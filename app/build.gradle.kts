@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
+val supabaseKey = localProperties.getProperty("SUPABASE_KEY") ?: ""
+
 
 android {
     namespace = "com.example.smartpick"
@@ -16,6 +28,13 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // SUPABASE -----------------------
+        buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
+        buildConfigField("String", "SUPABASE_KEY", "\"$supabaseKey\"")
+        //------------------------
+
+
     }
 
     buildTypes {
@@ -36,6 +55,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -49,6 +69,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -56,4 +77,21 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    /**
+     * Supabase
+     */
+    // Supabase bom (Quản lý phiên bản)
+    implementation(platform("io.github.jan-tennert.supabase:bom:2.1.3"))
+
+    // Auth (Đăng nhập) và Postgrest (Lưu/Đọc Database)
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt")
+
+    // Ktor client (Supabase dùng cái này để gọi mạng)
+    implementation("io.ktor:ktor-client-android:2.3.8")
+
+    // Kotlinx Serialization (Để biến JSON thành Object Kotlin)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("androidx.compose.material:material-icons-extended")
 }
