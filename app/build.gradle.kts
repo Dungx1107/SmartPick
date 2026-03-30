@@ -94,4 +94,12 @@ dependencies {
     // Kotlinx Serialization (Để biến JSON thành Object Kotlin)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Thư viện đăng nhập mới nhất của Google
+    implementation("androidx.credentials:credentials:1.2.1")
+    implementation("androidx.credentials:credentials-play-services-auth:1.2.1")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.0")
+
+    // Thư viện ViewModel cho Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 }

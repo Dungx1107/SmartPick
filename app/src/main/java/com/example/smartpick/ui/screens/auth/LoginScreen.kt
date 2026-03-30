@@ -1,11 +1,22 @@
-// File: ui/theme/Color.kt (Bạn cần thêm các màu này vào file màu của theme app)
 package com.example.smartpick.ui.theme
 
 import android.content.res.Configuration
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,13 +28,29 @@ import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -31,25 +58,50 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartpick.ui.theme.CardDark
-import com.example.smartpick.ui.theme.DeepBlack
-import com.example.smartpick.ui.theme.DividerColor
-import com.example.smartpick.ui.theme.LoginBlue
-import com.example.smartpick.ui.theme.LoginBlueGradientEnd
-import com.example.smartpick.ui.theme.SmartPickTheme
-import com.example.smartpick.ui.theme.SocialButtonDark
-import com.example.smartpick.ui.theme.TextPrimary
-import com.example.smartpick.ui.theme.TextSecondary
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smartpick.R
+import com.example.smartpick.ui.screens.auth.AuthState
+import com.example.smartpick.ui.screens.auth.AuthViewModel
+import com.example.smartpick.utils.Constants.WEB_CLIENT_ID
+import com.example.smartpick.utils.performGoogleSignIn
 
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
-    onNavigateToSignUp: () -> Unit
+    onNavigateToSignUp: () -> Unit,
+    viewModel: AuthViewModel = viewModel()
 ) {
     // Quản lý trạng thái của các ô nhập liệu
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    // Lắng nghe trạng thái từ ViewModel
+    val authState by viewModel.authState.collectAsState()
+
+    // Lắng nghe nếu Success thì tự động chuyển sang Home
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Success -> {
+                Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
+                onNavigateToHome()
+            }
+
+            is AuthState.Error -> {
+                // Hiện lỗi ra màn hình để xem bị kẹt ở đâu
+                val errorMessage = (authState as AuthState.Error).message
+                Toast.makeText(context, "Lỗi: $errorMessage", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "Lỗi GG: $errorMessage", Toast.LENGTH_LONG).show()
+            }
+
+            else -> {Toast.makeText(context, "kakakaka", Toast.LENGTH_LONG).show()}
+        }
+    }
+
+
 
     Column(
         modifier = Modifier
@@ -140,9 +192,28 @@ fun LoginScreen(
         OrConnectWithDivider()
         Spacer(modifier = Modifier.height(32.dp))
         // Nút Google và Facebook bo góc
-        SocialButton(text = "Continue with Google", brand = "Google", onClick = { /* Xử lý đăng nhập Google */ })
+        SocialButton(
+            text = "Continue with Google",
+            brand = "Google",
+            onClick = {
+                performGoogleSignIn(
+                    context = context,
+                    coroutineScope = coroutineScope,
+                    webClientId = WEB_CLIENT_ID,
+                    onTokenReceived = { token ->
+                        // Nhận được token thì đưa cho ViewModel xử lý
+                        viewModel.signInWithGoogleToken(token)
+                    },
+                    onError = { error ->
+                        error.printStackTrace()// In ra log hoặc hiện Toast báo lỗi
+                    }
+                )
+            })
         Spacer(modifier = Modifier.height(16.dp))
-        SocialButton(text = "Continue with Facebook", brand = "Facebook", onClick = { /* Xử lý đăng nhập Facebook */ })
+        SocialButton(
+            text = "Continue with Facebook",
+            brand = "Facebook",
+            onClick = { /* Xử lý đăng nhập Facebook */ })
 
         Spacer(modifier = Modifier.height(48.dp))
 
@@ -155,7 +226,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.width(8.dp))
             // Chữ "Sign Up Now" được in đậm và có thể bấm được
             Text(
-                text = "Sign Up Now",
+                text = stringResource(R.string.sign_up_now),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary,
@@ -185,7 +256,12 @@ fun BulbIcon() {
                     .matchParentSize()
                     .padding(top = 4.dp, end = 4.dp)
                     .background(
-                        Brush.linearGradient(listOf(Color.White.copy(alpha = 0.2f), Color.Transparent)),
+                        Brush.linearGradient(
+                            listOf(
+                                Color.White.copy(alpha = 0.2f),
+                                Color.Transparent
+                            )
+                        ),
                         shape = CircleShape
                     )
             )
@@ -235,7 +311,12 @@ fun StandardTextField(
                 modifier = Modifier.padding(start = 16.dp)
             )
         },
-        placeholder = { Text(text = placeholder, color = TextSecondary.copy(alpha = 0.5f)) },
+        placeholder = {
+            Text(
+                text = placeholder,
+                color = TextSecondary.copy(alpha = 0.5f)
+            )
+        },
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
@@ -269,13 +350,25 @@ fun PasswordTextField(
             )
         },
         trailingIcon = {
-            val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
+            val icon = if (passwordVisible) {
+                Icons.Filled.Visibility
+            } else {
+                Icons.Filled.VisibilityOff
+            }
             IconButton(onClick = onPasswordToggle) {
-                Icon(imageVector = icon, contentDescription = "Password Toggle", tint = TextSecondary)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = "Password Toggle",
+                    tint = TextSecondary
+                )
             }
         },
         placeholder = { Text(text = "••••••••", color = TextSecondary.copy(alpha = 0.5f)) },
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        visualTransformation = if (passwordVisible) {
+            VisualTransformation.None
+        } else {
+            PasswordVisualTransformation()
+        },
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
@@ -330,10 +423,19 @@ fun OrConnectWithDivider() {
         horizontalArrangement = Arrangement.Center
     ) {
         // Dải phân cách bên trái
-        HorizontalDivider(modifier = Modifier.weight(1f).padding(end = 16.dp), color = DividerColor)
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp), color = DividerColor
+        )
         Text(text = "OR CONNECT WITH", fontSize = 12.sp, color = DividerColor)
         // Dải phân cách bên phải
-        HorizontalDivider(modifier = Modifier.weight(1f).padding(start = 16.dp), color = DividerColor)
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            color = DividerColor
+        )
     }
 }
 
@@ -356,11 +458,29 @@ fun SocialButton(text: String, brand: String, onClick: () -> Unit) {
             // Icon Google/Facebook bo góc tròn như hình
             if (brand == "Google") {
                 Surface(shape = CircleShape, color = Color.White, modifier = Modifier.size(24.dp)) {
-                    Text(text = "G", fontSize = 16.sp, color = DeepBlack, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.wrapContentSize())
+                    Text(
+                        text = "G",
+                        fontSize = 16.sp,
+                        color = DeepBlack,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.wrapContentSize()
+                    )
                 }
             } else if (brand == "Facebook") {
-                Surface(shape = CircleShape, color = Color(0xFF1877F2), modifier = Modifier.size(24.dp)) {
-                    Text(text = "f", fontSize = 16.sp, color = TextPrimary, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.wrapContentSize())
+                Surface(
+                    shape = CircleShape,
+                    color = Color(0xFF1877F2),
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Text(
+                        text = "f",
+                        fontSize = 16.sp,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.wrapContentSize()
+                    )
                 }
             }
             Spacer(modifier = Modifier.width(16.dp))
@@ -374,7 +494,12 @@ fun SocialButton(text: String, brand: String, onClick: () -> Unit) {
 }
 
 // --- Hàm Preview ---
-@Preview(name = "Màn hình Đăng nhập (Dark Mode)", showBackground = true, showSystemUi = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(
+    name = "Màn hình Đăng nhập (Dark Mode)",
+    showBackground = true,
+    showSystemUi = true,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
+)
 @Composable
 fun LoginScreenPreview() {
     SmartPickTheme {

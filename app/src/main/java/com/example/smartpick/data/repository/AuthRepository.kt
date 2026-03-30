@@ -1,7 +1,8 @@
 package com.example.smartpick.data.repository
 
+import android.util.Log
 import com.example.smartpick.data.model.User
-import com.example.smartpick.data.remote.SupabaseClient
+import com.example.smartpick.data.remote.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.providers.builtin.IDToken
@@ -81,6 +82,8 @@ class AuthRepository {
                 }
             } catch (e: Exception) {
                 e.printStack()
+                Log.e("Loi_Supabase", "Chi tiết lỗi: ${e.message}", e)
+                throw e // Vẫn ném lỗi ra ngoài cho ViewModel
             }
         }
     }

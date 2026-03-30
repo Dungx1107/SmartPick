@@ -1,4 +1,4 @@
-package com.example.smartpick.data.remote
+package com.example.smartpick.data.remote.supabase
 
 import com.example.smartpick.BuildConfig
 import io.github.jan.supabase.createSupabaseClient
@@ -10,7 +10,7 @@ object SupabaseClient {
         supabaseUrl = BuildConfig.SUPABASE_URL,
         supabaseKey = BuildConfig.SUPABASE_KEY
     ) {
-        install(Auth)
-        install(Postgrest)
+        install(Auth.Companion)
+        install(Postgrest.Companion)
     }
 }
