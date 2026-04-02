@@ -12,7 +12,10 @@ fun AppNavigation() {
     val navController = rememberNavController()
 
     // Điểm bắt đầu (startDestination) là màn hình Login
-    NavHost(navController = navController, startDestination = Routes.Login.route) {
+    NavHost(
+        navController = navController,
+        startDestination = Routes.Login.route
+    ) {
 
         composable(Routes.Login.route) {
             LoginScreen(
