@@ -107,6 +107,7 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(DeepBlack)
+//            .background(Color.White)
             .padding(24.dp)
             .verticalScroll(rememberScrollState()), // Thêm scroll để không bị khuất khi hiện bàn phím
         horizontalAlignment = Alignment.CenterHorizontally
@@ -117,7 +118,7 @@ fun LoginScreen(
         // Tiêu đề và Logo bo góc, có hiệu ứng bóng (mô phỏng)
         BulbIcon()
         Text(
-            text = "LUMINA",
+            text = stringResource(R.string.app_name),
             fontSize = 20.sp,
             fontWeight = FontWeight.W600,
             color = TextPrimary,

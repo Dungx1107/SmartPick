@@ -25,11 +25,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartpick.R
+import com.example.smartpick.ui.navigation.MainBottomBar
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
 val DarkNavy = Color(0xFF0D1B2A)
@@ -108,7 +111,11 @@ val sampleCategories = listOf(
 fun HomeScreen() {
     Scaffold(
         containerColor = PageBg,
-        bottomBar = { LuminaBottomBar() }
+        bottomBar = {
+            MainBottomBar(stringResource(R.string.home),
+                {}
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -163,7 +170,7 @@ fun SmartPickTopBar() {
             modifier = Modifier.size(24.dp)
         )
         Text(
-            "LUMINA",
+            stringResource(R.string.app_name),
             fontSize = 20.sp,
             fontWeight = FontWeight.ExtraBold,
             color = TextPrimary,
@@ -585,51 +592,11 @@ fun AICuratorBanner() {
     }
 }
 
-// ─── Bottom Navigation Bar ────────────────────────────────────────────────────
-@Composable
-fun LuminaBottomBar() {
-    data class NavItem(val icon: ImageVector, val label: String, val selected: Boolean = false)
-
-    val items = listOf(
-        NavItem(Icons.Filled.Home, "Home", selected = true),
-        NavItem(Icons.Outlined.AutoAwesome, "AI Curator"),
-        NavItem(Icons.Outlined.Bookmark, "Saved"),
-        NavItem(Icons.Outlined.Person, "Profile"),
-    )
-
-    NavigationBar(
-        containerColor = White,
-        tonalElevation = 8.dp
-    ) {
-        items.forEach { item ->
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        item.icon, contentDescription = item.label,
-                        modifier = Modifier.size(22.dp)
-                    )
-                },
-                label = {
-                    Text(item.label, fontSize = 10.sp)
-                },
-                selected = item.selected,
-                onClick = {},
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = AccentBlue,
-                    selectedTextColor = AccentBlue,
-                    unselectedIconColor = TextMuted,
-                    unselectedTextColor = TextMuted,
-                    indicatorColor = Color(0xFFEBF3FF)
-                )
-            )
-        }
-    }
-}
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
-fun LuminaHomeScreenPreview() {
+fun HomeScreenPreview() {
     MaterialTheme {
         HomeScreen()
     }

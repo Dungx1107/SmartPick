@@ -1,4 +1,4 @@
-package com.example.smartpick.ui.screens.chat
+package com.example.smartpick.ui.screens.chatbot
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -28,12 +29,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartpick.R
+import com.example.smartpick.ui.navigation.MainBottomBar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen() {
+fun ChatbotScreen() {
     val messages = remember {
         mutableStateListOf(
             ChatMessage(
@@ -61,7 +64,11 @@ fun ChatScreen() {
                 },
                 navigationIcon = {
                     IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = Color(0xFF1E3A8A))
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Menu",
+                            tint = Color(0xFF1E3A8A)
+                        )
                     }
                 },
                 actions = {
@@ -79,7 +86,11 @@ fun ChatScreen() {
                         )
                     }
                     IconButton(onClick = { /* TODO */ }) {
-                        Icon(Icons.Default.ShoppingBag, contentDescription = "Cart", tint = Color(0xFF1E3A8A))
+                        Icon(
+                            Icons.Default.ShoppingBag,
+                            contentDescription = "Cart",
+                            tint = Color(0xFF1E3A8A)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White.copy(alpha = 0.9f))
@@ -96,17 +107,27 @@ fun ChatScreen() {
                             val responseText = when {
                                 userText.contains("giá", ignoreCase = true) ->
                                     "Tôi có thể giúp bạn tìm sản phẩm có giá tốt nhất. Bạn đang quan tâm đến phân khúc giá nào?"
-                                userText.contains("chào", ignoreCase = true) || userText.contains("hi", ignoreCase = true) ->
+
+                                userText.contains(
+                                    "chào",
+                                    ignoreCase = true
+                                ) || userText.contains("hi", ignoreCase = true) ->
                                     "Xin chào! Tôi là Lumina, trợ lý mua sắm thông minh của bạn. Tôi có thể giúp gì cho bạn?"
+
                                 userText.contains("điện thoại", ignoreCase = true) ->
                                     "Bạn đang tìm điện thoại? Tôi gợi ý bạn xem qua dòng iPhone 15 hoặc Samsung S24 đang có ưu đãi lớn."
+
                                 else -> "Tôi đã nhận được yêu cầu: \"$userText\". Tôi đang tìm kiếm thông tin tốt nhất cho bạn!"
                             }
                             messages.add(ChatMessage(text = responseText, isUser = false))
                         }
                     }
                 )
-                SmartPickBottomNav()
+
+                MainBottomBar(
+                    stringResource(R.string.ai_curator),
+                    {}
+                )
             }
         },
         containerColor = Color(0xFFF7FAFC)
@@ -138,7 +159,10 @@ fun ChatScreen() {
 @Composable
 fun AiMessageBubble(text: String) {
     Column(modifier = Modifier.fillMaxWidth(0.85f)) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 4.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 4.dp)
+        ) {
             Box(
                 modifier = Modifier
                     .size(24.dp)
@@ -146,16 +170,31 @@ fun AiMessageBubble(text: String) {
                     .background(Color(0xFF455F88)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Star, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                Icon(
+                    Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text("TRỢ LÝ SmartPick", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color.Gray)
+            Text(
+                "TRỢ LÝ SmartPick",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Gray
+            )
         }
         Surface(
             shape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 16.dp),
             color = Color(0xFFDFEAEF).copy(alpha = 0.7f)
         ) {
-            Text(text = text, modifier = Modifier.padding(16.dp), fontSize = 14.sp, color = Color(0xFF283439))
+            Text(
+                text = text,
+                modifier = Modifier.padding(16.dp),
+                fontSize = 14.sp,
+                color = Color(0xFF283439)
+            )
         }
     }
 }
@@ -171,9 +210,19 @@ fun UserMessageBubble(text: String) {
             color = Color(0xFF455F88),
             modifier = Modifier.fillMaxWidth(0.85f)
         ) {
-            Text(text = text, modifier = Modifier.padding(16.dp), fontSize = 14.sp, color = Color.White)
+            Text(
+                text = text,
+                modifier = Modifier.padding(16.dp),
+                fontSize = 14.sp,
+                color = Color.White
+            )
         }
-        Text("Vừa xong • Đã xem", fontSize = 10.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp))
+        Text(
+            "Vừa xong • Đã xem",
+            fontSize = 10.sp,
+            color = Color.Gray,
+            modifier = Modifier.padding(top = 4.dp)
+        )
     }
 }
 
@@ -203,7 +252,14 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
                     .aspectRatio(4f / 5f)
                     .background(Color(0xFFD7E5EB))
             ) {
-                Icon(Icons.Outlined.Headphones, contentDescription = null, modifier = Modifier.align(Alignment.Center).size(64.dp), tint = Color.Gray)
+                Icon(
+                    Icons.Outlined.Headphones,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(64.dp),
+                    tint = Color.Gray
+                )
 
                 if (tag != null) {
                     Surface(
@@ -211,24 +267,50 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
                         shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.padding(8.dp)
                     ) {
-                        Text(tag, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp))
+                        Text(
+                            tag,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
+                        )
                     }
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Text(desc, fontSize = 12.sp, color = Color.Gray, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    desc,
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(price, fontWeight = FontWeight.ExtraBold, color = Color(0xFF455F88), fontSize = 14.sp)
+                    Text(
+                        price,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF455F88),
+                        fontSize = 14.sp
+                    )
                     IconButton(
                         onClick = { /* TODO */ },
-                        modifier = Modifier.size(32.dp).background(Color(0xFFD4E4FC), CircleShape)
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(Color(0xFFD4E4FC), CircleShape)
                     ) {
-                        Icon(Icons.Default.AddShoppingCart, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF445367))
+                        Icon(
+                            Icons.Default.AddShoppingCart,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color(0xFF445367)
+                        )
                     }
                 }
             }
@@ -238,7 +320,8 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
 
 @Composable
 fun ChatInputBar(onSendMessage: (String) -> Unit) {
-    val quickActions = listOf("So sánh giá", "Gợi ý quà tặng", "Đánh giá người dùng", "Ưu đãi hôm nay")
+    val quickActions =
+        listOf("So sánh giá", "Gợi ý quà tặng", "Đánh giá người dùng", "Ưu đãi hôm nay")
     Column(modifier = Modifier.background(Color.White.copy(alpha = 0.9f))) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -250,7 +333,12 @@ fun ChatInputBar(onSendMessage: (String) -> Unit) {
                     border = BorderStroke(1.dp, Color(0xFFA7B4BA).copy(alpha = 0.5f)),
                     color = Color.White
                 ) {
-                    Text(action, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                    Text(
+                        action,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
                 }
             }
         }
@@ -309,41 +397,10 @@ fun ChatInputBar(onSendMessage: (String) -> Unit) {
     }
 }
 
-@Composable
-fun SmartPickBottomNav() {
-    NavigationBar(containerColor = Color.White.copy(alpha = 0.9f)) {
-        NavigationBarItem(
-            selected = false,
-            onClick = { /* TODO */ },
-            icon = { Icon(Icons.Outlined.Home, contentDescription = "Home") },
-            label = { Text("Home", fontSize = 10.sp) }
-        )
-        NavigationBarItem(
-            selected = true,
-            onClick = { /* TODO */ },
-            icon = { Icon(Icons.Outlined.AutoAwesome, contentDescription = "AI Curator") },
-            label = { Text("AI Curator", fontSize = 10.sp) },
-            colors = NavigationBarItemDefaults.colors(indicatorColor = Color(0xFFD6E3FF))
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /* TODO */ },
-            icon = { Icon(Icons.Outlined.BookmarkBorder, contentDescription = "Saved") },
-            label = { Text("Saved", fontSize = 10.sp) }
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { /* TODO */ },
-            icon = { Icon(Icons.Outlined.Person, contentDescription = "Profile") },
-            label = { Text("Profile", fontSize = 10.sp) }
-        )
-    }
-}
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LuminaChatScreenPreview() {
-    ChatScreen()
+    ChatbotScreen()
 }
 
 data class ChatMessage(

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.smartpick.ui.screens.chatbot.ChatbotScreen
 import com.example.smartpick.ui.screens.home.HomeScreen
 import com.example.smartpick.ui.theme.LoginScreen
 
@@ -33,5 +34,10 @@ fun AppNavigation() {
         composable(Routes.Home.route) {
             HomeScreen()
         }
+
+        composable(Routes.ChatBot.route) {
+            ChatbotScreen()
+        }
+
     }
 }
