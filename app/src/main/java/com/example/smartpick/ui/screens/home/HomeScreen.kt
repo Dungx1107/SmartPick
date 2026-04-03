@@ -111,11 +111,6 @@ val sampleCategories = listOf(
 fun HomeScreen() {
     Scaffold(
         containerColor = PageBg,
-        bottomBar = {
-            MainBottomBar(stringResource(R.string.home),
-                {}
-            )
-        }
     ) { innerPadding ->
         Column(
             modifier = Modifier

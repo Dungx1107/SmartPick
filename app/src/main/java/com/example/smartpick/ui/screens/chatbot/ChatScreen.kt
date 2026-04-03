@@ -60,7 +60,11 @@ fun ChatbotScreen() {
         topBar = {
             TopAppBar(
                 title = {
-                    Text("LUMINA", fontWeight = FontWeight.Black, color = Color(0xFF1E3A8A))
+                    Text(
+                        stringResource(R.string.app_name),
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF1E3A8A)
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = { /* TODO */ }) {
@@ -124,10 +128,10 @@ fun ChatbotScreen() {
                     }
                 )
 
-                MainBottomBar(
-                    stringResource(R.string.ai_curator),
-                    {}
-                )
+//                MainBottomBar(
+//                    stringResource(R.string.ai_curator),
+//                    {}
+//                )
             }
         },
         containerColor = Color(0xFFF7FAFC)

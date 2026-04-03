@@ -2,9 +2,7 @@ package com.example.smartpick.ui.navigation
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
@@ -14,6 +12,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -21,14 +20,32 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.smartpick.R
 import com.example.smartpick.ui.screens.home.AccentBlue
-import com.example.smartpick.ui.screens.home.TextMuted
 import com.example.smartpick.ui.screens.home.White
 
 @Composable
 fun MainBottomBar(
-    currentRoute: String,
+    navController: NavController,
+    onNavigate: (String) -> Unit
+) {
+    // Phần này xử lý Logic lấy Route từ NavController
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    // Gọi phần UI bên dưới
+    MainBottomBarContent(
+        currentRoute = currentRoute,
+        onNavigate = onNavigate
+    )
+}
+
+@Composable
+fun MainBottomBarContent(
+    currentRoute: String?,
     onNavigate: (String) -> Unit
 ) {
     data class NavItem(
@@ -37,27 +54,26 @@ fun MainBottomBar(
         val route: String
     )
 
-    // danh sach 4 nut chon phan duoi
     val items = listOf(
         NavItem(
             Icons.Outlined.Home,
             stringResource(R.string.home),
-            stringResource(R.string.home)
+            Routes.Home.route
         ),
         NavItem(
             Icons.Outlined.AutoAwesome,
             stringResource(R.string.ai_curator),
-            stringResource(R.string.ai_curator)
+            Routes.ChatBot.route
         ),
         NavItem(
             Icons.Outlined.BookmarkBorder,
             stringResource(R.string.saved),
-            stringResource(R.string.saved)
+            Routes.Saved.route
         ),
         NavItem(
             Icons.Outlined.Person,
             stringResource(R.string.profile),
-            stringResource(R.string.profile)
+            Routes.Profile.route
         ),
     )
 
@@ -66,6 +82,8 @@ fun MainBottomBar(
         tonalElevation = 8.dp
     ) {
         items.forEach { item ->
+            val selected = currentRoute == item.route
+
             NavigationBarItem(
                 icon = {
                     Icon(
@@ -74,10 +92,8 @@ fun MainBottomBar(
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                label = {
-                    Text(item.label, fontSize = 10.sp)
-                },
-                selected = currentRoute == item.route,
+                label = { Text(item.label, fontSize = 10.sp) },
+                selected = selected,
                 onClick = { onNavigate(item.route) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = AccentBlue,
@@ -91,8 +107,21 @@ fun MainBottomBar(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun MainBottomBarPreview() {
-    MainBottomBar("kaka", {})
+    // Gọi bản Content để Preview, không gọi bản có NavController
+    MainBottomBarContent(
+        currentRoute = Routes.Home.route, // Thử giả lập đang ở màn Home
+        onNavigate = {}
+    )
+}
+
+@Preview(showBackground = true, name = "AI Selected")
+@Composable
+fun MainBottomBarAIPreview() {
+    MainBottomBarContent(
+        currentRoute = Routes.ChatBot.route, // Thử giả lập đang chọn AI Curator
+        onNavigate = {}
+    )
 }
