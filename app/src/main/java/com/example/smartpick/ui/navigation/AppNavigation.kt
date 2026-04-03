@@ -11,7 +11,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.smartpick.ui.screens.chatbot.ChatbotScreen
 import com.example.smartpick.ui.screens.home.HomeScreen
-import com.example.smartpick.ui.theme.LoginScreen
+import com.example.smartpick.ui.screens.auth.LoginScreen
 
 @Composable
 fun AppNavigation() {
