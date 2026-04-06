@@ -137,7 +137,7 @@ fun HomeScreen() {
                 .verticalScroll(rememberScrollState())
         ) {
             // Top bar
-            SmartPickTopBar()
+//            SmartPickTopBar()
 
             // Search bar
             SearchBar()
@@ -163,47 +163,6 @@ fun HomeScreen() {
             AICuratorBanner()
 
             Spacer(Modifier.height(24.dp))
-        }
-    }
-}
-
-// ─── Top Bar ──────────────────────────────────────────────────────────────────
-@Composable
-fun SmartPickTopBar() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            Icons.Default.Menu,
-            contentDescription = "Menu",
-            tint = SmartPickColor,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            stringResource(R.string.app_name),
-            fontSize = 20.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = SmartPickColor,
-            letterSpacing = 2.sp
-        )
-        Box {
-            Icon(
-                Icons.Outlined.ShoppingBag,
-                contentDescription = "Cart",
-                tint = TextPrimary,
-                modifier = Modifier.size(24.dp)
-            )
-            // Cart badge
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(8.dp)
-                    .background(AccentBlue, CircleShape)
-            )
         }
     }
 }

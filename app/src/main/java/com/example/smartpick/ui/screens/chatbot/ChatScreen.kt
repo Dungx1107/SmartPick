@@ -92,49 +92,6 @@ fun ChatbotScreen() {
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.app_name),
-                        fontWeight = FontWeight.Black,
-                        color = SmartPickColor
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(
-                            Icons.Default.Menu,
-                            contentDescription = "Menu",
-                            tint = SmartPickColor
-                        )
-                    }
-                },
-                actions = {
-                    Surface(
-                        color = Color(0xFFD6E3FF),
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Text(
-                            text = "AI ASSISTANT",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF38527B),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                    IconButton(onClick = { /* TODO */ }) {
-                        Icon(
-                            Icons.Default.ShoppingBag,
-                            contentDescription = "Cart",
-                            tint = Color(0xFF1E3A8A)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White.copy(alpha = 0.9f))
-            )
-        },
         bottomBar = {
             Column {
                 ChatInputBar(

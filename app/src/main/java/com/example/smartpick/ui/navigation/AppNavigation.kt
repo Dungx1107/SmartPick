@@ -21,8 +21,26 @@ fun AppNavigation() {
     val currentRoute = navBackStackEntry.value?.destination?.route
 
     Scaffold(
+        topBar = {
+            if (currentRoute != Routes.Login.route) { // Chỉ hiện TopBar nếu không phải màn Login
+
+                MainTopBar(
+                    onMenuClick = {
+                        // TODO: Mở navigation drawer
+                    },
+                    tagText = when (currentRoute) {
+                        Routes.Home.route -> "SmartPick"
+                        Routes.ChatBot.route -> "AI Curator"
+                        Routes.Saved.route -> "Saved Items"
+                        Routes.Profile.route -> "My Profile"
+                        else -> null
+                    },
+                    showCartBadge = currentRoute == Routes.Home.route // Chỉ hiện tag AI ASSISTANT ở màn Home
+                )
+            }
+        },
         bottomBar = {
-            if (currentRoute != Routes.Login.route) {// Logic: Chỉ hiện nếu không phải màn Login
+            if (currentRoute != Routes.Login.route) {
                 MainBottomBar(
                     navController = navController,
                     onNavigate = { route ->
@@ -30,8 +48,10 @@ fun AppNavigation() {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             } // 1. Quay về màn hình đầu tiên (thường là Home) để tránh tích tụ stack
-                            launchSingleTop = true // 2. Tránh việc mở lại chính màn hình đó nhiều lần khi nhấn liên tục vào icon
-                            restoreState = true  // 3. Khôi phục lại trạng thái (ví dụ: vị trí cuộn trang) khi quay lại tab đó
+                            launchSingleTop =
+                                true // 2. Tránh việc mở lại chính màn hình đó nhiều lần khi nhấn liên tục vào icon
+                            restoreState =
+                                true  // 3. Khôi phục lại trạng thái (ví dụ: vị trí cuộn trang) khi quay lại tab đó
                         }
                     }
                 )
