@@ -8,12 +8,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
+import com.example.smartpick.test.SupabaseTest
 import com.example.smartpick.ui.navigation.AppNavigation
 import com.example.smartpick.ui.theme.SmartPickTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+//        lifecycleScope.launch {
+//            SupabaseTest.testConnection()
+//        }
+
         enableEdgeToEdge()
         setContent {
             SmartPickTheme {

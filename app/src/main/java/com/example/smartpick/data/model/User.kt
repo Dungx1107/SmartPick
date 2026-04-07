@@ -12,6 +12,6 @@ data class User(
     @SerialName("fullname")
     val fullName: String? = null,
 
-    @SerialName("avater_url")
+    @SerialName("avatar_url")
     val avatarUrl: String? = null
 )

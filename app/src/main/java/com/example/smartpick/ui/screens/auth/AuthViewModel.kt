@@ -17,7 +17,6 @@ sealed class AuthState {
 }
 
 class AuthViewModel : ViewModel() {
-
     private val authRepository = AuthRepository()
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()

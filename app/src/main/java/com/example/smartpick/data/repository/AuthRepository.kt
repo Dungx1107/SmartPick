@@ -37,17 +37,27 @@ class AuthRepository {
                  * idToken = googleIdToken: truyền token vào
                  */
 
+                Log.d("AUTH", "Bắt đầu sign in với Google token")
+
                 supabaseClient.auth.signInWith(IDToken) {
                     provider = Google
                     idToken = googleIdToken
                 }
+
+                Log.d("AUTH", "Sign in xong")
+
 
                 /**
                  * Lấy thông tin user hiện tại sau khi đăng nhập
                  *(có thể null nếu thất bại)
                  */
 
-                val currentUser = supabaseClient.auth.currentUserOrNull()
+//                val currentUser = supabaseClient.auth.currentUserOrNull()
+                val session = supabaseClient.auth.currentSessionOrNull()
+                Log.d("AUTH", "Session: $session")
+
+                val currentUser = session?.user
+                Log.d("AUTH", "User: $currentUser")
 
                 if (currentUser != null) {
                     /**

@@ -123,7 +123,7 @@ fun LoginScreen(
         )
 
         Text(
-            text = "Welcome Back",
+            text = stringResource(R.string.welcome_back),
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
             color = TextPrimary,
@@ -131,7 +131,7 @@ fun LoginScreen(
         )
 
         Text(
-            text = "Continue your journey of curated discovery.",
+            text = stringResource(R.string.continue_your_journey_of_curated_discovery),
             fontSize = 14.sp,
             color = TextSecondary,
             textAlign = TextAlign.Center,
@@ -144,7 +144,7 @@ fun LoginScreen(
         StandardTextFieldLight(
             value = email,
             onValueChange = { email = it },
-            placeholder = "name@domain.com",
+            placeholder = stringResource(R.string.name_domain_com),
             leadingIcon = Icons.Filled.Email
         )
 
@@ -157,9 +157,9 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Password", fontSize = 14.sp, color = TextSecondary)
+            Text(stringResource(R.string.password), fontSize = 14.sp, color = TextSecondary)
             Text(
-                "Forgot Password?",
+                stringResource(R.string.forgot_password),
                 fontSize = 12.sp,
                 color = TextSecondary,
                 modifier = Modifier.clickable { }
@@ -182,8 +182,8 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         SocialButtonLight(
-            text = "Continue with Google",
-            brand = "Google",
+            text = stringResource(R.string.continue_with_google),
+            brand = stringResource(R.string.google),
             onClick = {
                 performGoogleSignIn(
                     context = context,
@@ -198,8 +198,8 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         SocialButtonLight(
-            text = "Continue with Facebook",
-            brand = "Facebook",
+            text = stringResource(R.string.continue_with_facebook),
+            brand = stringResource(R.string.facebook),
             onClick = { }
         )
 
@@ -209,7 +209,11 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Don't have an account?", fontSize = 14.sp, color = TextSecondary)
+            Text(
+                stringResource(R.string.don_t_have_an_account),
+                fontSize = 14.sp,
+                color = TextSecondary
+            )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(R.string.sign_up_now),
@@ -335,7 +339,12 @@ fun LoginButtonLight(onClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(
+                stringResource(R.string.login),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Icon(Icons.Filled.ArrowForward, null, tint = Color.White)
         }
@@ -354,7 +363,7 @@ fun OrConnectWithDividerLight() {
                 .weight(1f)
                 .padding(end = 16.dp), color = DividerColor
         )
-        Text("OR CONNECT WITH", fontSize = 12.sp, color = DividerColor)
+        Text(stringResource(R.string.or_connect_with), fontSize = 12.sp, color = DividerColor)
         Divider(
             modifier = Modifier
                 .weight(1f)
@@ -384,18 +393,17 @@ fun SocialButtonLight(
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // --- Logo chính thức ---
             if (brand == "Google") {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_google_logo), // icon vector Google
-                    contentDescription = "Google Logo",
+                    contentDescription = stringResource(R.string.google_logo),
                     modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified// giữ màu gốc của logo
                 )
             } else if (brand == "Facebook") {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_facebook_logo), // icon vector Facebook
-                    contentDescription = "Facebook Logo",
+                    contentDescription = stringResource(R.string.facebook_logo),
                     modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified
                 )
