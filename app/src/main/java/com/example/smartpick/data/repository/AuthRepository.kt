@@ -79,7 +79,8 @@ class AuthRepository {
                         id = currentUser.id,//ID của user trong Supabase
                         email = currentUser.email,// Email từ Google
                         fullName = fullName,
-                        avatarUrl = avatarUrl
+                        avatarUrl = avatarUrl,
+                        username = currentUser.email?.substringBefore("@")// Lấy phần trước dấu @ của email làm username
                     )
 
                     /**
