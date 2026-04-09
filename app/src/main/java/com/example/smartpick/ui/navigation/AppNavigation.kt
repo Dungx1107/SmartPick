@@ -4,14 +4,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.smartpick.R
 import com.example.smartpick.ui.screens.chatbot.ChatbotScreen
 import com.example.smartpick.ui.screens.home.HomeScreen
 import com.example.smartpick.ui.screens.auth.LoginScreen
+import com.example.smartpick.ui.screens.profile.EditProfileScreen
+import com.example.smartpick.ui.screens.profile.ProfileScreen
+import com.example.smartpick.ui.screens.profile.SavedCollectionScreen
 
 @Composable
 fun AppNavigation() {
@@ -22,17 +27,19 @@ fun AppNavigation() {
 
     Scaffold(
         topBar = {
-            if (currentRoute != Routes.Login.route) { // Chỉ hiện TopBar nếu không phải màn Login
+            if (currentRoute != Routes.Login.route
+                && currentRoute != Routes.EditProfile.route
+            ) { // Chỉ hiện TopBar nếu không phải màn Login
 
                 MainTopBar(
                     onMenuClick = {
                         // TODO: Mở navigation drawer
                     },
                     tagText = when (currentRoute) {
-                        Routes.Home.route -> "SmartPick"
-                        Routes.ChatBot.route -> "AI Curator"
-                        Routes.Saved.route -> "Saved Items"
-                        Routes.Profile.route -> "My Profile"
+                        Routes.Home.route -> stringResource(R.string.app_name)
+                        Routes.ChatBot.route -> stringResource(R.string.ai_curator)
+                        Routes.Saved.route -> stringResource(R.string.saved)
+                        Routes.Profile.route -> stringResource(R.string.profile)
                         else -> null
                     },
                     showCartBadge = currentRoute == Routes.Home.route // Chỉ hiện tag AI ASSISTANT ở màn Home
@@ -40,7 +47,9 @@ fun AppNavigation() {
             }
         },
         bottomBar = {
-            if (currentRoute != Routes.Login.route) {
+            if (currentRoute != Routes.Login.route
+                && currentRoute != Routes.EditProfile.route
+            ) {
                 MainBottomBar(
                     navController = navController,
                     onNavigate = { route ->
@@ -49,9 +58,8 @@ fun AppNavigation() {
                                 saveState = true
                             } // 1. Quay về màn hình đầu tiên (thường là Home) để tránh tích tụ stack
                             launchSingleTop =
-                                true // 2. Tránh việc mở lại chính màn hình đó nhiều lần khi nhấn liên tục vào icon
-                            restoreState =
-                                true  // 3. Khôi phục lại trạng thái (ví dụ: vị trí cuộn trang) khi quay lại tab đó
+                                true //Tránh việc mở màn hình đó nhiều lần khi nhấn liên tục vào icon
+                            restoreState = true  //Khôi phục lại trạng thái khi quay lại tab đó
                         }
                     }
                 )
@@ -84,6 +92,22 @@ fun AppNavigation() {
 
             composable(Routes.ChatBot.route) {
                 ChatbotScreen()
+            }
+
+            composable(Routes.Saved.route) {
+                SavedCollectionScreen()
+            }
+
+            composable(Routes.Profile.route) {
+                ProfileScreen(navController)
+            }
+
+            composable(Routes.EditProfile.route) {
+                EditProfileScreen(
+                    onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                )
             }
         }
     }

@@ -136,9 +136,6 @@ fun HomeScreen() {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Top bar
-//            SmartPickTopBar()
-
             // Search bar
             SearchBar()
 

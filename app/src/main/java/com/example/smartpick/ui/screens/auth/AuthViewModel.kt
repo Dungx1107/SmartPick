@@ -25,8 +25,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _authState.value = AuthState.Loading // Báo cho UI hiện vòng xoay xoay
             try {
-                // Nhờ Repository xử lý logic
-                authRepository.signInWithGoogleAndSaveUser(idToken)
+                authRepository.signInWithGoogleAndSaveUser(idToken) //Repository xử lý logic
 
                 _authState.value = AuthState.Success// Trả về không có lỗi gì -> Thành công!
 

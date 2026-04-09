@@ -46,13 +46,10 @@ class AuthRepository {
 
                 Log.d("AUTH", "Sign in xong")
 
-
                 /**
                  * Lấy thông tin user hiện tại sau khi đăng nhập
                  *(có thể null nếu thất bại)
                  */
-
-//                val currentUser = supabaseClient.auth.currentUserOrNull()
                 val session = supabaseClient.auth.currentSessionOrNull()
                 Log.d("AUTH", "Session: $session")
 
