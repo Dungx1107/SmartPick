@@ -41,7 +41,7 @@ fun EditProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(PageBg)
-            .padding(WindowInsets.systemBars.asPaddingValues()) // tránh dính status bar
+            .padding(top = 10.dp)
             .verticalScroll(rememberScrollState())
     ) {
 
