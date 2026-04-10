@@ -128,39 +128,31 @@ val sampleCategories = listOf(
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 @Composable
 fun HomeScreen() {
-    Scaffold(
-        containerColor = PageBg,
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Search bar
-            SearchBar()
+    Column(
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+            .background(PageBg)
+    ) {
+        Spacer(Modifier.height(12.dp))
+        SearchBar()
 
-            Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(16.dp))
 
-            // Hero banner
-            HeroBanner()
+        HeroBanner()
 
-            Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(20.dp))
 
-            // Category row
-            CategoryRow(sampleCategories)
+        CategoryRow(sampleCategories)
 
-            Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
-            // "Gợi ý cho bạn" section
-            RecommendedSection(sampleProducts)
+        RecommendedSection(sampleProducts)
 
-            Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(24.dp))
 
-            // AI Curator CTA
-            AICuratorBanner()
+        AICuratorBanner()
 
-            Spacer(Modifier.height(24.dp))
-        }
+        Spacer(Modifier.height(24.dp))
     }
 }
 

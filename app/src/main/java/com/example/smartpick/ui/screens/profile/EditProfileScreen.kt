@@ -26,64 +26,68 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.ui.theme.PageBg
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     onNavigateBack: () -> Unit = {},
     onSaveProfile: () -> Unit = {}
 ) {
-    // Khởi tạo các state để quản lý dữ liệu form
     var name by remember { mutableStateOf("Nguyễn Bá Trọng Tín") }
     var role by remember { mutableStateOf("Cloud & DevOps Intern") }
     var email by remember { mutableStateOf("trongtin@smartpick.com") }
     var phone by remember { mutableStateOf("+84 123 456 789") }
     var dob by remember { mutableStateOf("01/01/2005") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Chỉnh sửa hồ sơ",
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E3A8A),
-                        fontSize = 20.sp
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xFF1E3A8A)
-                        )
-                    }
-                },
-                actions = {
-                    TextButton(onClick = onSaveProfile) {
-                        Text(
-                            "Lưu",
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E3A8A),
-                            fontSize = 16.sp
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF8FAFC))
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PageBg)
+            .padding(WindowInsets.systemBars.asPaddingValues()) // tránh dính status bar
+            .verticalScroll(rememberScrollState())
+    ) {
+
+        // ===== Top Bar =====
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    tint = Color(0xFF1E3A8A)
+                )
+            }
+
+            Text(
+                text = "Chỉnh sửa hồ sơ",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = Color(0xFF1E3A8A),
+                modifier = Modifier.weight(1f)
             )
-        },
-        containerColor = PageBg
-    ) { paddingValues ->
+
+            TextButton(onClick = onSaveProfile) {
+                Text(
+                    "Lưu",
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
+                )
+            }
+        }
+
+        // ===== Content =====
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // Editable Avatar
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ===== Avatar =====
             Box(
                 modifier = Modifier
                     .padding(vertical = 24.dp)
@@ -101,76 +105,47 @@ fun EditProfileScreen(
                 ) {
                     Icon(
                         Icons.Default.Person,
-                        contentDescription = "Avatar",
+                        contentDescription = null,
                         tint = Color.Gray,
                         modifier = Modifier.size(56.dp)
                     )
                 }
 
-                // Camera Badge Button
                 Box(
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
                         .background(Color(0xFF1E3A8A))
                         .border(2.dp, Color.White, CircleShape)
-                        .clickable { /* TODO: Open Image Picker */ },
+                        .clickable { },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.CameraAlt,
-                        contentDescription = "Edit Avatar",
+                        contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
                 }
             }
 
-            // Form Fields
-            ProfileTextField(
-                label = "Họ và Tên",
-                value = name,
-                onValueChange = { name = it }
-            )
+            // ===== Form =====
+            ProfileTextField(label = "Họ và Tên", value = name, onValueChange = { name = it })
+            Spacer(Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            ProfileTextField("Công việc / Vai trò", role, { role = it })
+            Spacer(Modifier.height(16.dp))
 
-            ProfileTextField(
-                label = "Công việc / Vai trò",
-                value = role,
-                onValueChange = { role = it }
-            )
+            ProfileTextField("Email", email, { email = it }, KeyboardType.Email)
+            Spacer(Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            ProfileTextField("Số điện thoại", phone, { phone = it }, KeyboardType.Phone)
+            Spacer(Modifier.height(16.dp))
 
-            ProfileTextField(
-                label = "Email",
-                value = email,
-                onValueChange = { email = it },
-                keyboardType = KeyboardType.Email
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileTextField(
-                label = "Số điện thoại",
-                value = phone,
-                onValueChange = { phone = it },
-                keyboardType = KeyboardType.Phone
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileTextField(
-                label = "Năm sinh",
-                value = dob,
-                onValueChange = { dob = it },
-                keyboardType = KeyboardType.Number
-            )
+            ProfileTextField("Năm sinh", dob, { dob = it }, KeyboardType.Number)
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            // Primary Save Button
             Button(
                 onClick = onSaveProfile,
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A)),
@@ -192,7 +167,6 @@ fun EditProfileScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileTextField(
     label: String,
@@ -219,6 +193,6 @@ fun ProfileTextField(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun LuminaChatScreenPreview() {
-    EditProfileScreen();
+fun PreviewEditProfile() {
+    EditProfileScreen()
 }

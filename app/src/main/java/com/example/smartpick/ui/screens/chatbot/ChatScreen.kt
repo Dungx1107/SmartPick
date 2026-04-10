@@ -8,12 +8,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -28,7 +31,6 @@ import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Headphones
 import androidx.compose.material3.Card
@@ -36,13 +38,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,7 +54,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -64,8 +62,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartpick.R
-import com.example.smartpick.ui.theme.SmartPickColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -75,7 +71,7 @@ fun ChatbotScreen() {
     val messages = remember {
         mutableStateListOf(
             ChatMessage(
-                text = "Chào bạn! Tôi là Lumina. Hôm nay bạn muốn tìm kiếm sản phẩm gì để làm mới không gian sống hay nâng cấp trải nghiệm công nghệ của mình không?",
+                text = "Chào bạn! Tôi là SmartPick...",
                 isUser = false
             )
         )
@@ -84,53 +80,25 @@ fun ChatbotScreen() {
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()
 
-    // Tự động cuộn xuống khi có tin nhắn mới
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
             listState.animateScrollToItem(messages.size - 1)
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            Column {
-                ChatInputBar(
-                    onSendMessage = { userText ->
-                        messages.add(ChatMessage(text = userText, isUser = true))
-
-                        coroutineScope.launch {
-                            delay(1000)
-                            val responseText = when {
-                                userText.contains("giá", ignoreCase = true) ->
-                                    "Tôi có thể giúp bạn tìm sản phẩm có giá tốt nhất. Bạn đang quan tâm đến phân khúc giá nào?"
-
-                                userText.contains(
-                                    "chào",
-                                    ignoreCase = true
-                                ) || userText.contains("hi", ignoreCase = true) ->
-                                    "Xin chào! Tôi là Lumina, trợ lý mua sắm thông minh của bạn. Tôi có thể giúp gì cho bạn?"
-
-                                userText.contains("điện thoại", ignoreCase = true) ->
-                                    "Bạn đang tìm điện thoại? Tôi gợi ý bạn xem qua dòng iPhone 15 hoặc Samsung S24 đang có ưu đãi lớn."
-
-                                else -> "Tôi đã nhận được yêu cầu: \"$userText\". Tôi đang tìm kiếm thông tin tốt nhất cho bạn!"
-                            }
-                            messages.add(ChatMessage(text = responseText, isUser = false))
-                        }
-                    }
-                )
-
-            }
-        },
-        containerColor = Color(0xFFF7FAFC)
-    ) { paddingValues ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF7FAFC))
+            .padding(WindowInsets.systemBars.asPaddingValues())
+    ) {
+        // ===== MESSAGE LIST =====
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
+                .weight(1f) // 🔥 QUAN TRỌNG: chiếm phần còn lại
+                .fillMaxWidth(),
+            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             items(messages) { message ->
@@ -138,6 +106,7 @@ fun ChatbotScreen() {
                     UserMessageBubble(text = message.text)
                 } else {
                     AiMessageBubble(text = message.text)
+
                     if (message == messages.first()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         ProductSuggestionRow()
@@ -145,9 +114,32 @@ fun ChatbotScreen() {
                 }
             }
         }
+
+        // ===== INPUT BAR =====
+        ChatInputBar(
+            onSendMessage = { userText ->
+                messages.add(ChatMessage(text = userText, isUser = true))
+
+                coroutineScope.launch {
+                    delay(1000)
+
+                    val responseText = when {
+                        userText.contains("giá", true) ->
+                            "Bạn muốn tầm giá bao nhiêu?"
+
+                        userText.contains("chào", true) ->
+                            "Xin chào! Tôi là Lumina."
+
+                        else ->
+                            "Tôi đã nhận: \"$userText\""
+                    }
+
+                    messages.add(ChatMessage(text = responseText, isUser = false))
+                }
+            }
+        )
     }
 }
-
 @Composable
 fun AiMessageBubble(text: String) {
     Column(modifier = Modifier.fillMaxWidth(0.85f)) {

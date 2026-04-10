@@ -22,20 +22,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.HelpCenter
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.ShoppingBag
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,72 +45,66 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.smartpick.R
 import com.example.smartpick.ui.navigation.Routes
 import com.example.smartpick.ui.theme.PageBg
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(navController: NavController) {
-    Scaffold(
-        containerColor = PageBg
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .background(PageBg)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        ProfileCard(navController) // Section: User Profile Card
 
-    ) { paddingValues ->
-        Column(
+        Spacer(modifier = Modifier.height(24.dp))
+
+        SettingsGrid()// Section: Bento Grid Settings
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Section: Logout
+        Button(
+            onClick = { /* TODO: Handle Logout */ },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = Color(0xFF9F403D)
+            ),
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                Color(0xFF9F403D).copy(alpha = 0.1f)
+            ),
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxWidth()
+                .height(56.dp)
         ) {
-            // Section: User Profile Card
-            ProfileCard(navController)
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Section: Bento Grid Settings
-            SettingsGrid()
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Section: Logout
-            Button(
-                onClick = { /* TODO: Handle Logout */ },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFF9F403D)
-                ),
-                shape = RoundedCornerShape(12.dp),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    Color(0xFF9F403D).copy(alpha = 0.1f)
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-            ) {
-                Icon(
-                    Icons.Default.ExitToApp,
-                    contentDescription = "Logout",
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Đăng xuất", fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            Text(
-                text = "SMARTPICK VERSION 1.0.0 • 2026",
-                fontSize = 10.sp,
-                color = Color.Gray,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
-                textAlign = TextAlign.Center
+            Icon(
+                Icons.Default.ExitToApp,
+                contentDescription = "Logout",
+                modifier = Modifier.size(24.dp)
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(stringResource(R.string.ng_xu_t), fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Text(
+            text = "SMARTPICK VERSION 1.0.0 • 2026",
+            fontSize = 10.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

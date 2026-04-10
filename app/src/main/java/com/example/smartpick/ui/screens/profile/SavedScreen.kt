@@ -29,82 +29,78 @@ import com.example.smartpick.ui.theme.PageBg
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SavedCollectionScreen() {
-    Scaffold(
-        containerColor = PageBg
-    ) { paddingValues ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Section: Categories
-            item(span = { GridItemSpan(2) }) {
-                CategorySection()
-            }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PageBg),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Section: Categories
+        item(span = { GridItemSpan(2) }) {
+            CategorySection()
+        }
 
-            // Section: Grid Header
-            item(span = { GridItemSpan(2) }) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Sản phẩm đã lưu (12)", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        IconButton(
-                            onClick = {},
-                            modifier = Modifier
-                                .background(
-                                    Color(0xFFE2E8F0),
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.GridView,
-                                contentDescription = "Grid",
-                                tint = Color(0xFF1E3A8A),
-                                modifier = Modifier.size(20.dp)
+        // Section: Grid Header
+        item(span = { GridItemSpan(2) }) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Sản phẩm đã lưu (12)", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconButton(
+                        onClick = {},
+                        modifier = Modifier
+                            .background(
+                                Color(0xFFE2E8F0),
+                                RoundedCornerShape(8.dp)
                             )
-                        }
-                        IconButton(onClick = {}, modifier = Modifier.size(36.dp)) {
-                            Icon(
-                                Icons.Default.List,
-                                contentDescription = "List",
-                                tint = Color.Gray,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
+                            .size(36.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.GridView,
+                            contentDescription = "Grid",
+                            tint = Color(0xFF1E3A8A),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = {}, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.Default.List,
+                            contentDescription = "List",
+                            tint = Color.Gray,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
             }
+        }
 
-            // Section: Products List
-            val products = listOf(
-                ProductItem("Minimalist Silver Watch", "Thiết bị âm thanh", "$120.00", true),
-                ProductItem("Pro Sound Headphones", "Thiết bị âm thanh", "$299.00", false),
-                ProductItem("Organic Vase Set", "Đồ dùng nhà bếp", "$85.00", false),
-                ProductItem("Matte Black Kettle", "Đồ dùng nhà bếp", "$145.00", false)
-            )
-            items(products) { product ->
-                ProductCard(product)
-            }
+        // Section: Products List
+        val products = listOf(
+            ProductItem("Minimalist Silver Watch", "Thiết bị âm thanh", "$120.00", true),
+            ProductItem("Pro Sound Headphones", "Thiết bị âm thanh", "$299.00", false),
+            ProductItem("Organic Vase Set", "Đồ dùng nhà bếp", "$85.00", false),
+            ProductItem("Matte Black Kettle", "Đồ dùng nhà bếp", "$145.00", false)
+        )
+        items(products) { product ->
+            ProductCard(product)
+        }
 
-            // Section: AI Banner
-            item(span = { GridItemSpan(2) }) {
-                AIBanner()
-            }
+        // Section: AI Banner
+        item(span = { GridItemSpan(2) }) {
+            AIBanner()
+        }
 
-            // Padding bottom for scrolling past nav bar
-            item(span = { GridItemSpan(2) }) {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+        // Padding bottom for scrolling past nav bar
+        item(span = { GridItemSpan(2) }) {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -136,7 +132,10 @@ fun CategorySection() {
 
 @Composable
 fun CategoryItem(title: String, icon: ImageVector, isSelected: Boolean) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(100.dp)) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(100.dp)
+    ) {
         Box(
             modifier = Modifier
                 .size(width = 100.dp, height = 70.dp)
@@ -179,9 +178,11 @@ fun ProductCard(product: ProductItem) {
                     .background(Color(0xFFF1F5F9))
             ) {
                 // TODO: Replace with Coil AsyncImage in real project
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.LightGray))
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.LightGray)
+                )
 
                 if (product.isSmartChoice) {
                     Box(
@@ -237,7 +238,8 @@ fun ProductCard(product: ProductItem) {
 @Composable
 fun AIBanner() {
     Box(
-        modifier = Modifier            .fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(Color(0xFF476282))
             .padding(24.dp)
