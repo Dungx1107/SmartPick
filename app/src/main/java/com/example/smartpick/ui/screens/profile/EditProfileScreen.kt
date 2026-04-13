@@ -19,11 +19,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartpick.R
 import com.example.smartpick.ui.theme.PageBg
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,7 +46,7 @@ fun EditProfileScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "Chỉnh sửa hồ sơ",
+                        stringResource(R.string.chinhSuaHoSo),
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E3A8A),
                         fontSize = 20.sp
@@ -119,7 +121,7 @@ fun EditProfileScreen(
                 ) {
                     Icon(
                         Icons.Default.CameraAlt,
-                        contentDescription = "Edit Avatar",
+                        contentDescription = stringResource(R.string.editAvatar),
                         tint = Color.White,
                         modifier = Modifier.size(18.dp)
                     )
@@ -128,7 +130,7 @@ fun EditProfileScreen(
 
             // Form Fields
             ProfileTextField(
-                label = "Họ và Tên",
+                label = stringResource(R.string.name),
                 value = name,
                 onValueChange = { name = it }
             )
@@ -136,7 +138,7 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileTextField(
-                label = "Công việc / Vai trò",
+                label = stringResource(R.string.Role),
                 value = role,
                 onValueChange = { role = it }
             )
@@ -153,7 +155,7 @@ fun EditProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileTextField(
-                label = "Số điện thoại",
+                label = stringResource(R.string.soDienThoai),
                 value = phone,
                 onValueChange = { phone = it },
                 keyboardType = KeyboardType.Phone
@@ -180,7 +182,7 @@ fun EditProfileScreen(
                     .height(56.dp)
             ) {
                 Text(
-                    "Cập nhật thông tin",
+                    stringResource(R.string.capNhatThongTin),
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = Color.White
@@ -217,8 +219,3 @@ fun ProfileTextField(
     )
 }
 
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LuminaChatScreenPreview() {
-    EditProfileScreen();
-}

@@ -19,4 +19,11 @@
     <string name="facebook_logo">Facebook Logo</string>
     <string name="or_connect_with">OR CONNECT WITH</string>
     <string name="login">Login</string>
+    <string name="sanPhamDaLuu">Sản phẩm đã lưu (12)</string>
+    <string name="capNhatThongTin">Cập nhật thông tin</string>
+    <string name="soDienThoai">Số điện thoại</string>
+    <string name="Role">Công việc / Vai trò</string>
+    <string name="name">Họ và Tên</string>
+    <string name="editAvatar">Edit Avatar</string>
+    <string name="chinhSuaHoSo">Chỉnh sửa hồ sơ</string>
 </resources>
