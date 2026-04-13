@@ -11,9 +11,6 @@ val Pink40 = Color(0xFF7D5260)
 val DeepBlack = Color(0xFF5584D5)
 val CardDark = Color(0xFF1A1D21)
 val SmartPickColor = Color(0xFF1E3A8A)
-
-//val TextSecondary = Color(0xFFA1A3A7)
-
 val TextPrimary = Color(0xFF1A1A2E)
 val TextSecondary = Color(0xFF6B7280)
 val LoginBlue = Color(0xFF4A7BBA)

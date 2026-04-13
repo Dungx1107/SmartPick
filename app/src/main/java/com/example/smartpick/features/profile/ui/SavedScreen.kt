@@ -1,5 +1,4 @@
-package com.example.smartpick.ui.screens.profile
-
+package com.example.smartpick.features.profile.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,7 +23,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartpick.ui.theme.PageBg
+import com.example.smartpick.core.theme.PageBg
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

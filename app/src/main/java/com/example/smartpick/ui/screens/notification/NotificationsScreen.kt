@@ -22,6 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.app.Notification
+import androidx.core.app.NotificationCompat
 
 // 1. Định nghĩa các loại thông báo
 enum class NotificationType {
@@ -32,7 +34,7 @@ enum class NotificationType {
 }
 
 // 2. Data class cho Thông báo
-data class Notification(
+data class AppNotification(
     val id: String,
     val title: String,
     val message: String,
@@ -44,15 +46,15 @@ data class Notification(
 @Composable
 fun NotificationsScreen(
     paddingValues: PaddingValues, // Nhận padding từ Scaffold cha chứa TopBar/BottomBar
-    onNotificationClick: (Notification) -> Unit = {}
+    onNotificationClick: (AppNotification) -> Unit = {}
 ) {
     // Dữ liệu mẫu
     val notifications = listOf(
-        Notification("1", "Đơn hàng đang giao", "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến. Vui lòng chú ý điện thoại.", "10 phút trước", NotificationType.ORDER, true),
-        Notification("2", "Lê Hải An đã bình luận", "Gõ cực êm nha bác, build nhôm đầm tay lắm. Nên mua switch red nhen! 🔥", "45 phút trước", NotificationType.COMMUNITY, true),
-        Notification("3", "Khuyến mãi cuối tuần!", "Giảm ngay 20% cho tất cả thiết bị âm thanh và màn hình. Nhập mã WEEKEND20 ngay.", "2 giờ trước", NotificationType.PROMO, false),
-        Notification("4", "Cập nhật ứng dụng", "SmartPick phiên bản mới đã sẵn sàng. Trải nghiệm mượt mà hơn và thêm tính năng mới.", "1 ngày trước", NotificationType.SYSTEM, false),
-        Notification("5", "Giao hàng thành công", "Đơn hàng #SP88921 (Giá đỡ màn hình Human Motion) đã được giao thành công.", "2 ngày trước", NotificationType.ORDER, false)
+        AppNotification("1", "Đơn hàng đang giao", "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến. Vui lòng chú ý điện thoại.", "10 phút trước", NotificationType.ORDER, true),
+        AppNotification("2", "Lê Hải An đã bình luận", "Gõ cực êm nha bác, build nhôm đầm tay lắm. Nên mua switch red nhen! 🔥", "45 phút trước", NotificationType.COMMUNITY, true),
+        AppNotification("3", "Khuyến mãi cuối tuần!", "Giảm ngay 20% cho tất cả thiết bị âm thanh và màn hình. Nhập mã WEEKEND20 ngay.", "2 giờ trước", NotificationType.PROMO, false),
+        AppNotification("4", "Cập nhật ứng dụng", "SmartPick phiên bản mới đã sẵn sàng. Trải nghiệm mượt mà hơn và thêm tính năng mới.", "1 ngày trước", NotificationType.SYSTEM, false),
+        AppNotification("5", "Giao hàng thành công", "Đơn hàng #SP88921 (Giá đỡ màn hình Human Motion) đã được giao thành công.", "2 ngày trước", NotificationType.ORDER, false)
     )
 
     Column(
@@ -117,7 +119,7 @@ fun NotificationFilterRow() {
 
 @Composable
 fun NotificationItem(
-    notification: Notification,
+    notification: AppNotification,
     onClick: () -> Unit
 ) {
     // Tùy chỉnh Icon và Màu nền icon theo Loại thông báo

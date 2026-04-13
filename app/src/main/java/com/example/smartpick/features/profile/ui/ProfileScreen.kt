@@ -91,7 +91,7 @@ fun ProfileScreen(navController: NavController) {
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(stringResource(R.string.ng_xu_t), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text("Đăng xuất", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         }
 
         Spacer(modifier = Modifier.height(32.dp))

@@ -14,9 +14,9 @@ import com.example.smartpick.R
 import com.example.smartpick.features.chatbot.ui.ChatbotScreen
 import com.example.smartpick.features.home.ui.HomeScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
-import com.example.smartpick.features.profile.ui.EditProfileScreen
 import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
+import com.example.smartpick.ui.screens.profile.EditProfileScreen
 
 @Composable
 fun AppNavigation() {
