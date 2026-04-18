@@ -19,4 +19,13 @@
     <string name="facebook_logo">Facebook Logo</string>
     <string name="or_connect_with">OR CONNECT WITH</string>
     <string name="login">Login</string>
+    <string name="avatar">Avatar</string>
+    <string name="logout">Logout</string>
+    <string name="user">User</string>
+    <string name="audio">AUDIO</string>
+    <string name="health">HEALTH</string>
+    <string name="smart">SMART</string>
+    <string name="ai_choice">AI CHOICE</string>
+    <string name="user_null">LỖI: User đang bị NULL</string>
+    <string name="nhan_duoc_user">Đã nhận được User: %1$s</string>
 </resources>

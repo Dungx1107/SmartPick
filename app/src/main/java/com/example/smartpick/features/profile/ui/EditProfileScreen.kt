@@ -1,4 +1,4 @@
-package com.example.smartpick.ui.screens.profile
+package com.example.smartpick.features.profile.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

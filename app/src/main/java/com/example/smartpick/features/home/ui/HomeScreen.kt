@@ -1,5 +1,6 @@
 package com.example.smartpick.features.home.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -35,10 +37,14 @@ import androidx.compose.material.icons.outlined.Tv
 import androidx.compose.material.icons.outlined.Watch
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +52,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,6 +68,10 @@ import com.example.smartpick.core.theme.PageBg
 import com.example.smartpick.core.theme.SurfaceCard
 import com.example.smartpick.core.theme.TextMuted
 import com.example.smartpick.core.theme.White
+import com.example.smartpick.features.auth.ui.AuthViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.smartpick.R
+import com.example.smartpick.core.model.User
 
 
 // ─── Data Models ──────────────────────────────────────────────────────────────
@@ -128,7 +140,7 @@ val sampleCategories = listOf(
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 @Composable
-fun HomeScreen() {
+fun HomeScreen(user: User) {
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
@@ -154,6 +166,42 @@ fun HomeScreen() {
         AICuratorBanner()
 
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+@Composable
+fun HomeScreenRoute(
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    // Lắng nghe user từ StateFlow
+    val user by authViewModel.currentUser.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(user) {
+        if (user == null) {
+            Toast.makeText(context, context.getString(R.string.user_null),
+                Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(R.string.nhan_duoc_user, user?.fullName),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    // Cách viết an toàn:
+    user?.let { currentUser ->
+        // Chỉ khi user khác null thì HomeScreen mới được gọi
+        HomeScreen(user = currentUser)
+    } ?: run {
+        // Trong lúc đợi user (null), hiện màn hình chờ
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color(0xFF1E3A8A))
+        }
     }
 }
 
@@ -192,6 +240,7 @@ fun SearchBar() {
         )
     }
 }
+
 
 // ─── Hero Banner ──────────────────────────────────────────────────────────────
 @Composable
@@ -406,7 +455,7 @@ fun ProductCard(product: Product, modifier: Modifier = Modifier) {
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (badge == "AI CHOICE") {
+                            if (badge == stringResource(R.string.ai_choice)) {
                                 Box(
                                     modifier = Modifier
                                         .size(6.dp)
@@ -430,9 +479,9 @@ fun ProductCard(product: Product, modifier: Modifier = Modifier) {
 
                 // Product image placeholder
                 val icon = when {
-                    product.brand.contains("AUDIO") -> Icons.Outlined.Headphones
-                    product.brand.contains("HEALTH") -> Icons.Outlined.Watch
-                    product.brand.contains("SMART") -> Icons.Outlined.Speaker
+                    product.brand.contains(stringResource(R.string.audio)) -> Icons.Outlined.Headphones
+                    product.brand.contains(stringResource(R.string.health)) -> Icons.Outlined.Watch
+                    product.brand.contains(stringResource(R.string.smart)) -> Icons.Outlined.Speaker
                     else -> Icons.Outlined.TabletMac
                 }
                 Icon(
@@ -477,8 +526,10 @@ fun ProductCard(product: Product, modifier: Modifier = Modifier) {
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            Icons.Outlined.AddShoppingCart, contentDescription = "Add to cart",
-                            tint = AccentBlue, modifier = Modifier.size(16.dp)
+                            Icons.Outlined.AddShoppingCart,
+                            contentDescription = "Add to cart",
+                            tint = AccentBlue,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
@@ -541,14 +592,20 @@ fun AICuratorBanner() {
                     .clip(RoundedCornerShape(12.dp))
                     .background(
                         Brush.linearGradient(
-                            listOf(Color(0xFF071629), Color(0xFF0D2B4A), Color(0xFF071629))
+                            listOf(
+                                Color(0xFF071629),
+                                Color(0xFF0D2B4A),
+                                Color(0xFF071629)
+                            )
                         )
                     ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Outlined.Stars, contentDescription = null,
-                    tint = AICyan, modifier = Modifier.size(40.dp)
+                    Icons.Outlined.Stars,
+                    contentDescription = null,
+                    tint = AICyan,
+                    modifier = Modifier.size(40.dp)
                 )
             }
         }
@@ -557,10 +614,21 @@ fun AICuratorBanner() {
 
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
+// Bạn có thể để cái này ở cuối file HomeScreen.kt
+val sampleUser = User(
+    id = "123",
+    fullName = "Nguyễn Xuân Dũng",
+    username = "dung_uet_2005",
+    email = "dung.nx@vnu.edu.vn",
+    avatarUrl = "https://example.com/avatar.jpg" // Có thể để null nếu chưa có ảnh mẫu
+)
+
+// ─── Preview ──────────────────────────────────────────────────────────────────
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun HomeScreenPreview() {
+    // Sử dụng Theme của App bạn (ví dụ SmartPickTheme) để xem đúng màu sắc nhất
     MaterialTheme {
-        HomeScreen()
+        HomeScreen(user = sampleUser) // Nạp User giả vào đây
     }
 }

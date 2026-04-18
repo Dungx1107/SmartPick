@@ -57,10 +57,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartpick.R
 import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
 import com.example.smartpick.features.auth.data.performGoogleSignIn
+import androidx.hilt.navigation.compose.hiltViewModel
 
 // --- Màu chủ đạo trắng + xanh dương ---
 val BrightBackground = Color(0xFFFFFFFF)
@@ -76,7 +76,7 @@ val CardLight = Color(0xFFE3F2FD)
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    viewModel: AuthViewModel = viewModel()
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -84,7 +84,7 @@ fun LoginScreen(
 
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val authState by viewModel.authState.collectAsState()
+    val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         when (authState) {
@@ -189,7 +189,7 @@ fun LoginScreen(
                     context = context,
                     coroutineScope = coroutineScope,
                     webClientId = WEB_CLIENT_ID,
-                    onTokenReceived = { token -> viewModel.signInWithGoogleToken(token) },
+                    onTokenReceived = { token -> authViewModel.signInWithGoogleToken(token) },
                     onError = { it.printStackTrace() }
                 )
             }

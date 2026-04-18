@@ -22,8 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.app.Notification
-import androidx.core.app.NotificationCompat
+import androidx.compose.foundation.BorderStroke
 
 // 1. Định nghĩa các loại thông báo
 enum class NotificationType {
@@ -102,7 +101,7 @@ fun NotificationFilterRow() {
             Surface(
                 shape = RoundedCornerShape(20.dp),
                 color = if (isSelected) Color(0xFF1E3A8A) else Color.White,
-                border = if (!isSelected) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)) else null,
+                border = if (!isSelected) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null,
                 modifier = Modifier.clickable { selectedFilter = filter }
             ) {
                 Text(

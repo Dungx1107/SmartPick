@@ -6,9 +6,14 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     alias(libs.plugins.kotlin.serialization)
+
+    id("kotlin-kapt")
+    id("com.google.dagger.hilt.android")
 }
 
-
+kapt {
+    correctErrorTypes = true
+}
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
@@ -104,4 +109,11 @@ dependencies {
 
     // Thư viện ViewModel cho Compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+    // Thư viện hỗ trợ hiltViewModel() trong Compose
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
+
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.compareTo
 
 // Data model cho Bình luận
 data class Comment(
@@ -42,10 +43,35 @@ fun CommentsScreen(
 
     // Dữ liệu mẫu
     val comments = listOf(
-        Comment("1", "Nguyễn Minh Quang", "1 giờ trước", "Bàn phím này gõ êm không bác? Đang tính xúc một em về code đêm.", 12),
-        Comment("2", "Lê Hải An", "45 phút trước", "Gõ cực êm nha bác, build nhôm đầm tay lắm. Nên mua switch red nhen! 🔥", 5, isAuthor = true),
-        Comment("3", "Trần Thu Hà", "30 phút trước", "Setup đẹp quá, xin link mua cái giá đỡ màn hình với ạ.", 2),
-        Comment("4", "Hoàng Nam", "15 phút trước", "Mình cũng đang dùng combo y hệt, công nhận làm việc năng suất hẳn.", 0)
+        Comment(
+            "1",
+            "Nguyễn Minh Quang",
+            "1 giờ trước",
+            "Bàn phím này gõ êm không bác? Đang tính xúc một em về code đêm.",
+            12
+        ),
+        Comment(
+            "2",
+            "Lê Hải An",
+            "45 phút trước",
+            "Gõ cực êm nha bác, build nhôm đầm tay lắm. Nên mua switch red nhen! 🔥",
+            5,
+            isAuthor = true
+        ),
+        Comment(
+            "3",
+            "Trần Thu Hà",
+            "30 phút trước",
+            "Setup đẹp quá, xin link mua cái giá đỡ màn hình với ạ.",
+            2
+        ),
+        Comment(
+            "4",
+            "Hoàng Nam",
+            "15 phút trước",
+            "Mình cũng đang dùng combo y hệt, công nhận làm việc năng suất hẳn.",
+            0
+        )
     )
 
     // Sử dụng Column thay vì Scaffold
@@ -94,7 +120,12 @@ fun CommentItem(comment: Comment) {
                 .background(Color(0xFFE2E8F0)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.Person, contentDescription = "Avatar", tint = Color.Gray, modifier = Modifier.size(20.dp))
+            Icon(
+                Icons.Default.Person,
+                contentDescription = "Avatar",
+                tint = Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
         }
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -117,7 +148,12 @@ fun CommentItem(comment: Comment) {
                             .background(Color(0xFFD6E4FF), RoundedCornerShape(4.dp))
                             .padding(horizontal = 4.dp, vertical = 2.dp)
                     ) {
-                        Text("Tác giả", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A))
+                        Text(
+                            "Tác giả",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E3A8A)
+                        )
                     }
                 }
 
@@ -201,7 +237,12 @@ fun CommentInputField(
                     .background(Color(0xFFE2E8F0)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Person, contentDescription = "My Avatar", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = "My Avatar",
+                    tint = Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
             Spacer(modifier = Modifier.width(12.dp))
@@ -210,7 +251,13 @@ fun CommentInputField(
             TextField(
                 value = commentText,
                 onValueChange = onCommentChange,
-                placeholder = { Text("Thêm bình luận...", color = Color(0xFF94A3B8), fontSize = 14.sp) },
+                placeholder = {
+                    Text(
+                        "Thêm bình luận...",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 14.sp
+                    )
+                },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFFF1F5F9),
                     unfocusedContainerColor = Color(0xFFF1F5F9),
@@ -233,7 +280,11 @@ fun CommentInputField(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (commentText.isNotBlank()) Color(0xFF1E3A8A) else Color(0xFFE2E8F0))
+                    .background(
+                        if (commentText.isNotBlank()) Color(0xFF1E3A8A) else Color(
+                            0xFFE2E8F0
+                        )
+                    )
             ) {
                 Icon(
                     Icons.Default.Send,
@@ -246,4 +297,13 @@ fun CommentInputField(
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CommentsScreenPreview() {
+    CommentsScreen(
+        paddingValues = PaddingValues(0.dp),
+        modifier = Modifier
+    )
 }

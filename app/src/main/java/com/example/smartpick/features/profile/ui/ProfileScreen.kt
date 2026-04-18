@@ -32,27 +32,39 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.example.smartpick.R
+import com.example.smartpick.core.model.User
 import com.example.smartpick.core.navigation.Routes
 import com.example.smartpick.core.theme.PageBg
+import com.example.smartpick.features.auth.ui.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(navController: NavController) {
+fun ProfileScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val user by authViewModel.currentUser.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -61,7 +73,7 @@ fun ProfileScreen(navController: NavController) {
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ProfileCard(navController) // Section: User Profile Card
+        ProfileCard(navController, user) // Section: User Profile Card
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -71,7 +83,13 @@ fun ProfileScreen(navController: NavController) {
 
         // Section: Logout
         Button(
-            onClick = { /* TODO: Handle Logout */ },
+            onClick = { //Xử lý dăng xuất
+                authViewModel.logout()
+                // Sau khi logout, xóa sạch stack và về Login
+                navController.navigate(Routes.Login.route) {
+                    popUpTo(0)
+                }
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.White,
                 contentColor = Color(0xFF9F403D)
@@ -87,7 +105,7 @@ fun ProfileScreen(navController: NavController) {
         ) {
             Icon(
                 Icons.Default.ExitToApp,
-                contentDescription = "Logout",
+                contentDescription = stringResource(R.string.logout),
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -112,7 +130,7 @@ fun ProfileScreen(navController: NavController) {
 @Composable
 fun ProfileCard(
     navController: NavController,
-    username: String = "username"
+    user: User?
 ) {
     Box(
         modifier = Modifier
@@ -134,8 +152,7 @@ fun ProfileCard(
         )
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Avatar
-            Box(
+            Box(// Avatar
                 modifier = Modifier
                     .size(112.dp)
                     .clip(CircleShape)
@@ -143,22 +160,38 @@ fun ProfileCard(
                     .background(Color(0xFFE2E8F0)),
                 contentAlignment = Alignment.Center
             ) {
-                // TODO: Replace with actual image using Coil
-                Icon(
-                    Icons.Default.Person,
-                    contentDescription = "Avatar",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(48.dp)
-                )
+                if (user?.avatarUrl != null) {
+                    AsyncImage( // Dùng Coil để tải ảnh từ URL
+                        model = user.avatarUrl,
+                        contentDescription = stringResource(R.string.avatar),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = stringResource(R.string.avatar),
+                        tint = Color.Gray,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = username,
+                text = user?.fullName ?: user?.username ?: stringResource(R.string.user),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF1E3A8A)
+            )
+
+            Text(
+                text = user?.email ?: "",
+                fontSize = 14.sp,
+                color = Color.Gray
             )
 
             Spacer(modifier = Modifier.height(24.dp))
