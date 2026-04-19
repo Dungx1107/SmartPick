@@ -12,7 +12,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SmartPick">
+        android:theme="@style/Theme.SmartPick"
+        android:exported="true"
+        android:screenOrientation="landscape"
+        android:configChanges="orientation|screenSize|screenLayout">
         <activity
             android:name=".MainActivity"
             android:exported="true"

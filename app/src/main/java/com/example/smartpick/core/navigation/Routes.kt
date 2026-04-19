@@ -9,5 +9,6 @@ sealed class Routes(val route: String) {
 
     object EditProfile : Routes("edit_profile")
 
+    object SignUp : Routes("sign_up")
 
 }

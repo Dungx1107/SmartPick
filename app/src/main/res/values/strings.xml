@@ -28,4 +28,13 @@
     <string name="ai_choice">AI CHOICE</string>
     <string name="user_null">LỖI: User đang bị NULL</string>
     <string name="nhan_duoc_user">Đã nhận được User: %1$s</string>
+    <string name="dangNhapThanhCong">Đăng nhập thành công!</string>
+    <string name="loi">Lỗi: %1$s</string>
+    <string name="curating_excellence_for_you">Curating excellence for you.</string>
+    <string name="email">Email</string>
+    <string name="full_name">Full name</string>
+    <string name="enter_your_name">Enter your name</string>
+    <string name="create_account">Create Account</string>
+    <string name="already_have_an_account">Already have an account?</string>
+    <string name="log_in">Log In</string>
 </resources>

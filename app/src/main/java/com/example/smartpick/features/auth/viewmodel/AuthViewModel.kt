@@ -1,4 +1,4 @@
-package com.example.smartpick.features.auth.ui
+package com.example.smartpick.features.auth.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

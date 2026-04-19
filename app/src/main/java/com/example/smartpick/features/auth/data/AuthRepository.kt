@@ -1,18 +1,12 @@
 package com.example.smartpick.features.auth.data
 
 import android.util.Log
-import android.util.Log.e
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModel
-import com.example.smartpick.R
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.network.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.providers.builtin.IDToken
 import io.github.jan.supabase.postgrest.postgrest
-import io.ktor.utils.io.printStack
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.jsonPrimitive

@@ -59,8 +59,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartpick.features.auth.ui.TextPrimary
-import com.example.smartpick.features.auth.ui.TextSecondary
 import com.example.smartpick.core.theme.AICyan
 import com.example.smartpick.core.theme.AccentBlue
 import com.example.smartpick.core.theme.BadgeOrange
@@ -68,10 +66,12 @@ import com.example.smartpick.core.theme.PageBg
 import com.example.smartpick.core.theme.SurfaceCard
 import com.example.smartpick.core.theme.TextMuted
 import com.example.smartpick.core.theme.White
-import com.example.smartpick.features.auth.ui.AuthViewModel
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.theme.TextPrimary
+import com.example.smartpick.core.theme.TextSecondary
 
 
 // ─── Data Models ──────────────────────────────────────────────────────────────

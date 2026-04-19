@@ -55,7 +55,7 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.navigation.Routes
 import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.features.auth.ui.AuthViewModel
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

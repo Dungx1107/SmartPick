@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,16 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,61 +35,82 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
+import com.example.smartpick.core.theme.BrightBackground
+import com.example.smartpick.core.theme.DividerColor
+import com.example.smartpick.core.theme.LoginBlue
+import com.example.smartpick.core.theme.LoginBlueGradientEnd
+import com.example.smartpick.core.theme.TextPrimary
+import com.example.smartpick.core.theme.TextSecondary
 import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
 import com.example.smartpick.features.auth.data.performGoogleSignIn
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.smartpick.features.auth.viewmodel.AuthState
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 
-// --- Màu chủ đạo trắng + xanh dương ---
-val BrightBackground = Color(0xFFFFFFFF)
-val TextPrimary = Color(0xFF1A73E8)
-val TextSecondary = Color(0xFF4A4A4A)
-val DividerColor = Color(0xFFB0B0B0)
-val LoginBlue = Color(0xFF1A73E8)
-val LoginBlueGradientEnd = Color(0xFF0D47A1)
-val SocialButtonLight = Color(0xFFF5F9FF)
-val CardLight = Color(0xFFE3F2FD)
 
+// 1. Stateful Composable (Được gọi từ AppNavigation)
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel() // Hilt chỉ chạy ở đây
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-
+    val authState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
-                Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context,
+                    context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT).show()
                 onNavigateToHome()
             }
 
             is AuthState.Error -> {
                 val errorMessage = (authState as AuthState.Error).message
-                Toast.makeText(context, "Lỗi: $errorMessage", Toast.LENGTH_LONG).show()
+                Toast.makeText(context,
+                    context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG).show()
             }
 
             else -> {}
         }
     }
+
+    // Truyền event xuống Stateless Composable
+    LoginContent(
+        onNavigateToHome = onNavigateToHome,
+        onNavigateToSignUp = onNavigateToSignUp,
+        onGoogleSignInClick = {
+            performGoogleSignIn(
+                context = context,
+                coroutineScope = coroutineScope,
+                webClientId = WEB_CLIENT_ID,
+                onTokenReceived = { token -> authViewModel.signInWithGoogleToken(token) },
+                onError = { it.printStackTrace() }
+            )
+        }
+    )
+}
+
+// 2. Stateless Composable (Chỉ vẽ UI, không phụ thuộc thư viện ngoài)
+@Composable
+fun LoginContent(
+    onNavigateToHome: () -> Unit,
+    onNavigateToSignUp: () -> Unit,
+    onGoogleSignInClick: () -> Unit // Bắt event click
+) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -140,7 +150,7 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        FieldLabel("Email")
+        FieldLabel(stringResource(R.string.email))
         StandardTextFieldLight(
             value = email,
             onValueChange = { email = it },
@@ -174,30 +184,26 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        LoginButtonLight(onClick = onNavigateToHome)
+        AuthPrimaryButton(
+            text = stringResource(R.string.login),
+            showArrow = true,
+            onClick = onNavigateToHome
+        )
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        OrConnectWithDividerLight()
+        AuthDivider()
         Spacer(modifier = Modifier.height(32.dp))
 
-        SocialButtonLight(
+        SocialAuthButton(
             text = stringResource(R.string.continue_with_google),
             brand = stringResource(R.string.google),
-            onClick = {
-                performGoogleSignIn(
-                    context = context,
-                    coroutineScope = coroutineScope,
-                    webClientId = WEB_CLIENT_ID,
-                    onTokenReceived = { token -> authViewModel.signInWithGoogleToken(token) },
-                    onError = { it.printStackTrace() }
-                )
-            }
+            onClick = onGoogleSignInClick // Thực thi hàm được truyền vào
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        SocialButtonLight(
+        SocialAuthButton(
             text = stringResource(R.string.continue_with_facebook),
             brand = stringResource(R.string.facebook),
             onClick = { }
@@ -227,199 +233,8 @@ fun LoginScreen(
     }
 }
 
-// --- Các Composable phụ dùng màu sáng + xanh ---
-@Composable
-fun BulbIconLight() {
-    Surface(
-        modifier = Modifier
-            .size(64.dp)
-            .background(CardLight, shape = RoundedCornerShape(16.dp))
-            .border(1.dp, DividerColor, shape = RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        shadowElevation = 4.dp
-    ) {
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-            Icon(
-                imageVector = Icons.Filled.Lightbulb,
-                contentDescription = "Bulb Icon",
-                modifier = Modifier.size(32.dp),
-                tint = LoginBlue
-            )
-        }
-    }
-}
 
-@Composable
-fun FieldLabel(text: String) {
-    Text(
-        text = text,
-        fontSize = 14.sp,
-        color = TextSecondary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp),
-        textAlign = TextAlign.Start
-    )
-}
-
-@Composable
-fun StandardTextFieldLight(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    leadingIcon: ImageVector
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(SocialButtonLight, RoundedCornerShape(12.dp)),
-        textStyle = LocalTextStyle.current.copy(color = TextPrimary),
-        leadingIcon = { Icon(leadingIcon, null, tint = TextSecondary) },
-        placeholder = { Text(placeholder, color = TextSecondary.copy(alpha = 0.5f)) },
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color.Transparent,
-            unfocusedBorderColor = Color.Transparent,
-            cursorColor = TextPrimary
-        ),
-        singleLine = true
-    )
-}
-
-@Composable
-fun PasswordTextFieldLight(
-    value: String,
-    onValueChange: (String) -> Unit,
-    passwordVisible: Boolean,
-    onPasswordToggle: () -> Unit
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(SocialButtonLight, RoundedCornerShape(12.dp)),
-        textStyle = LocalTextStyle.current.copy(color = TextPrimary),
-        leadingIcon = { Icon(Icons.Filled.Lock, null, tint = TextSecondary) },
-        trailingIcon = {
-            val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
-            IconButton(onClick = onPasswordToggle) { Icon(icon, null, tint = TextSecondary) }
-        },
-        placeholder = { Text("••••••••", color = TextSecondary.copy(alpha = 0.5f)) },
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-        shape = RoundedCornerShape(12.dp),
-
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color.Transparent,
-            unfocusedBorderColor = Color.Transparent,
-            cursorColor = TextPrimary,
-        ),
-        singleLine = true
-    )
-}
-
-@Composable
-fun LoginButtonLight(onClick: () -> Unit) {
-    val gradientBrush = Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .clickable(onClick = onClick)
-            .border(1.dp, DividerColor, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp),
-        color = Color.Transparent
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradientBrush),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Text(
-                stringResource(R.string.login),
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Icon(Icons.Filled.ArrowForward, null, tint = Color.White)
-        }
-    }
-}
-
-@Composable
-fun OrConnectWithDividerLight() {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Divider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 16.dp), color = DividerColor
-        )
-        Text(stringResource(R.string.or_connect_with), fontSize = 12.sp, color = DividerColor)
-        Divider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp), color = DividerColor
-        )
-    }
-}
-
-@Composable
-fun SocialButtonLight(
-    text: String,
-    brand: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .clickable(onClick = onClick)
-            .background(SocialButtonLight, RoundedCornerShape(12.dp))
-            .border(1.dp, DividerColor, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (brand == "Google") {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_google_logo), // icon vector Google
-                    contentDescription = stringResource(R.string.google_logo),
-                    modifier = Modifier.size(24.dp),
-                    tint = Color.Unspecified// giữ màu gốc của logo
-                )
-            } else if (brand == "Facebook") {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_facebook_logo), // icon vector Facebook
-                    contentDescription = stringResource(R.string.facebook_logo),
-                    modifier = Modifier.size(24.dp),
-                    tint = Color.Unspecified
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = text,
-                fontSize = 16.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
+// 3. Cập nhật hàm Preview
 @Preview(
     name = "Login Screen - White Blue Theme",
     showBackground = true,
@@ -428,6 +243,9 @@ fun SocialButtonLight(
 )
 @Composable
 fun LoginScreenWhiteBluePreview() {
-    LoginScreen(onNavigateToHome = {}, onNavigateToSignUp = {})
-
+    LoginContent(
+        onNavigateToHome = {},
+        onNavigateToSignUp = {},
+        onGoogleSignInClick = {}
+    )
 }

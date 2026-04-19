@@ -20,15 +20,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.smartpick.R
-import com.example.smartpick.features.auth.ui.AuthViewModel
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.chatbot.ui.ChatbotScreen
-import com.example.smartpick.features.home.ui.HomeScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
+import com.example.smartpick.features.auth.ui.SignUpScreen
 import com.example.smartpick.features.home.ui.HomeScreenRoute
 import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.EditProfileScreen
-import kotlinx.coroutines.delay
 
 @Composable
 fun AppNavigation(
@@ -53,7 +52,8 @@ fun AppNavigation(
     }
 // NẾU ĐANG KHỞI TẠO: Hiện màn hình trắng hoặc Logo app
     if (isInitializing) {
-        Box(modifier = Modifier.fillMaxSize(),
+        Box(
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Color(0xFF1E3A8A))
@@ -64,6 +64,8 @@ fun AppNavigation(
             topBar = {
                 if (currentRoute != Routes.Login.route
                     && currentRoute != Routes.EditProfile.route
+                    && currentRoute != Routes.SignUp.route
+
                 ) { // Chỉ hiện TopBar nếu không phải màn Login
 
                     MainTopBar(
@@ -84,6 +86,7 @@ fun AppNavigation(
             bottomBar = {
                 if (currentRoute != Routes.Login.route
                     && currentRoute != Routes.EditProfile.route
+                    && currentRoute != Routes.SignUp.route
                 ) {
                     MainBottomBar(
                         navController = navController,
@@ -117,7 +120,9 @@ fun AppNavigation(
                                 }
                             }
                         },
-                        onNavigateToSignUp = {}
+                        onNavigateToSignUp = {
+                            navController.navigate(Routes.SignUp.route)
+                        }
                     )
                 }
 
@@ -142,6 +147,17 @@ fun AppNavigation(
                         onNavigateBack = {
                             navController.popBackStack()
                         }
+                    )
+                }
+
+                composable(Routes.SignUp.route) {
+                    SignUpScreen(
+                        onCreateAccount = {},
+                        onLoginClick = {
+                            navController.navigate(Routes.Login.route)
+                        },
+                        onGoogleClick = {},
+                        onFacebookClick = {}
                     )
                 }
             }
