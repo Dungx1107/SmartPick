@@ -27,6 +27,17 @@ android {
     namespace = "com.example.smartpick"
     compileSdk = 36
 
+    // 1. Thêm cấu hình ký (Signing Config) trước buildTypes
+    signingConfigs {
+        getByName("debug") {
+            // file("debug.keystore") trỏ trực tiếp vào file trong thư mục app/
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     defaultConfig {
         applicationId = "com.example.smartpick"
         minSdk = 24
@@ -44,7 +55,14 @@ android {
 
     }
 
+
+
     buildTypes {
+        // 2. Gán cấu hình ký cho bản build debug
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(

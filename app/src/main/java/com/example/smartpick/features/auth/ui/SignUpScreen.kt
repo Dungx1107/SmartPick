@@ -8,9 +8,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -28,10 +30,15 @@ fun SignUpScreen(
     onGoogleClick: () -> Unit,
     onFacebookClick: () -> Unit
 ) {
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var fullName by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var phoneNumber by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var confirmPassword by rememberSaveable { mutableStateOf("") }
+
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
+    var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -41,7 +48,7 @@ fun SignUpScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         BulbIconLight()
 
@@ -53,24 +60,27 @@ fun SignUpScreen(
             modifier = Modifier.padding(top = 16.dp)
         )
 
-        Text(
-            text = stringResource(R.string.curating_excellence_for_you),
-            fontSize = 14.sp,
-            color = TextSecondary,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
         FieldLabel(stringResource(R.string.full_name))
         StandardTextFieldLight(
             value = fullName,
             onValueChange = { fullName = it },
-            placeholder = stringResource(R.string.enter_your_name),
+            placeholder = stringResource(R.string.vd_full_name),
             leadingIcon = Icons.Default.Person
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        FieldLabel(stringResource(R.string.username))
+        StandardTextFieldLight(
+            value = username,
+            onValueChange = { username = it },
+            placeholder = stringResource(R.string.nguyenvana123),
+            leadingIcon = Icons.Default.Person
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         FieldLabel(stringResource(R.string.email))
         StandardTextFieldLight(
@@ -80,7 +90,17 @@ fun SignUpScreen(
             leadingIcon = Icons.Default.Email
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        FieldLabel(stringResource(R.string.phone_number))
+        StandardTextFieldLight(
+            value = phoneNumber,
+            onValueChange = { phoneNumber = it },
+            placeholder = stringResource(R.string.sdt),
+            leadingIcon = Icons.Default.Phone
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         FieldLabel(stringResource(R.string.password))
         PasswordTextFieldLight(
@@ -90,14 +110,31 @@ fun SignUpScreen(
             onPasswordToggle = { passwordVisible = !passwordVisible }
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        FieldLabel(stringResource(R.string.confirm_password))
+        PasswordTextFieldLight(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            passwordVisible = confirmPasswordVisible,
+            onPasswordToggle = { confirmPasswordVisible = !confirmPasswordVisible }
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
 
         AuthPrimaryButton(
             text = stringResource(R.string.create_account),
-            onClick = onCreateAccount
+            onClick = {
+                // Thêm logic kiểm tra password == confirmPassword trước khi gọi API
+                if (password == confirmPassword) {
+                    onCreateAccount()
+                } else {
+                    // Hiển thị thông báo lỗi
+                }
+            }
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         AuthDivider()
 
@@ -109,24 +146,15 @@ fun SignUpScreen(
             onClick = onGoogleClick
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        SocialAuthButton(
-            text = stringResource(R.string.continue_with_facebook),
-            brand = stringResource(R.string.facebook),
-            onClick = onFacebookClick
-        )
-
         Spacer(modifier = Modifier.height(32.dp))
 
         Row {
             Text(
                 text = stringResource(R.string.already_have_an_account),
-                color = TextSecondary
-            )
+                color = TextSecondary)
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = stringResource(R.string.log_in),
+                text = stringResource(R.string.login),
                 color = LoginBlue,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.clickable { onLoginClick() }

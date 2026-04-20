@@ -5,13 +5,22 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class User(
-    val id: String,  // ID từ hệ thống Auth của Supabase
-    val username: String? = null,
+    val id: String, // UUID từ auth.users
     val email: String? = null,
+    val username: String? = null,
 
     @SerialName("fullname")
     val fullName: String? = null,
 
     @SerialName("avatar_url")
-    val avatarUrl: String? = null
+    val avatarUrl: String? = null,
+
+    @SerialName("phone_number")
+    val phoneNumber: String? = null,
+
+    @SerialName("created_at")
+    val createdAt: String? = null,
+
+    @SerialName("updated_at")
+    val updatedAt: String? = null
 )
