@@ -1,6 +1,7 @@
 package com.example.smartpick.core.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -13,21 +14,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.smartpick.R
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.chatbot.ui.ChatbotScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
+import com.example.smartpick.features.feed.ui.HomeFeedScreen
 import com.example.smartpick.features.home.ui.HomeScreenRoute
 import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.EditProfileScreen
+import com.example.smartpick.features.feed.ui.CommentsScreen
+import com.example.smartpick.features.feed.ui.PostDetailScreen
 
 @Composable
 fun AppNavigation(
@@ -74,6 +81,7 @@ fun AppNavigation(
                         },
                         tagText = when (currentRoute) {
                             Routes.Home.route -> stringResource(R.string.app_name)
+                            Routes.Feed.route -> stringResource(R.string.feeds)
                             Routes.ChatBot.route -> stringResource(R.string.ai_curator)
                             Routes.Saved.route -> stringResource(R.string.saved)
                             Routes.Profile.route -> stringResource(R.string.profile)
@@ -158,6 +166,32 @@ fun AppNavigation(
                         },
                         onGoogleClick = {},
                         onFacebookClick = {}
+                    )
+                }
+
+                composable(
+                    route = Routes.PostDetail.route,
+                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
+                        type = NavType.StringType
+                    })
+                ) { backStackEntry ->
+                    val postId =
+                        backStackEntry.arguments?.getString(Routes.PostDetail.ARG_POST_ID) ?: ""
+                    PostDetailScreen(
+                        postId = postId,
+                        onBackClick = { navController.popBackStack() })
+                }
+
+
+                composable(Routes.Feed.route) {
+                    HomeFeedScreen(
+                        paddingValues = PaddingValues(0.dp),
+                        onPostClick = { postId ->
+                            navController.navigate(Routes.PostDetail.createRoute(postId))
+                        },
+                        onCommentClick = { postId ->
+                            navController.navigate(Routes.Comments.createRoute(postId))
+                        }
                     )
                 }
             }

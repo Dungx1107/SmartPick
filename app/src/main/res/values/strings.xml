@@ -2,6 +2,7 @@
     <string name="app_name">SmartPick</string>
     <string name="sign_up_now">Sign Up Now</string>
     <string name="home">Home</string>
+    <string name="feeds">Feeds</string>
     <string name="ai_curator">AI Curator</string>
     <string name="saved">Saved</string>
     <string name="profile">Profile</string>

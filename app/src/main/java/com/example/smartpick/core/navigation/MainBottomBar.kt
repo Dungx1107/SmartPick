@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.DynamicFeed
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Icon
@@ -58,6 +59,11 @@ fun MainBottomBarContent(
             Icons.Outlined.Home,
             stringResource(R.string.home),
             Routes.Home.route
+        ),
+        NavItem(
+            Icons.Outlined.DynamicFeed,
+            stringResource(R.string.feeds),
+            Routes.Feed.route
         ),
         NavItem(
             Icons.Outlined.AutoAwesome,

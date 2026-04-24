@@ -1,4 +1,4 @@
-package com.example.smartpick.ui.screens.home
+package com.example.smartpick.features.feed.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.compareTo
 
 // Data model cho Bình luận
 data class Comment(
