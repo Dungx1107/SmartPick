@@ -8,7 +8,7 @@
     <string name="profile">Profile</string>
     <string name="continue_with_google">Continue with Google</string>
     <string name="google">Google</string>
-    <string name="continue_with_facebook">Continue with Facebook</string>
+    <string name="google_logo">Google Logo</string>
     <string name="facebook">Facebook</string>
     <string name="welcome_back">Welcome Back</string>
     <string name="continue_your_journey_of_curated_discovery">Continue your journey of curated discovery.</string>
@@ -16,7 +16,6 @@
     <string name="password">Password</string>
     <string name="forgot_password">Forgot Password?</string>
     <string name="don_t_have_an_account">Don\'t have an account?</string>
-    <string name="google_logo">Google Logo</string>
     <string name="facebook_logo">Facebook Logo</string>
     <string name="or_connect_with">OR CONNECT WITH</string>
     <string name="login">Login</string>

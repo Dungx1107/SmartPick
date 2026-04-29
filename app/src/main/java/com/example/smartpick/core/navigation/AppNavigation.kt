@@ -163,10 +163,6 @@ fun AppNavigation(
                             navController.navigate(Routes.Login.route)
                         },
                         onGoogleClick = {},
-                        onFacebookClick = {},
-//                        onSignUp = { email, pass, name, user, phone ->
-//                            authViewModel.onSignUp(email, pass, name, user, phone)
-//                        },
                     )
                 }
 

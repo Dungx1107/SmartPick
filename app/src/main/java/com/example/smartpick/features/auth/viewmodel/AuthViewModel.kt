@@ -3,6 +3,7 @@ package com.example.smartpick.features.auth.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.features.auth.data.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,7 @@ sealed class AuthState {
     object Success : AuthState()
     data class Error(val message: String) : AuthState()
 }
+
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository
@@ -83,13 +85,33 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            val result = authRepository.signUpManual(email, pass, name, user, phone)
+            val availabilityResult =
+                authRepository.checkAvailability(user, email) // 1. Kiểm tra trùng lặp nhanh qua RPC
 
-            result.onSuccess {
-                _authState.value = AuthState.Success
-            }.onFailure { exception ->
-                _authState.value = AuthState.Error(exception.message ?: "Đăng ký thất bại")
+            availabilityResult.onSuccess { response ->
+                if (response.emailTaken) {
+                    _authState.value =
+                        AuthState.Error(Constants.ValidationError.EMAIL_ALREADY_EXISTS)
+                    return@launch
+                }
+                if (response.usernameTaken) {
+                    _authState.value =
+                        AuthState.Error(Constants.ValidationError.USERNAME_ALREADY_EXISTS)
+                    return@launch
+                }
+
+                // 2. Nếu không trùng thì mới gọi hàm SignUp
+                val result = authRepository.signUpManual(email, pass, name, user, phone)
+
+                result.onSuccess {
+                    _authState.value = AuthState.Success
+                }.onFailure { exception ->
+                    _authState.value = AuthState.Error(exception.message ?: "Đăng ký thất bại")
+                }
+            }.onFailure {
+                _authState.value = AuthState.Error("Lỗi kết nối hệ thống")
             }
+
         }
     }
 }

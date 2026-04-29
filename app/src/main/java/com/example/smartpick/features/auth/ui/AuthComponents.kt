@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.theme.*
+import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
 
 /**
  * Biểu tượng bóng đèn đặc trưng của ứng dụng SmartPick.
@@ -255,8 +256,7 @@ fun SocialAuthButton(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val iconRes = when (brand.lowercase()) {
-                stringResource(R.string.google) -> R.drawable.ic_google_logo
-                stringResource(R.string.facebook) -> R.drawable.ic_facebook_logo
+                PROVIDER_GOOGLE -> R.drawable.ic_google_logo
                 else -> null
             }
 

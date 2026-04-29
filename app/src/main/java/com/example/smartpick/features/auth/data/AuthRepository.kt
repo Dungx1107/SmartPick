@@ -3,11 +3,13 @@ package com.example.smartpick.features.auth.data
 import android.util.Log
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.network.SupabaseClient
+import com.example.smartpick.core.utils.Constants
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.gotrue.providers.builtin.IDToken
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
@@ -152,25 +154,41 @@ class AuthRepository @Inject constructor() {
                 this.email = email
                 password = pass
                 data = buildJsonObject {
-                    put("fullname", name)
-                    put("username", user)
-                    put("phone_number", phone)
+                    put(Constants.UserMetadata.FULL_NAME, name)
+                    put(Constants.UserMetadata.USERNAME, user)
+                    put(Constants.UserMetadata.PHONE_NUMBER, phone)
                 }
             }
             Result.success(Unit)
         } catch (e: Exception) {
-            // Log lỗi chi tiết ra Logcat để debug
-            Log.e("SUPABASE_ERROR", "Chi tiết: ${e.localizedMessage}", e)
+            val errorMsg = when {
+                // Lỗi email đã tồn tại (Supabase trả về 400 hoặc 422)
+                e.message?.contains("already registered", ignoreCase = true) == true ->
+                    "Email này đã được sử dụng."
+                // Lỗi trùng Username từ bảng public.users
+                e.message?.contains("duplicate key", ignoreCase = true) == true ->
+                    "Username này đã tồn tại, vui lòng chọn tên khác."
 
-            // Trả về thông báo lỗi cụ thể dựa trên loại Exception
-            val errorMessage = when (e) {
-                is io.github.jan.supabase.exceptions.RestException -> "Lỗi Database: ${e.message}"
-//                is io.github.jan.supabase.gotrue.AuthRestException -> {
-//                    "Lỗi xác thực: Email đã tồn tại hoặc mật khẩu yếu"
-//                }
-                else -> e.message ?: "Lỗi kết nối không xác định"
+                else -> e.message ?: "Lỗi đăng ký không xác định"
             }
-            Result.failure(Exception(errorMessage))
+            Result.failure(Exception(errorMsg))
+        }
+    }
+
+    /* kiểm tra trùng lặp username và email khi đăng kí*/
+    suspend fun checkAvailability(username: String, email: String):
+            Result<AvailabilityResponse> = withContext(Dispatchers.IO) {
+        try {
+            val response = supabase.postgrest.rpc(
+                function = "check_user_availability",
+                parameters = mapOf(
+                    "p_username" to username,
+                    "p_email" to email
+                )
+            ).decodeSingle<AvailabilityResponse>()
+            Result.success(response)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

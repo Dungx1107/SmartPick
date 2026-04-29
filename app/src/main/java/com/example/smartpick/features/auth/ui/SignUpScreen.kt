@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
 import com.example.smartpick.core.theme.*
+import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.core.utils.Validator
 import com.example.smartpick.features.auth.viewmodel.AuthState
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
@@ -40,7 +41,6 @@ fun SignUpScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onLoginClick: () -> Unit,
     onGoogleClick: () -> Unit,
-    onFacebookClick: () -> Unit
 ) {
     val authState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
@@ -70,7 +70,6 @@ fun SignUpScreen(
         },
         onLoginClick = onLoginClick,
         onGoogleClick = onGoogleClick,
-        onFacebookClick = onFacebookClick
     )
 }
 
@@ -84,7 +83,6 @@ fun SignUpContent(
     onSignUp: (String, String, String, String, String) -> Unit,
     onLoginClick: () -> Unit,
     onGoogleClick: () -> Unit,
-    onFacebookClick: () -> Unit
 ) {
     // Các biến lưu trữ dữ liệu người dùng nhập
     var fullName by rememberSaveable { mutableStateOf("") }
@@ -107,7 +105,7 @@ fun SignUpContent(
 
     // Hàm xử lý kiểm tra tính hợp lệ trước khi gửi dữ liệu đi
     fun validateAndSubmit() {
-        /* Reset toàn bộ lỗi cũ về null trước khi kiểm tra mới */
+        /* Reset toàn bộ lỗi cũ về null */
         fullNameError = null
         emailError = null
         usernameError = null
@@ -117,52 +115,50 @@ fun SignUpContent(
 
         var isValid = true
 
+        // Kiểm tra Họ tên
         if (fullName.isBlank()) {
-            fullNameError = "Họ tên không được để trống"
+            fullNameError = Constants.ValidationError.FULL_NAME_EMPTY
             isValid = false
         }
 
+        // Kiểm tra Email
         if (email.isBlank()) {
-            emailError = "Email không được bỏ trống !!!"
+            emailError = Constants.ValidationError.EMAIL_EMPTY
             isValid = false
         } else if (!Validator.isValidEmail(email)) {
-            emailError = "Email không đúng định dạng"
+            emailError = Constants.ValidationError.EMAIL_INVALID
             isValid = false
         }
 
+        // Kiểm tra Số điện thoại
         if (!Validator.isValidPhone(phoneNumber)) {
-            phoneNumberError = "Số điện thoại không đúng định dạng"
+            phoneNumberError = Constants.ValidationError.PHONE_INVALID
             isValid = false
         }
 
+        // Kiểm tra Username
         if (username.isBlank()) {
-            usernameError = "Username không được bỏ trống !!!"
+            usernameError = Constants.ValidationError.USERNAME_EMPTY
             isValid = false
         } else if (!Validator.isValidUsername(username)) {
-            usernameError = "Username từ 3-20 ký tự, không chứa ký tự đặc biệt"
+            usernameError = Constants.ValidationError.USERNAME_INVALID
             isValid = false
         }
 
+        // Kiểm tra Mật khẩu
         if (password.isBlank()) {
-            passwordError = "Mật khẩu không được để trống !!!"
+            passwordError = Constants.ValidationError.PASSWORD_EMPTY
             isValid = false
         } else if (!Validator.isTestValidPassword(password)) {
-            passwordError = "Mật khẩu phải có ít nhất 6 ký tự"
+            passwordError = Constants.ValidationError.PASSWORD_INVALID
             isValid = false
         } else if (password != confirmPassword) {
-            confirmPasswordError = "Mật khẩu xác nhận không khớp"
+            confirmPasswordError = Constants.ValidationError.PASSWORD_MISMATCH
             isValid = false
         }
 
-        // Nếu tất cả các trường đều hợp lệ, thực thi callback onSignUp
         if (isValid) {
-            onSignUp(
-                email.trim(),
-                password.trim(),
-                fullName.trim(),
-                username.trim(),
-                phoneNumber.trim()
-            )
+            onSignUp(email, password, fullName, username, phoneNumber)
         }
     }
 
@@ -328,7 +324,6 @@ fun PreviewSignUpNormal() {
             onSignUp = { _, _, _, _, _ -> },
             onLoginClick = {},
             onGoogleClick = {},
-            onFacebookClick = {}
         )
     }
 }
@@ -342,7 +337,6 @@ fun PreviewSignUpLoading() {
             onSignUp = { _, _, _, _, _ -> },
             onLoginClick = {},
             onGoogleClick = {},
-            onFacebookClick = {}
         )
     }
 }

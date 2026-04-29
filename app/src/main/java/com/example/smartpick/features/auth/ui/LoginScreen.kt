@@ -191,13 +191,6 @@ fun LoginContent(
             onClick = onGoogleSignInClick // Thực thi hàm được truyền vào
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        SocialAuthButton(
-            text = stringResource(R.string.continue_with_facebook),
-            brand = stringResource(R.string.facebook),
-            onClick = { }
-        )
 
         Spacer(modifier = Modifier.height(48.dp))
 
