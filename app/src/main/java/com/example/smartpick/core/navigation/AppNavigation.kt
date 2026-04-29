@@ -33,7 +33,6 @@ import com.example.smartpick.features.home.ui.HomeScreenRoute
 import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.EditProfileScreen
-import com.example.smartpick.features.feed.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.PostDetailScreen
 
 @Composable
@@ -160,12 +159,14 @@ fun AppNavigation(
 
                 composable(Routes.SignUp.route) {
                     SignUpScreen(
-                        onCreateAccount = {},
                         onLoginClick = {
                             navController.navigate(Routes.Login.route)
                         },
                         onGoogleClick = {},
-                        onFacebookClick = {}
+                        onFacebookClick = {},
+                        onSignUp = { email, pass, name, user, phone ->
+                            authViewModel.onSignUp(email, pass, name, user, phone)
+                        },
                     )
                 }
 

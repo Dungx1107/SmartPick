@@ -77,25 +77,37 @@ fun StandardTextFieldLight(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    leadingIcon: ImageVector
+    leadingIcon: ImageVector,
+    isError: Boolean = false,
+    errorMessage: String? = null
 ) {
     OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
             .background(SocialButtonLightColor, RoundedCornerShape(12.dp)),
-        textStyle = LocalTextStyle.current.copy(color = TextPrimary),
-        leadingIcon = { Icon(leadingIcon, null, tint = TextSecondary) },
-        placeholder = { Text(placeholder, color = TextSecondary.copy(alpha = 0.5f)) },
-        shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent,
             cursorColor = TextPrimary
         ),
-        singleLine = true
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = LocalTextStyle.current.copy(color = TextPrimary),
+        leadingIcon = { Icon(leadingIcon, null, tint = TextSecondary) },
+        placeholder = { Text(placeholder, color = TextSecondary.copy(alpha = 0.5f)) },
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true,
+        isError = isError,
     )
+
+    if (isError && errorMessage != null) {
+        Text(
+            text = errorMessage,
+            color = MaterialTheme.colorScheme.error, // Màu đỏ mặc định của hệ thống
+            fontSize = 12.sp,
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+        )
+    }
 }
 
 /**
@@ -106,7 +118,9 @@ fun PasswordTextFieldLight(
     value: String,
     onValueChange: (String) -> Unit,
     passwordVisible: Boolean,
-    onPasswordToggle: () -> Unit
+    onPasswordToggle: () -> Unit,
+    isError: Boolean = false,
+    errorMessage: String? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -120,16 +134,35 @@ fun PasswordTextFieldLight(
             val icon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
             IconButton(onClick = onPasswordToggle) { Icon(icon, null, tint = TextSecondary) }
         },
-        placeholder = { Text("••••••••", color = TextSecondary.copy(alpha = 0.5f)) },
-        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+        placeholder = {
+            Text(
+                stringResource(R.string.pass_hidden),
+                color = TextSecondary.copy(alpha = 0.5f)
+            )
+        },
+        visualTransformation = if (passwordVisible) {
+            VisualTransformation.None
+        } else {
+            PasswordVisualTransformation()
+        },
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent,
             cursorColor = TextPrimary,
         ),
-        singleLine = true
+        singleLine = true,
+        isError = isError,
     )
+
+    if (isError && errorMessage != null) {
+        Text(
+            text = errorMessage,
+            color = MaterialTheme.colorScheme.error, // Màu đỏ mặc định của hệ thống
+            fontSize = 12.sp,
+            modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+        )
+    }
 }
 
 /**
@@ -176,36 +209,6 @@ fun AuthPrimaryButton(
 }
 
 /**
- * Đường kẻ phân cách với văn bản ở giữa.
- */
-@Composable
-fun AuthDivider(text: String = stringResource(R.string.or_connect_with)) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Divider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 16.dp),
-            color = DividerColor
-        )
-        Text(
-            text = text.uppercase(),
-            fontSize = 12.sp,
-            color = DividerColor
-        )
-        Divider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 16.dp),
-            color = DividerColor
-        )
-    }
-}
-
-/**
  * Nút đăng nhập qua mạng xã hội.
  * @param text Văn bản hiển thị.
  * @param brand Loại thương hiệu (Google/Facebook) để hiển thị logo tương ứng.
@@ -232,15 +235,15 @@ fun SocialAuthButton(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val iconRes = when (brand.lowercase()) {
-                "google" -> R.drawable.ic_google_logo
-                "facebook" -> R.drawable.ic_facebook_logo
+                stringResource(R.string.google) -> R.drawable.ic_google_logo
+                stringResource(R.string.facebook) -> R.drawable.ic_facebook_logo
                 else -> null
             }
 
             iconRes?.let {
                 Icon(
                     painter = painterResource(id = it),
-                    contentDescription = "$brand Logo",
+                    contentDescription = stringResource(R.string.logo, brand),
                     modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified
                 )
@@ -254,5 +257,35 @@ fun SocialAuthButton(
                 fontWeight = FontWeight.Medium
             )
         }
+    }
+}
+
+/**
+ * Đường kẻ phân cách với văn bản ở giữa.
+ */
+@Composable
+fun AuthDivider(text: String = stringResource(R.string.or_connect_with)) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Divider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 16.dp),
+            color = DividerColor
+        )
+        Text(
+            text = text.uppercase(),
+            fontSize = 12.sp,
+            color = DividerColor
+        )
+        Divider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            color = DividerColor
+        )
     }
 }

@@ -5,11 +5,14 @@ import com.example.smartpick.core.model.User
 import com.example.smartpick.core.network.SupabaseClient
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
+import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.gotrue.providers.builtin.IDToken
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -134,6 +137,31 @@ class AuthRepository @Inject constructor() {
     suspend fun signOut() {
         withContext(Dispatchers.IO) {
             supabase.auth.signOut()
+        }
+    }
+
+    suspend fun signUpManual(
+        email: String,
+        pass: String,
+        name: String,
+        user: String,
+        phone: String
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            supabase.auth.signUpWith(Email) {
+                this.email = email
+                password = pass
+                // Đưa thông tin bổ sung vào metadata để Trigger bên SQL tự nhặt
+                data = buildJsonObject {
+                    put("fullname", name)
+                    put("username", user)
+                    put("phone_number", phone)
+                }
+            }
+            true
+        } catch (e: Exception) {
+            Log.e("AUTH", "Lỗi đăng ký: ${e.message}")
+            false
         }
     }
 }

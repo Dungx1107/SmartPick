@@ -44,4 +44,6 @@
     <string name="nguyenvana123">nguyenvana123</string>
     <string name="username">Username</string>
     <string name="vd_full_name">Nguyễn Văn A</string>
+    <string name="logo">%1$s Logo</string>
+    <string name="pass_hidden">••••••••</string>
 </resources>

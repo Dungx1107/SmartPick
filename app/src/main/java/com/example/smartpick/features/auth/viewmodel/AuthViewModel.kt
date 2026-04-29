@@ -78,4 +78,20 @@ class AuthViewModel @Inject constructor(
             _authState.value = AuthState.Idle
         }
     }
+
+    fun onSignUp(email: String, pass: String, name: String, user: String, phone: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                val isSuccess = authRepository.signUpManual(email, pass, name, user, phone)
+                if (isSuccess) {
+                    _authState.value = AuthState.Success
+                } else {
+                    _authState.value = AuthState.Error("Đăng ký thất bại, vui lòng thử lại.")
+                }
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Lỗi không xác định")
+            }
+        }
+    }
 }
