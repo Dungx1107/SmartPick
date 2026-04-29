@@ -164,9 +164,9 @@ fun AppNavigation(
                         },
                         onGoogleClick = {},
                         onFacebookClick = {},
-                        onSignUp = { email, pass, name, user, phone ->
-                            authViewModel.onSignUp(email, pass, name, user, phone)
-                        },
+//                        onSignUp = { email, pass, name, user, phone ->
+//                            authViewModel.onSignUp(email, pass, name, user, phone)
+//                        },
                     )
                 }
 

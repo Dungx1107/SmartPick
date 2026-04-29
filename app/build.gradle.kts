@@ -51,7 +51,7 @@ android {
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_KEY", "\"$supabaseKey\"")
         //------------------------
-
+        println("DEBUG: Supabase URL là: $supabaseUrl")
 
     }
 

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -175,15 +176,30 @@ fun PasswordTextFieldLight(
 fun AuthPrimaryButton(
     text: String,
     showArrow: Boolean = true,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    enabled: Boolean = true // Thêm tham số này
 ) {
-    val gradientBrush = Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
+    // 1. Định nghĩa màu sắc dựa trên trạng thái enabled
+    val gradientBrush = if (enabled) {
+        Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
+    } else {
+        // Khi disable thì dùng một màu xám cố định thay vì gradient
+        SolidColor(Color.LightGray)
+    }
+
+    val contentColor = if (enabled) Color.White else Color.Gray
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
-            .clickable(onClick = onClick)
-            .border(1.dp, DividerColor, RoundedCornerShape(12.dp)),
+            // 2. Quan trọng: Truyền enabled vào clickable để chặn click khi đang load
+            .clickable(enabled = enabled, onClick = onClick)
+            .border(
+                width = 1.dp,
+                color = if (enabled) DividerColor else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            ),
         shape = RoundedCornerShape(12.dp),
         color = Color.Transparent
     ) {
@@ -198,11 +214,15 @@ fun AuthPrimaryButton(
                 text = text,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = contentColor // Đổi màu chữ khi disable
             )
             if (showArrow) {
                 Spacer(modifier = Modifier.width(12.dp))
-                Icon(Icons.Filled.ArrowForward, null, tint = Color.White)
+                Icon(
+                    imageVector = Icons.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = contentColor // Đổi màu icon khi disable
+                )
             }
         }
     }

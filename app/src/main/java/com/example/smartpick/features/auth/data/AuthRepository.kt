@@ -146,22 +146,31 @@ class AuthRepository @Inject constructor() {
         name: String,
         user: String,
         phone: String
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             supabase.auth.signUpWith(Email) {
                 this.email = email
                 password = pass
-                // Đưa thông tin bổ sung vào metadata để Trigger bên SQL tự nhặt
                 data = buildJsonObject {
                     put("fullname", name)
                     put("username", user)
                     put("phone_number", phone)
                 }
             }
-            true
+            Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("AUTH", "Lỗi đăng ký: ${e.message}")
-            false
+            // Log lỗi chi tiết ra Logcat để debug
+            Log.e("SUPABASE_ERROR", "Chi tiết: ${e.localizedMessage}", e)
+
+            // Trả về thông báo lỗi cụ thể dựa trên loại Exception
+            val errorMessage = when (e) {
+                is io.github.jan.supabase.exceptions.RestException -> "Lỗi Database: ${e.message}"
+//                is io.github.jan.supabase.gotrue.AuthRestException -> {
+//                    "Lỗi xác thực: Email đã tồn tại hoặc mật khẩu yếu"
+//                }
+                else -> e.message ?: "Lỗi kết nối không xác định"
+            }
+            Result.failure(Exception(errorMessage))
         }
     }
 }

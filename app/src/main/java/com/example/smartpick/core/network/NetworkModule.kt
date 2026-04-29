@@ -31,7 +31,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun providePostgrest(client: SupabaseClient): Postgrest {
-        // Đây chính là mắt xích còn thiếu để Hilt sửa lỗi MissingBinding cho FeedRepositoryImpl
+        // Hilt sửa lỗi MissingBinding cho FeedRepositoryImpl
         return client.postgrest
     }
 }

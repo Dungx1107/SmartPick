@@ -46,4 +46,5 @@
     <string name="vd_full_name">Nguyễn Văn A</string>
     <string name="logo">%1$s Logo</string>
     <string name="pass_hidden">••••••••</string>
+    <string name="DangKiThanhCong">Đăng ký thành công! Kiểm tra Email để xác nhận.</string>
 </resources>
