@@ -118,6 +118,19 @@ fun AppNavigation(
                 modifier = Modifier.padding(padding)
             ) {
 
+                composable(Routes.SignUp.route) {
+                    SignUpScreen(
+                        onLoginClick = {
+                            navController.navigate(Routes.Login.route)
+                        },
+                        onNavigateToHome = {
+                            navController.navigate("home") {
+                                popUpTo("signup") { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
                 composable(Routes.Login.route) {
                     LoginScreen(
                         onNavigateToHome = {
@@ -157,14 +170,6 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.SignUp.route) {
-                    SignUpScreen(
-                        onLoginClick = {
-                            navController.navigate(Routes.Login.route)
-                        },
-                        onGoogleClick = {},
-                    )
-                }
 
                 composable(
                     route = Routes.PostDetail.route,

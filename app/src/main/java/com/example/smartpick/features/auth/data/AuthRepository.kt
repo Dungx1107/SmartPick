@@ -191,4 +191,28 @@ class AuthRepository @Inject constructor() {
             Result.failure(e)
         }
     }
+
+    /* đăng nhập thủ công */
+    suspend fun signInManual(email: String, pass: String):
+            Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            supabase.auth.signInWith(Email) {
+                this.email = email
+                password = pass
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            val errorMsg = when {
+                // Bắt lỗi email chưa xác nhận
+                e.message?.contains("Email not confirmed", ignoreCase = true) == true ->
+                    "Vui lòng xác nhận email của bạn trước khi đăng nhập."
+
+                e.message?.contains("Invalid login credentials", ignoreCase = true) == true ->
+                    "Email hoặc mật khẩu không chính xác."
+
+                else -> e.message ?: "Đăng nhập thất bại"
+            }
+            Result.failure(Exception(errorMsg))
+        }
+    }
 }

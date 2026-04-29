@@ -14,7 +14,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,9 +30,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
 import com.example.smartpick.core.theme.*
 import com.example.smartpick.core.utils.Constants
+import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
 import com.example.smartpick.core.utils.Validator
+import com.example.smartpick.features.auth.data.performGoogleSignIn
 import com.example.smartpick.features.auth.viewmodel.AuthState
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
+import kotlinx.coroutines.coroutineScope
 
 /**
  * STATEFUL COMPOSABLE
@@ -40,10 +45,13 @@ import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 fun SignUpScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onLoginClick: () -> Unit,
-    onGoogleClick: () -> Unit,
+    onNavigateToHome: () -> Unit
 ) {
     val authState by authViewModel.authState.collectAsState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var isGoogleLogin by remember { mutableStateOf(false) }
 
     // Xử lý các thông báo đẩy ra từ Server (Supabase) dựa trên trạng thái authState
     LaunchedEffect(authState) {
@@ -56,8 +64,12 @@ fun SignUpScreen(
                 context.getString(R.string.DangKiThanhCong),
                 Toast.LENGTH_LONG
             ).show()
+            if (isGoogleLogin) {
+                onNavigateToHome()
+            } else {
+                onLoginClick()
+            }
 
-            onLoginClick()
 
         }
     }
@@ -69,7 +81,16 @@ fun SignUpScreen(
             authViewModel.onSignUp(email, pass, name, user, phone)
         },
         onLoginClick = onLoginClick,
-        onGoogleClick = onGoogleClick,
+        onGoogleClick = {
+            isGoogleLogin = true
+            performGoogleSignIn(
+                context = context,
+                coroutineScope = coroutineScope,
+                webClientId = WEB_CLIENT_ID,
+                onTokenReceived = { token -> authViewModel.signInWithGoogleToken(token) },
+                onError = { it.printStackTrace() }
+            )
+        },
     )
 }
 

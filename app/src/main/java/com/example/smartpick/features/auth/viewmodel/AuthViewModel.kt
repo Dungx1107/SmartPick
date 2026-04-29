@@ -114,4 +114,21 @@ class AuthViewModel @Inject constructor(
 
         }
     }
+
+    fun signInManual(email: String, pass: String) {
+        if (email.isBlank() || pass.isBlank()) {
+            _authState.value = AuthState.Error("Vui lòng nhập đầy đủ thông tin")
+            return
+        }
+
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = authRepository.signInManual(email, pass)
+            result.onSuccess {
+                _authState.value = AuthState.Success
+            }.onFailure { exception ->
+                _authState.value = AuthState.Error(exception.message ?: "Lỗi đăng nhập")
+            }
+        }
+    }
 }

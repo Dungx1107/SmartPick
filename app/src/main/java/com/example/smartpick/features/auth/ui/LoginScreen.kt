@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,15 +61,19 @@ fun LoginScreen(
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
-                Toast.makeText(context,
-                    context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT
+                ).show()
                 onNavigateToHome()
             }
 
             is AuthState.Error -> {
                 val errorMessage = (authState as AuthState.Error).message
-                Toast.makeText(context,
-                    context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG
+                ).show()
             }
 
             else -> {}
@@ -77,7 +82,9 @@ fun LoginScreen(
 
     // Truyền event xuống Stateless Composable
     LoginContent(
-        onNavigateToHome = onNavigateToHome,
+        onSignIn = { email, password ->
+            authViewModel.signInManual(email, password)
+        },
         onNavigateToSignUp = onNavigateToSignUp,
         onGoogleSignInClick = {
             performGoogleSignIn(
@@ -94,13 +101,36 @@ fun LoginScreen(
 // 2. Stateless Composable (Chỉ vẽ UI, không phụ thuộc thư viện ngoài)
 @Composable
 fun LoginContent(
-    onNavigateToHome: () -> Unit,
+    onSignIn: (String, String) -> Unit,
     onNavigateToSignUp: () -> Unit,
     onGoogleSignInClick: () -> Unit // Bắt event click
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+
+    var emailError by rememberSaveable { mutableStateOf<String?>(null) }
+    var passwordError by rememberSaveable { mutableStateOf<String?>(null) }
+
+    fun validateAndSubmit() {
+        emailError = null
+        passwordError = null
+
+        var isValid = true
+
+        if (email.isBlank()) {
+            emailError = "Vui lòng nhập email"
+            isValid = false
+        }
+        if (password.isBlank()) {
+            passwordError = "Vui lòng nhập mật khẩu"
+            isValid = false
+        }
+
+        if (isValid) {
+            onSignIn(email, password)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -143,9 +173,14 @@ fun LoginContent(
         FieldLabel(stringResource(R.string.email))
         StandardTextFieldLight(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = {
+                email = it
+                emailError = null
+            },
             placeholder = stringResource(R.string.name_domain_com),
-            leadingIcon = Icons.Filled.Email
+            leadingIcon = Icons.Filled.Email,
+            isError = emailError != null,
+            errorMessage = emailError
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -167,9 +202,14 @@ fun LoginContent(
         }
         PasswordTextFieldLight(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                passwordError = null
+            },
             passwordVisible = passwordVisible,
-            onPasswordToggle = { passwordVisible = !passwordVisible }
+            onPasswordToggle = { passwordVisible = !passwordVisible },
+            isError = passwordError != null,
+            errorMessage = passwordError
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -177,7 +217,7 @@ fun LoginContent(
         AuthPrimaryButton(
             text = stringResource(R.string.login),
             showArrow = true,
-            onClick = onNavigateToHome
+            onClick = { validateAndSubmit() }
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -227,8 +267,8 @@ fun LoginContent(
 @Composable
 fun LoginScreenWhiteBluePreview() {
     LoginContent(
-        onNavigateToHome = {},
         onNavigateToSignUp = {},
-        onGoogleSignInClick = {}
+        onGoogleSignInClick = {},
+        onSignIn = { _, _ -> }
     )
 }
