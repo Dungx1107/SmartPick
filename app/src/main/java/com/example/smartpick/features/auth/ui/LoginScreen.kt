@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +42,7 @@ import com.example.smartpick.R
 import com.example.smartpick.core.components.AuthDivider
 import com.example.smartpick.core.components.AuthPrimaryButton
 import com.example.smartpick.core.components.FieldLabel
+import com.example.smartpick.core.components.FullScreenLoadingOverlay
 import com.example.smartpick.core.components.PasswordTextFieldLight
 import com.example.smartpick.core.components.SocialAuthButton
 import com.example.smartpick.core.components.StandardTextFieldLight
@@ -88,22 +90,29 @@ fun LoginScreen(
     }
 
     // Truyền event xuống Stateless Composable
-    LoginContent(
-        onSignIn = { email, password ->
-            authViewModel.signInManual(email, password)
-        },
-        onNavigateToSignUp = onNavigateToSignUp,
-        isLoading = authState is AuthState.Loading,
-        onGoogleSignInClick = {
-            performGoogleSignIn(
-                context = context,
-                coroutineScope = coroutineScope,
-                webClientId = WEB_CLIENT_ID,
-                onTokenReceived = { token -> authViewModel.signInWithGoogleToken(token) },
-                onError = { it.printStackTrace() }
-            )
+    // Quản lý hiệu ứng chuyển cảnh
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 1. UI Chính
+        LoginContent(
+            onSignIn = { email, password -> authViewModel.signInManual(email, password) },
+            onNavigateToSignUp = onNavigateToSignUp,
+            isLoading = authState is AuthState.Loading, // Vẫn truyền để disable nút
+            onGoogleSignInClick = {
+                performGoogleSignIn(
+                    context = context,
+                    coroutineScope = coroutineScope,
+                    webClientId = WEB_CLIENT_ID,
+                    onTokenReceived = { token -> authViewModel.signInWithGoogleToken(token) },
+                    onError = { it.printStackTrace() }
+                )
+            }
+        )
+
+        // 2. Lớp phủ Loading xuất hiện đè lên trên khi đang xử lý
+        if (authState is AuthState.Loading) {
+            FullScreenLoadingOverlay()
         }
-    )
+    }
 }
 
 // 2. Stateless Composable (Chỉ vẽ UI, không phụ thuộc thư viện ngoài)

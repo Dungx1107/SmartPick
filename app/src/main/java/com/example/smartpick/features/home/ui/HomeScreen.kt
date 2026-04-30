@@ -69,6 +69,7 @@ import com.example.smartpick.core.theme.White
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
+import com.example.smartpick.core.components.LoadingScreen
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.theme.TextPrimary
 import com.example.smartpick.core.theme.TextSecondary
@@ -176,14 +177,15 @@ fun HomeScreenRoute(
     // Lắng nghe user từ StateFlow
     val user by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
+    val isInitializing by authViewModel.isInitializing.collectAsState()
 
     LaunchedEffect(user) {
-        if (user == null) {
+        if (!isInitializing && user == null) {
             Toast.makeText(
                 context, context.getString(R.string.user_null),
                 Toast.LENGTH_LONG
             ).show()
-        } else {
+        } else if (user != null) {
             Toast.makeText(
                 context,
                 context.getString(R.string.nhan_duoc_user, user?.fullName),
@@ -191,18 +193,18 @@ fun HomeScreenRoute(
             ).show()
         }
     }
-
-    // Cách viết an toàn:
-    user?.let { currentUser ->
-        // Chỉ khi user khác null thì HomeScreen mới được gọi
-        HomeScreen(user = currentUser)
-    } ?: run {
-        // Trong lúc đợi user (null), hiện màn hình chờ
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator(color = Color(0xFF1E3A8A))
+    if (isInitializing) {
+        LoadingScreen()
+    } else {
+        user?.let { currentUser ->    // Cách viết an toàn:
+            HomeScreen(user = currentUser) //user khác null thì HomeScreen mới được gọi
+        } ?: run {
+            Box( // Trong lúc đợi user (null), hiện màn hình chờ
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xFF1E3A8A))
+            }
         }
     }
 }
