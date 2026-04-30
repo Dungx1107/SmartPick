@@ -179,8 +179,10 @@ fun HomeScreenRoute(
 
     LaunchedEffect(user) {
         if (user == null) {
-            Toast.makeText(context, context.getString(R.string.user_null),
-                Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context, context.getString(R.string.user_null),
+                Toast.LENGTH_LONG
+            ).show()
         } else {
             Toast.makeText(
                 context,
@@ -614,20 +616,16 @@ fun AICuratorBanner() {
 
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
-// Bạn có thể để cái này ở cuối file HomeScreen.kt
-val sampleUser = User(
-    id = "123",
-    fullName = "Nguyễn Xuân Dũng",
-    username = "dung_uet_2005",
-    email = "dung.nx@vnu.edu.vn",
-    avatarUrl = "https://example.com/avatar.jpg" // Có thể để null nếu chưa có ảnh mẫu
-)
-
-// ─── Preview ──────────────────────────────────────────────────────────────────
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun HomeScreenPreview() {
-    // Sử dụng Theme của App bạn (ví dụ SmartPickTheme) để xem đúng màu sắc nhất
+    val sampleUser = User(
+        id = "123",
+        fullName = "Nguyễn Xuân Dũng",
+        username = "dung_uet_2005",
+        email = "dung.nx@vnu.edu.vn",
+        avatarUrl = "https://example.com/avatar.jpg" // Có thể để null nếu chưa có ảnh mẫu
+    )
     MaterialTheme {
         HomeScreen(user = sampleUser) // Nạp User giả vào đây
     }

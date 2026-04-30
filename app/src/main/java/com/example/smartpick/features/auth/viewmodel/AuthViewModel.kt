@@ -125,6 +125,7 @@ class AuthViewModel @Inject constructor(
             _authState.value = AuthState.Loading
             val result = authRepository.signInManual(email, pass)
             result.onSuccess {
+                _currentUser.value = authRepository.getCurrentUser()
                 _authState.value = AuthState.Success
             }.onFailure { exception ->
                 _authState.value = AuthState.Error(exception.message ?: "Lỗi đăng nhập")

@@ -1,0 +1,170 @@
+package com.example.smartpick.core.components
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.smartpick.R
+import com.example.smartpick.core.theme.DividerColor
+import com.example.smartpick.core.theme.LoginBlue
+import com.example.smartpick.core.theme.LoginBlueGradientEnd
+import com.example.smartpick.core.theme.SocialButtonLightColor
+import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
+
+
+/**
+ * Nút bấm chính có hiệu ứng Gradient màu xanh.
+ * @param text Văn bản hiển thị trên nút.
+ * @param showArrow Hiển thị icon mũi tên ở cuối nút.
+ * @param onClick Sự kiện khi bấm nút.
+ */
+@Composable
+fun AuthPrimaryButton(
+    text: String,
+    showArrow: Boolean = true,
+    onClick: () -> Unit,
+    enabled: Boolean = true // Thêm tham số này
+) {
+    // 1. Định nghĩa màu sắc dựa trên trạng thái enabled
+    val gradientBrush = if (enabled) {
+        Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
+    } else {
+        // Khi disable thì dùng một màu xám cố định thay vì gradient
+        SolidColor(Color.LightGray)
+    }
+
+    val contentColor = if (enabled) Color.White else Color.Gray
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            // 2. Quan trọng: Truyền enabled vào clickable để chặn click khi đang load
+            .clickable(enabled = enabled, onClick = onClick)
+            .border(
+                width = 1.dp,
+                color = if (enabled) DividerColor else Color.Transparent,
+                shape = RoundedCornerShape(12.dp)
+            ),
+        shape = RoundedCornerShape(12.dp),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(gradientBrush),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = text,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = contentColor // Đổi màu chữ khi disable
+            )
+            if (showArrow) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Icon(
+                    imageVector = Icons.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = contentColor // Đổi màu icon khi disable
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Nút đăng nhập qua mạng xã hội.
+ * @param text Văn bản hiển thị.
+ * @param brand Loại thương hiệu (Google/Facebook) để hiển thị logo tương ứng.
+ */
+@Composable
+fun SocialAuthButton(
+    text: String,
+    brand: String,
+    onClick: () -> Unit,
+    enabled: Boolean = true, // Thêm tham số kiểm soát trạng thái
+    loading: Boolean = false  // Thêm tham số hiển thị loading
+) {
+    // Xác định màu sắc dựa trên trạng thái
+    val backgroundColor = if (enabled && !loading) SocialButtonLightColor else Color.LightGray
+    val contentAlpha = if (enabled && !loading) 1f else 0.5f
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            // Chặn click khi disabled hoặc đang loading
+            .clickable(enabled = enabled && !loading, onClick = onClick)
+            .background(backgroundColor, RoundedCornerShape(12.dp))
+            .border(1.dp, DividerColor, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        color = Color.Transparent // Tránh đè màu background của modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center // Căn giữa nội dung
+        ) {
+            if (loading) {
+                // Hiển thị vòng xoay khi đang xử lý token Google
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.Gray,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                val iconRes = when (brand.lowercase()) {
+                    PROVIDER_GOOGLE -> R.drawable.ic_google_logo
+                    else -> null
+                }
+
+                iconRes?.let {
+                    Icon(
+                        painter = painterResource(id = it),
+                        contentDescription = stringResource(R.string.logo, brand),
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Unspecified // Giữ nguyên màu gốc của logo Google
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = text,
+                    fontSize = 16.sp,
+                    color = Color.Black.copy(alpha = contentAlpha),
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}

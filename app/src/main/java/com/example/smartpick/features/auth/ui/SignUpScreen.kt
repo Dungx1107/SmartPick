@@ -28,6 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
+import com.example.smartpick.core.components.AuthDivider
+import com.example.smartpick.core.components.AuthPrimaryButton
+import com.example.smartpick.core.components.FieldLabel
+import com.example.smartpick.core.components.PasswordTextFieldLight
+import com.example.smartpick.core.components.SocialAuthButton
+import com.example.smartpick.core.components.StandardTextFieldLight
 import com.example.smartpick.core.theme.*
 import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
@@ -35,7 +41,6 @@ import com.example.smartpick.core.utils.Validator
 import com.example.smartpick.features.auth.data.performGoogleSignIn
 import com.example.smartpick.features.auth.viewmodel.AuthState
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import kotlinx.coroutines.coroutineScope
 
 /**
  * STATEFUL COMPOSABLE

@@ -38,9 +38,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
+import com.example.smartpick.core.components.AuthDivider
+import com.example.smartpick.core.components.AuthPrimaryButton
+import com.example.smartpick.core.components.FieldLabel
+import com.example.smartpick.core.components.PasswordTextFieldLight
+import com.example.smartpick.core.components.SocialAuthButton
+import com.example.smartpick.core.components.StandardTextFieldLight
 import com.example.smartpick.core.theme.BrightBackground
 import com.example.smartpick.core.theme.TextPrimary
 import com.example.smartpick.core.theme.TextSecondary
+import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
 import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
 import com.example.smartpick.features.auth.data.performGoogleSignIn
 import com.example.smartpick.features.auth.viewmodel.AuthState
@@ -86,6 +93,7 @@ fun LoginScreen(
             authViewModel.signInManual(email, password)
         },
         onNavigateToSignUp = onNavigateToSignUp,
+        isLoading = authState is AuthState.Loading,
         onGoogleSignInClick = {
             performGoogleSignIn(
                 context = context,
@@ -103,7 +111,8 @@ fun LoginScreen(
 fun LoginContent(
     onSignIn: (String, String) -> Unit,
     onNavigateToSignUp: () -> Unit,
-    onGoogleSignInClick: () -> Unit // Bắt event click
+    onGoogleSignInClick: () -> Unit, // Bắt event click
+    isLoading: Boolean,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -216,8 +225,9 @@ fun LoginContent(
 
         AuthPrimaryButton(
             text = stringResource(R.string.login),
-            showArrow = true,
-            onClick = { validateAndSubmit() }
+            showArrow = !isLoading, // Ẩn mũi tên khi đang load để hiện vòng xoay
+            onClick = { validateAndSubmit() },
+            enabled = !isLoading //Khi isLoading = true, enabled sẽ là false -> Nút bị khóa
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -225,10 +235,13 @@ fun LoginContent(
         AuthDivider()
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Nút Đăng nhập Google
         SocialAuthButton(
             text = stringResource(R.string.continue_with_google),
-            brand = stringResource(R.string.google),
-            onClick = onGoogleSignInClick // Thực thi hàm được truyền vào
+            brand = PROVIDER_GOOGLE,
+            onClick = onGoogleSignInClick,
+            loading = isLoading, // Tự động xoay khi authState là Loading
+            enabled = !isLoading  // Khóa nút khi đang xử lý bất kỳ tác vụ auth nào
         )
 
 
@@ -269,6 +282,7 @@ fun LoginScreenWhiteBluePreview() {
     LoginContent(
         onNavigateToSignUp = {},
         onGoogleSignInClick = {},
-        onSignIn = { _, _ -> }
+        onSignIn = { _, _ -> },
+        isLoading = false
     )
 }
