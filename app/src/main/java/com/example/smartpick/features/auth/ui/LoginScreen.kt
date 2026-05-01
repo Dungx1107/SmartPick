@@ -64,29 +64,38 @@ fun LoginScreen(
     authViewModel: AuthViewModel = hiltViewModel() // Hilt chỉ chạy ở đây
 ) {
     val authState by authViewModel.authState.collectAsState()
+
+    /* Lấy User tổng thể từ ViewModel.*/
+    val currentUser by authViewModel.currentUser.collectAsState()
+
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Success -> {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT
-                ).show()
-                onNavigateToHome()
-            }
-
-            is AuthState.Error -> {
-                val errorMessage = (authState as AuthState.Error).message
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG
-                ).show()
-            }
-
-            else -> {}
+    LaunchedEffect(authState, currentUser) {
+        if (currentUser != null) {
+            onNavigateToHome()
+            return@LaunchedEffect
         }
+            when (authState) {
+                is AuthState.Success -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT
+                    ).show()
+                    onNavigateToHome()
+                }
+
+                is AuthState.Error -> {
+                    val errorMessage = (authState as AuthState.Error).message
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG
+                    ).show()
+                }
+
+                else -> {}
+            }
+
     }
 
     // Truyền event xuống Stateless Composable
@@ -96,7 +105,7 @@ fun LoginScreen(
         LoginContent(
             onSignIn = { email, password -> authViewModel.signInManual(email, password) },
             onNavigateToSignUp = onNavigateToSignUp,
-            isLoading = authState is AuthState.Loading, // Vẫn truyền để disable nút
+            isLoading = authState is AuthState.Loading, //disable nút
             onGoogleSignInClick = {
                 performGoogleSignIn(
                     context = context,

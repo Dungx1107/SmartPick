@@ -3,7 +3,9 @@ package com.example.smartpick.features.auth.data
 import android.util.Log
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.network.SupabaseClient
+import com.example.smartpick.core.network.SupabaseClient.supabaseClient
 import com.example.smartpick.core.utils.Constants
+import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -11,6 +13,7 @@ import io.github.jan.supabase.gotrue.providers.builtin.IDToken
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -22,7 +25,9 @@ import javax.inject.Singleton
 class AuthRepository @Inject constructor() {
 
     private val supabase = SupabaseClient.supabaseClient
-
+    
+    // Luồng trạng thái session từ SDK
+    val sessionStatus: Flow<SessionStatus> = supabase.auth.sessionStatus
     /**
      * Hàm lấy thông tin user hiện tại từ Database
      */

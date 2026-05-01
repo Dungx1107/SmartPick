@@ -1,11 +1,15 @@
 package com.example.smartpick.core.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
@@ -23,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
@@ -148,3 +153,42 @@ fun PasswordTextFieldLight(
         )
     }
 }
+
+
+/**
+ * Preview
+ */
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewFieldLabel() {
+    FieldLabel(text = "Email")
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewStandardTextFieldLight() {
+    Column(modifier = Modifier.padding(16.dp)) {
+
+        // Normal
+        StandardTextFieldLight(
+            value = "nguyenvana@gmail.com",
+            onValueChange = {},
+            placeholder = "Nhập email",
+            leadingIcon = Icons.Default.Person
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Error state
+        StandardTextFieldLight(
+            value = "abc",
+            onValueChange = {},
+            placeholder = "Nhập email",
+            leadingIcon = Icons.Default.Person,
+            isError = true,
+            errorMessage = "Email không hợp lệ"
+        )
+    }
+}
+

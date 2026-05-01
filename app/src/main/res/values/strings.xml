@@ -47,4 +47,17 @@
     <string name="pass_hidden">••••••••</string>
     <string name="DangKiThanhCong">Đăng ký thành công! Kiểm tra Email để xác nhận.</string>
     <string name="DangXuLi">Đang xử lý...</string>
+    <string name="DangXuat">Đăng xuất</string>
+    <string name="smartpick_version_1_0_0_2026">SMARTPICK VERSION 1.0.0 • 2026</string>
+    <string name="ChinhSuaHoSo">Chỉnh sửa hồ sơ</string>
+    <string name="LichSuMuaHang">Lịch sử mua hàng</string>
+    <string name="XemDonHang">Xem lại các đơn hàng và theo dõi vận chuyển</string>
+    <string name="ThanhToan">Thanh toán</string>
+    <string name="QuanLiTaiChinh">Quản lý thẻ tín dụng và ví điện tử của bạn</string>
+    <string name="ThongBao">Thông báo</string>
+    <string name="TuyChinhCachNhanTinTuc">Tùy chỉnh cách bạn nhận tin tức từ ứng dụng</string>
+    <string name="HoTro">Hỗ trợ</string>
+    <string name="GiaiDapThacMac">Giải đáp thắc mắc và liên hệ CSKH</string>
+    <string name="HoVaTen">Họ và tên</string>
+    <string name="CapNhatThongTin">Cập nhật thông tin</string>
 </resources>
