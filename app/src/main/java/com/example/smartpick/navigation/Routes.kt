@@ -1,4 +1,4 @@
-package com.example.smartpick.core.navigation
+package com.example.smartpick.navigation
 
 sealed class Routes(val route: String) {
     object Login : Routes("login")

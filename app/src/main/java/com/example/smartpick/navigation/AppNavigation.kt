@@ -1,4 +1,4 @@
-package com.example.smartpick.core.navigation
+package com.example.smartpick.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -56,14 +56,12 @@ fun AppNavigation(
             }
         }
     }
-// NẾU ĐANG KHỞI TẠO: Hiện màn hình trắng hoặc Logo app
     if (isInitializing) {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = Color(0xFF1E3A8A))
-            // Có thể thêm Logo SmartPick ở đây cho xịn
         }
     } else {
         Scaffold(
@@ -117,75 +115,60 @@ fun AppNavigation(
                 startDestination = Routes.Login.route,
                 modifier = Modifier.padding(padding)
             ) {
-
-                composable(Routes.SignUp.route) {
+                // Sử dụng named argument 'route =' và dùng '_' cho tham số không dùng đến
+                composable(route = Routes.SignUp.route) {
                     SignUpScreen(
-                        onLoginClick = {
-                            navController.navigate(Routes.Login.route)
-                        },
+                        onLoginClick = { navController.navigate(Routes.Login.route) },
                         onNavigateToHome = {
-                            navController.navigate("home") {
-                                popUpTo("signup") { inclusive = true }
+                            navController.navigate(Routes.Home.route) {
+                                popUpTo(Routes.SignUp.route) { inclusive = true }
                             }
                         }
                     )
                 }
 
-                composable(Routes.Login.route) {
+                composable(route = Routes.Login.route) {
                     LoginScreen(
                         onNavigateToHome = {
                             navController.navigate(Routes.Home.route) {
-                                popUpTo(Routes.Login.route) {
-                                    inclusive = true
-                                }
+                                popUpTo(Routes.Login.route) { inclusive = true }
                             }
                         },
-                        onNavigateToSignUp = {
-                            navController.navigate(Routes.SignUp.route)
-                        }
+                        onNavigateToSignUp = { navController.navigate(Routes.SignUp.route) }
                     )
                 }
 
-                composable(Routes.Home.route) {
+                composable(route = Routes.Home.route) {
                     HomeScreenRoute()
                 }
 
-                composable(Routes.ChatBot.route) {
-                    ChatbotScreen()
-                }
-
-                composable(Routes.Saved.route) {
-                    SavedCollectionScreen()
-                }
-
-                composable(Routes.Profile.route) {
-                    ProfileScreen(navController)
-                }
-
-                composable(Routes.EditProfile.route) {
-                    EditProfileScreen(
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        }
+                // Các màn hình đơn giản khác cũng làm tương tự
+                composable(route = Routes.ChatBot.route) { ChatbotScreen() }
+                composable(route = Routes.Saved.route) {  SavedCollectionScreen() }
+                composable(route = Routes.Profile.route) {
+                    ProfileScreen(
+                        navController
                     )
                 }
+                composable(route = Routes.EditProfile.route) {
+                    EditProfileScreen(onNavigateBack = { navController.popBackStack() })
+                }
 
-
+                // Màn hình có tham số (PostDetail) - cần dùng 'entry' để lấy ID
                 composable(
                     route = Routes.PostDetail.route,
                     arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
                         type = NavType.StringType
                     })
-                ) { backStackEntry ->
-                    val postId =
-                        backStackEntry.arguments?.getString(Routes.PostDetail.ARG_POST_ID) ?: ""
+                ) { entry ->
+                    val postId = entry.arguments?.getString(Routes.PostDetail.ARG_POST_ID) ?: ""
                     PostDetailScreen(
                         postId = postId,
-                        onBackClick = { navController.popBackStack() })
+                        onBackClick = { navController.popBackStack() }
+                    )
                 }
 
-
-                composable(Routes.Feed.route) {
+                composable(route = Routes.Feed.route) {
                     HomeFeedScreen(
                         paddingValues = PaddingValues(0.dp),
                         onPostClick = { postId ->

@@ -56,7 +56,7 @@ fun SignUpScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var isGoogleLogin by remember { mutableStateOf(false) }
+    var isGoogleLogin by rememberSaveable { mutableStateOf(false) }
 
     // Xử lý các thông báo đẩy ra từ Server (Supabase) dựa trên trạng thái authState
     LaunchedEffect(authState) {
@@ -83,6 +83,7 @@ fun SignUpScreen(
     SignUpContent(
         isLoading = authState is AuthState.Loading,
         onSignUp = { email, pass, name, user, phone ->
+            isGoogleLogin = false // Reset về false khi đăng ký bằng email
             authViewModel.onSignUp(email, pass, name, user, phone)
         },
         onLoginClick = onLoginClick,

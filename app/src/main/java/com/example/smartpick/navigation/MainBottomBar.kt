@@ -1,4 +1,4 @@
-package com.example.smartpick.core.navigation
+package com.example.smartpick.navigation
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons

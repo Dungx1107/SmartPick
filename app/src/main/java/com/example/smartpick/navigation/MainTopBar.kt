@@ -1,4 +1,4 @@
-package com.example.smartpick.core.navigation
+package com.example.smartpick.navigation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

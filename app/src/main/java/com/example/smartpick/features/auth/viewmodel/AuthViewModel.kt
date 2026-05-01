@@ -36,9 +36,16 @@ class AuthViewModel @Inject constructor(
     private val _isInitializing = MutableStateFlow(true)
     val isInitializing = _isInitializing.asStateFlow()
 
+    private val _hasShownWelcomeToast = MutableStateFlow(false)
+    val hasShownWelcomeToast = _hasShownWelcomeToast.asStateFlow()
+
     init {
         // Tự động kiểm tra xem người dùng đã login từ trước chưa khi mở App
         checkExistingSession()
+    }
+
+    fun markWelcomeToastShown() {
+        _hasShownWelcomeToast.value = true
     }
 
     private fun checkExistingSession() {
@@ -78,6 +85,7 @@ class AuthViewModel @Inject constructor(
             authRepository.signOut()
             _currentUser.value = null
             _authState.value = AuthState.Idle
+            _hasShownWelcomeToast.value = false
         }
     }
 

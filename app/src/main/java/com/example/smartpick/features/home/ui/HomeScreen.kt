@@ -178,19 +178,24 @@ fun HomeScreenRoute(
     val user by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
     val isInitializing by authViewModel.isInitializing.collectAsState()
+    val hasShownWelcomeToast by authViewModel.hasShownWelcomeToast.collectAsState()
 
-    LaunchedEffect(user) {
-        if (!isInitializing && user == null) {
-            Toast.makeText(
-                context, context.getString(R.string.user_null),
-                Toast.LENGTH_LONG
-            ).show()
-        } else if (user != null) {
-            Toast.makeText(
-                context,
-                context.getString(R.string.nhan_duoc_user, user?.fullName),
-                Toast.LENGTH_SHORT
-            ).show()
+    LaunchedEffect(isInitializing, user) {
+        if (!isInitializing) {
+            if (user == null) {
+                Toast.makeText(
+                    context, context.getString(R.string.user_null),
+                    Toast.LENGTH_LONG
+                ).show()
+            } else if (!hasShownWelcomeToast) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.nhan_duoc_user, user?.fullName),
+                    Toast.LENGTH_SHORT
+                ).show()
+                // Đánh dấu đã hiển thị để lần sau quay lại Home không hiện nữa
+                authViewModel.markWelcomeToastShown()
+            }
         }
     }
     if (isInitializing) {

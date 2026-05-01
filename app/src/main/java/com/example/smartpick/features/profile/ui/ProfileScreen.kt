@@ -53,7 +53,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.navigation.Routes
+import com.example.smartpick.navigation.Routes
 import com.example.smartpick.core.theme.PageBg
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 
