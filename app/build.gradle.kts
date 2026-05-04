@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -108,9 +109,14 @@ dependencies {
     // Auth (Đăng nhập) và Postgrest (Lưu/Đọc Database)
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:gotrue-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
+
 
     // Ktor client (Supabase dùng cái này để gọi mạng)
-    implementation("io.ktor:ktor-client-android:2.3.8")
+    val ktorVersion = "2.3.8"
+    implementation("io.ktor:ktor-client-android:$ktorVersion")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-utils:$ktorVersion")
 
     // Kotlinx Serialization (Để biến JSON thành Object Kotlin)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")

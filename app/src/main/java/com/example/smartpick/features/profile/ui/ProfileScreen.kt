@@ -37,8 +37,6 @@ import com.example.smartpick.core.theme.ErrorRedBg
 import com.example.smartpick.core.theme.PageBg
 import com.example.smartpick.core.theme.TextMuted
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import com.example.smartpick.features.profile.ui.components.ProfileHeaderCard
-import com.example.smartpick.features.profile.ui.components.SettingsBentoGrid
 import com.example.smartpick.navigation.Routes
 
 // 1. Stateful Composable: Quản lý logic và dữ liệu từ Hilt/Navigation

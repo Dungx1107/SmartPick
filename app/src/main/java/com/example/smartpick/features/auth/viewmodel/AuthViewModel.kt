@@ -115,17 +115,6 @@ class AuthViewModel @Inject constructor(
     }
 
     /**
-     * Kết thúc phiên làm việc hiện tại và thu hồi các token xác thực.
-     */
-    fun logout() {
-        viewModelScope.launch {
-            authRepository.signOut()
-            _authState.value = AuthState.Idle
-            _hasShownWelcomeToast.value = false
-        }
-    }
-
-    /**
      * Xác thực thông qua Google OAuth Provider bằng ID Token.
      */
     fun signInWithGoogleToken(idToken: String) {
@@ -176,4 +165,28 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Kết thúc phiên làm việc hiện tại và thu hồi các token xác thực.
+     */
+    fun logout() {
+        viewModelScope.launch {
+            authRepository.signOut()
+            _authState.value = AuthState.Idle
+            _hasShownWelcomeToast.value = false
+        }
+    }
+
+    fun updateLocalAvatar(newAvatarUrl: String) {
+        _currentUser.value = _currentUser.value?.copy(avatarUrl = newAvatarUrl)
+    }
+
+    /**
+     * Cập nhật lại State cục bộ của User sau khi chỉnh sửa hồ sơ.
+     * Hàm này giúp giao diện (Profile, Home...) phản ứng và tải lại dữ liệu mới ngay lập tức.
+     */
+    fun updateCurrentUser(updatedUser: User) {
+        _currentUser.value = updatedUser
+    }
+
 }

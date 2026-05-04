@@ -60,4 +60,10 @@
     <string name="GiaiDapThacMac">Giải đáp thắc mắc và liên hệ CSKH</string>
     <string name="HoVaTen">Họ và tên</string>
     <string name="CapNhatThongTin">Cập nhật thông tin</string>
+    <string name="default_avatar">Default Avatar</string>
+    <string name="CapNhatThanhCong">Cập nhật thành công</string>
+    <string name="LoiCapNhat">Lỗi cập nhật: %1$s</string>
+    <string name="ChupAnhMoi">Chụp ảnh mới</string>
+    <string name="ChonTuThuVien">Chọn từ thư viện</string>
+    <string name="BanCanCapQuyenCamera">Bạn cần cấp quyền Camera để chụp ảnh</string>
 </resources>
