@@ -23,8 +23,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor() {
-
-    private val supabase = SupabaseClient.supabaseClient
+    private val supabase = supabaseClient
     
     // Luồng trạng thái session từ SDK
     val sessionStatus: Flow<SessionStatus> = supabase.auth.sessionStatus

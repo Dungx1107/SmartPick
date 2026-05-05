@@ -1,622 +1,116 @@
 package com.example.smartpick.features.home.ui
 
-import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.AddShoppingCart
-import androidx.compose.material.icons.outlined.Headphones
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Router
-import androidx.compose.material.icons.outlined.Speaker
-import androidx.compose.material.icons.outlined.Stars
-import androidx.compose.material.icons.outlined.TabletMac
-import androidx.compose.material.icons.outlined.Tv
-import androidx.compose.material.icons.outlined.Watch
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartpick.core.theme.AICyan
-import com.example.smartpick.core.theme.AccentBlue
-import com.example.smartpick.core.theme.BadgeOrange
-import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.core.theme.SurfaceCard
-import com.example.smartpick.core.theme.TextMuted
-import com.example.smartpick.core.theme.White
-import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
-import com.example.smartpick.core.components.LoadingScreen
+import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.theme.PageBg
 import com.example.smartpick.core.theme.TextPrimary
 import com.example.smartpick.core.theme.TextSecondary
-
-
-// ─── Data Models ──────────────────────────────────────────────────────────────
-data class Product(
-    val id: Int,
-    val brand: String,
-    val name: String,
-    val price: String,
-    val badge: String? = null,          // "AI CHOICE" | "TRENDING" | null
-    val imageDescription: String = "",   // placeholder label
-    val badgeColor: Color = AccentBlue,
-    val bgColor: Color = SurfaceCard,
-)
-
-data class Category(
-    val icon: ImageVector,
-    val label: String
-)
-
-// ─── Sample Data ──────────────────────────────────────────────────────────────
-val sampleProducts = listOf(
-    Product(
-        1,
-        "AUDIO MASTER",
-        "Tai nghe chống ồn Pro",
-        "5.490.000đ",
-        "AI CHOICE",
-        badgeColor = AccentBlue,
-        bgColor = Color(0xFF1E3A5F)
-    ),
-    Product(
-        2,
-        "LUMINA CORE",
-        "Tablet Đồ Họa AI",
-        "12.900.000đ",
-        "TRENDING",
-        badgeColor = BadgeOrange,
-        bgColor = Color(0xFF0F2035)
-    ),
-    Product(
-        3,
-        "HEALTH LAB",
-        "Đồng Hồ Lumina S2",
-        "4.150.000đ",
-        "AI CHOICE",
-        badgeColor = AccentBlue,
-        bgColor = SurfaceCard
-    ),
-    Product(
-        4,
-        "SMART HOME",
-        "Loa Trợ Lý Aura G1",
-        "2.890.000đ", null,
-        badgeColor = AccentBlue,
-        bgColor = SurfaceCard
-    ),
-)
-
-val sampleCategories = listOf(
-    Category(Icons.Outlined.Home, "SMART HOME"),
-    Category(Icons.Outlined.Headphones, "AUDIO"),
-    Category(Icons.Outlined.Watch, "WEARABLE"),
-    Category(Icons.Outlined.Tv, "TV & DISPLAY"),
-    Category(Icons.Outlined.Router, "NETWORK"),
-)
-
-// ─── Main Screen ──────────────────────────────────────────────────────────────
-@Composable
-fun HomeScreen(user: User) {
-    Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .background(PageBg)
-    ) {
-        Spacer(Modifier.height(12.dp))
-        SearchBar()
-
-        Spacer(Modifier.height(16.dp))
-
-        HeroBanner()
-
-        Spacer(Modifier.height(20.dp))
-
-        CategoryRow(sampleCategories)
-
-        Spacer(Modifier.height(24.dp))
-
-        RecommendedSection(sampleProducts)
-
-        Spacer(Modifier.height(24.dp))
-
-        AICuratorBanner()
-
-        Spacer(Modifier.height(24.dp))
-    }
-}
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
+import com.example.smartpick.features.home.ui.components.AICuratorBanner
+import com.example.smartpick.features.home.ui.components.HeroBanner
+import com.example.smartpick.features.home.ui.components.ProductCard
+import com.example.smartpick.features.home.ui.components.SearchBar
 
 @Composable
 fun HomeScreenRoute(
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+//    homeViewModel: HomeViewModel = hiltViewModel(), // ViewModel quản lý sản phẩm
+    products: List<Product> = emptyList()
 ) {
-    // Lắng nghe user từ StateFlow
     val user by authViewModel.currentUser.collectAsState()
-    val context = LocalContext.current
-    val isInitializing by authViewModel.isInitializing.collectAsState()
-    val hasShownWelcomeToast by authViewModel.hasShownWelcomeToast.collectAsState()
+//    val products by homeViewModel.products.collectAsState() // Giả sử có StateFlow products
 
-    LaunchedEffect(isInitializing, user) {
-        if (!isInitializing) {
-            if (user == null) {
-                Toast.makeText(
-                    context, context.getString(R.string.user_null),
-                    Toast.LENGTH_LONG
-                ).show()
-            } else if (!hasShownWelcomeToast) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.nhan_duoc_user, user?.fullName),
-                    Toast.LENGTH_SHORT
-                ).show()
-                // Đánh dấu đã hiển thị để lần sau quay lại Home không hiện nữa
-                authViewModel.markWelcomeToastShown()
-            }
-        }
-    }
-    if (isInitializing) {
-        LoadingScreen()
-    } else {
-        user?.let { currentUser ->    // Cách viết an toàn:
-            HomeScreen(user = currentUser) //user khác null thì HomeScreen mới được gọi
-        } ?: run {
-            Box( // Trong lúc đợi user (null), hiện màn hình chờ
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(color = Color(0xFF1E3A8A))
-            }
-        }
-    }
-}
-
-// ─── Search Bar ───────────────────────────────────────────────────────────────
-@Composable
-fun SearchBar() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(White)
-            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(28.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                Icons.Default.Search, contentDescription = null,
-                tint = TextMuted, modifier = Modifier.size(18.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                "Tìm kiếm sản phẩm thông minh...",
-                color = TextMuted, fontSize = 14.sp,
-                maxLines = 1, overflow = TextOverflow.Ellipsis
-            )
-        }
-        Icon(
-            Icons.Default.CameraAlt, contentDescription = "Camera search",
-            tint = TextSecondary, modifier = Modifier.size(20.dp)
+    user?.let { currentUser ->
+        HomeScreen(
+            user = currentUser,
+            products = products
         )
     }
 }
 
-
-// ─── Hero Banner ──────────────────────────────────────────────────────────────
 @Composable
-fun HeroBanner() {
-    Box(
+fun HomeScreen(
+    user: User,
+    products: List<Product> = emptyList()
+) {
+    LazyColumn(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .height(180.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(Color(0xFF0D2137), Color(0xFF1E5F99), Color(0xFF0A3D6B))
-                )
-            )
+            .fillMaxSize()
+            .background(PageBg),
+        contentPadding = PaddingValues(bottom = 24.dp)
     ) {
-        // Decorative circles
-        Box(
-            modifier = Modifier
-                .size(140.dp)
-                .offset(x = 200.dp, y = (-30).dp)
-                .background(
-                    Brush.radialGradient(listOf(Color(0x40009FFF), Color.Transparent)),
-                    CircleShape
-                )
-        )
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .offset(x = 240.dp, y = 60.dp)
-                .background(
-                    Brush.radialGradient(listOf(Color(0x3000C8FF), Color.Transparent)),
-                    CircleShape
-                )
-        )
-
-        // Text content
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
-                .padding(start = 24.dp, end = 140.dp)
-        ) {
-            Text(
-                "Kỷ Nguyên\nÂm Thanh AI",
-                color = White,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.ExtraBold,
-                lineHeight = 28.sp
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Trải nghiệm chất âm tinh tế được tinh chỉnh bởi trí tuệ nhân tạo Lumina Pro.",
-                color = Color(0xCCFFFFFF),
-                fontSize = 12.sp,
-                lineHeight = 18.sp
-            )
+        // 1. Thanh tìm kiếm
+        item {
             Spacer(Modifier.height(12.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(White)
-                    .padding(horizontal = 16.dp, vertical = 6.dp)
-            ) {
+            SearchBar()
+        }
+
+        // 2. Banner chính
+        item {
+            Spacer(Modifier.height(16.dp))
+            HeroBanner()
+        }
+
+        // 3. Tiêu đề mục gợi ý
+        item {
+            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
                 Text(
-                    "Khám phá ngay", color = AccentBlue,
-                    fontSize = 12.sp, fontWeight = FontWeight.SemiBold
+                    stringResource(R.string.GoiYChoBan),
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
                 )
+                user.fullName?.let {
+                    Text(
+                        stringResource(R.string.DuaTrenSoThich, it),
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
             }
         }
 
-        // Right side placeholder for product image
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = 16.dp)
-                .size(110.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color(0x33FFFFFF)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                Icons.Outlined.Headphones, contentDescription = null,
-                tint = Color(0x99FFFFFF), modifier = Modifier.size(48.dp)
-            )
-        }
-    }
-}
-
-// ─── Category Row ─────────────────────────────────────────────────────────────
-@Composable
-fun CategoryRow(categories: List<Category>) {
-    Row(
-        modifier = Modifier
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        categories.forEach { cat ->
-            CategoryItem(cat)
-        }
-    }
-}
-
-@Composable
-fun CategoryItem(category: Category) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(64.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(54.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFFEBF3FF))
-                .clickable { },
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                category.icon, contentDescription = category.label,
-                tint = AccentBlue, modifier = Modifier.size(26.dp)
-            )
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(
-            category.label,
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Medium,
-            color = TextSecondary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-// ─── Recommended Section ──────────────────────────────────────────────────────
-@Composable
-fun RecommendedSection(products: List<Product>) {
-    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    "Gợi ý cho bạn",
-                    fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimary
-                )
-                Text(
-                    "Dựa trên sở thích của bạn với trợ lý AI",
-                    fontSize = 12.sp, color = TextSecondary
-                )
-            }
-            Text(
-                "Xem tất cả",
-                fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = AccentBlue
-            )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        // 2-column grid
-        val rows = products.chunked(2)
-        rows.forEach { rowItems ->
+        // 4. Danh sách sản phẩm (Grid 2 cột)
+        items(products.chunked(2)) { rowItems ->
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 rowItems.forEach { product ->
-                    ProductCard(product, modifier = Modifier.weight(1f))
+                    ProductCard(product = product, modifier = Modifier.weight(1f))
                 }
-                // Fill empty slot if odd count
-                if (rowItems.size == 1) {
-                    Spacer(Modifier.weight(1f))
-                }
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-    }
-}
-
-@Composable
-fun ProductCard(product: Product, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier
-            .shadow(4.dp, RoundedCornerShape(16.dp))
-            .clickable { },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White)
-    ) {
-        Column {
-            // Image area
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .background(
-                        product.bgColor,
-                        RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                // Badge
-                product.badge?.let { badge ->
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(product.badgeColor)
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (badge == stringResource(R.string.ai_choice)) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .background(AICyan, CircleShape)
-                                )
-                                Spacer(Modifier.width(3.dp))
-                            } else {
-                                Icon(
-                                    Icons.Default.Bolt, contentDescription = null,
-                                    tint = White, modifier = Modifier.size(10.dp)
-                                )
-                                Spacer(Modifier.width(2.dp))
-                            }
-                            Text(
-                                badge, color = White, fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-
-                // Product image placeholder
-                val icon = when {
-                    product.brand.contains(stringResource(R.string.audio)) -> Icons.Outlined.Headphones
-                    product.brand.contains(stringResource(R.string.health)) -> Icons.Outlined.Watch
-                    product.brand.contains(stringResource(R.string.smart)) -> Icons.Outlined.Speaker
-                    else -> Icons.Outlined.TabletMac
-                }
-                Icon(
-                    icon, contentDescription = product.name,
-                    tint = if (product.bgColor == SurfaceCard) Color(0xFF9CA3AF) else Color(
-                        0x99FFFFFF
-                    ),
-                    modifier = Modifier.size(64.dp)
-                )
-            }
-
-            // Product info
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(
-                    product.brand,
-                    fontSize = 9.sp, fontWeight = FontWeight.SemiBold,
-                    color = TextMuted, letterSpacing = 0.5.sp
-                )
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    product.name,
-                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary, maxLines = 2, lineHeight = 18.sp
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        product.price,
-                        fontSize = 14.sp, fontWeight = FontWeight.Bold,
-                        color = AccentBlue
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFFEBF3FF))
-                            .clickable { },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Outlined.AddShoppingCart,
-                            contentDescription = "Add to cart",
-                            tint = AccentBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
+                if (rowItems.size == 1) Spacer(Modifier.weight(1f))
             }
         }
-    }
-}
 
-// ─── AI Curator Banner ────────────────────────────────────────────────────────
-@Composable
-fun AICuratorBanner() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xFFEBF3FF))
-    ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Text(
-                "Tìm kiếm bằng AI\nCurator?",
-                fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
-                color = AccentBlue, lineHeight = 26.sp
-            )
-            Spacer(Modifier.height(10.dp))
-            Text(
-                "Hãy để trí tuệ nhân tạo của Lumina giúp bạn tìm thấy sản phẩm hoàn hảo chỉ qua một cuộc trò chuyện ngắn.",
-                fontSize = 13.sp, color = TextSecondary, lineHeight = 20.sp
-            )
-            Spacer(Modifier.height(16.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(
-                        Brush.horizontalGradient(listOf(Color(0xFF1A4FA0), AccentBlue))
-                    )
-                    .clickable { }
-                    .padding(horizontal = 20.dp, vertical = 12.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Default.AutoAwesome, contentDescription = null,
-                        tint = White, modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "Bắt đầu ngay", color = White,
-                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Star field placeholder
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                Color(0xFF071629),
-                                Color(0xFF0D2B4A),
-                                Color(0xFF071629)
-                            )
-                        )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Outlined.Stars,
-                    contentDescription = null,
-                    tint = AICyan,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
+        // 5. Banner AI Curator
+        item {
+            Spacer(Modifier.height(24.dp))
+            AICuratorBanner()
         }
     }
 }
@@ -626,6 +120,41 @@ fun AICuratorBanner() {
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun HomeScreenPreview() {
+    val mockProducts = listOf(
+        Product(
+            id = "1",
+            name = "Tai nghe chống ồn WH-1000XM5",
+            branch = "SONY",
+            price = 8490000.0,
+            category = "Audio",
+            imageUrl = null
+        ),
+        Product(
+            id = "2",
+            name = "iPad Pro M4 11 inch (2024)",
+            branch = "APPLE",
+            price = 28990000.0,
+            category = "Tablet",
+            imageUrl = null
+        ),
+        Product(
+            id = "3",
+            name = "Đồng hồ thông minh Watch S3",
+            branch = "XIAOMI",
+            price = 3590000.0,
+            category = "Wearable",
+            imageUrl = null
+        ),
+        Product(
+            id = "4",
+            name = "Loa Bluetooth Aura Studio 4",
+            branch = "HARMAN KARDON",
+            price = 6990000.0,
+            category = "Smart Home",
+            imageUrl = null
+        )
+    )
+
     val sampleUser = User(
         id = "123",
         fullName = "Nguyễn Xuân Dũng",
@@ -634,6 +163,10 @@ fun HomeScreenPreview() {
         avatarUrl = "https://example.com/avatar.jpg" // Có thể để null nếu chưa có ảnh mẫu
     )
     MaterialTheme {
-        HomeScreen(user = sampleUser) // Nạp User giả vào đây
+        HomeScreen(
+            user = sampleUser,
+            products = mockProducts // Nạp User giả vào đây
+        )
+
     }
 }

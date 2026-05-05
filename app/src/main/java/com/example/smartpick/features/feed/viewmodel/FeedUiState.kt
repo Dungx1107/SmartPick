@@ -1,4 +1,4 @@
-package com.example.smartpick.features.feed.ui
+package com.example.smartpick.features.feed.viewmodel
 
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User

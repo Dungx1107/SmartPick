@@ -66,4 +66,22 @@
     <string name="ChupAnhMoi">Chụp ảnh mới</string>
     <string name="ChonTuThuVien">Chọn từ thư viện</string>
     <string name="BanCanCapQuyenCamera">Bạn cần cấp quyền Camera để chụp ảnh</string>
+    <string name="KhamPhaNgay">Khám phá ngay</string>
+    <string name="KyNguyenAmThanhAI">Kỷ Nguyên\nÂm Thanh AI</string>
+    <string name="TimKiemSanPham">Tìm kiếm sản phẩm...</string>
+    <string name="TraiNghiemTinhTeAI">Trải nghiệm chất âm tinh tế được tinh chỉnh bởi trí tuệ nhân tạo.</string>
+    <string name="GoiYChoBan">Gợi ý cho bạn</string>
+    <string name="DuaTrenSoThich">Dựa trên sở thích của %1$s</string>
+    <string name="TacGia">Tác giả</string>
+    <string name="tra_loi">Trả lời</string>
+    <string name="VietBinhLuan">Viết bình luận...</string>
+    <string name="smartpick_user">SmartPick User</string>
+    <string name="thich">Thích</string>
+    <string name="BinhLuan">Bình luận</string>
+    <string name="ChiaSe">Chia sẻ</string>
+    <string name="BanMuonChiaSeSanPhamGi">Bạn muốn chia sẻ sản phẩm gì?</string>
+    <string name="AnhVideo">Ảnh/Video</string>
+    <string name="BaiViet">Bài viết</string>
+    <string name="back">Back</string>
+    <string name="create_post">Create Post</string>
 </resources>

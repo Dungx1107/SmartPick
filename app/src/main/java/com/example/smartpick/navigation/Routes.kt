@@ -10,6 +10,8 @@ sealed class Routes(val route: String) {
     object EditProfile : Routes("edit_profile")
     object SignUp : Routes("sign_up")
 
+    object CreatePost : Routes("create_post")
+
     object Notifications : Routes("notifications")
 
     object PostDetail : Routes("post_detail/{postId}") {

@@ -24,16 +24,18 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.smartpick.R
+import com.example.smartpick.core.utils.NavigationUtils.shouldShowBottomBar
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.chatbot.ui.ChatbotScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
-import com.example.smartpick.features.feed.ui.HomeFeedScreen
-import com.example.smartpick.features.home.ui.HomeScreenRoute
+import com.example.smartpick.features.feed.ui.FeedScreen
+import com.example.smartpick.features.feed.ui.components.CreatePostScreen
+import com.example.smartpick.features.feed.ui.components.PostDetailScreen
 import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.EditProfileScreen
-import com.example.smartpick.features.feed.ui.PostDetailScreen
+import com.example.smartpick.features.home.ui.HomeScreenRoute
 
 @Composable
 fun AppNavigation(
@@ -66,12 +68,7 @@ fun AppNavigation(
     } else {
         Scaffold(
             topBar = {
-                if (currentRoute != Routes.Login.route
-                    && currentRoute != Routes.EditProfile.route
-                    && currentRoute != Routes.SignUp.route
-
-                ) { // Chỉ hiện TopBar nếu không phải màn Login
-
+                if (shouldShowBottomBar(currentRoute)) {
                     MainTopBar(
                         onMenuClick = {
                             // TODO: Mở navigation drawer
@@ -82,6 +79,7 @@ fun AppNavigation(
                             Routes.ChatBot.route -> stringResource(R.string.ai_curator)
                             Routes.Saved.route -> stringResource(R.string.saved)
                             Routes.Profile.route -> stringResource(R.string.profile)
+                            Routes.CreatePost.route -> stringResource(R.string.create_post)
                             else -> null
                         },
                         showCartBadge = currentRoute == Routes.Home.route // Chỉ hiện tag AI ASSISTANT ở màn Home
@@ -89,10 +87,7 @@ fun AppNavigation(
                 }
             },
             bottomBar = {
-                if (currentRoute != Routes.Login.route
-                    && currentRoute != Routes.EditProfile.route
-                    && currentRoute != Routes.SignUp.route
-                ) {
+                if (shouldShowBottomBar(currentRoute)) {
                     MainBottomBar(
                         navController = navController,
                         onNavigate = { route ->
@@ -115,7 +110,6 @@ fun AppNavigation(
                 startDestination = Routes.Login.route,
                 modifier = Modifier.padding(padding)
             ) {
-                // Sử dụng named argument 'route =' và dùng '_' cho tham số không dùng đến
                 composable(route = Routes.SignUp.route) {
                     SignUpScreen(
                         onLoginClick = { navController.navigate(Routes.Login.route) },
@@ -144,7 +138,7 @@ fun AppNavigation(
 
                 // Các màn hình đơn giản khác cũng làm tương tự
                 composable(route = Routes.ChatBot.route) { ChatbotScreen() }
-                composable(route = Routes.Saved.route) {  SavedCollectionScreen() }
+                composable(route = Routes.Saved.route) { SavedCollectionScreen() }
                 composable(route = Routes.Profile.route) {
                     ProfileScreen(
                         navController
@@ -154,7 +148,6 @@ fun AppNavigation(
                     EditProfileScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
-                // Màn hình có tham số (PostDetail) - cần dùng 'entry' để lấy ID
                 composable(
                     route = Routes.PostDetail.route,
                     arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
@@ -162,20 +155,31 @@ fun AppNavigation(
                     })
                 ) { entry ->
                     val postId = entry.arguments?.getString(Routes.PostDetail.ARG_POST_ID) ?: ""
-                    PostDetailScreen(
-                        postId = postId,
-                        onBackClick = { navController.popBackStack() }
-                    )
+//                    PostDetailScreen(
+//                        postId = postId,
+//                        onBackClick = { navController.popBackStack() }
+//                    )
                 }
 
                 composable(route = Routes.Feed.route) {
-                    HomeFeedScreen(
+                    FeedScreen(
                         paddingValues = PaddingValues(0.dp),
                         onPostClick = { postId ->
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
                         onCommentClick = { postId ->
                             navController.navigate(Routes.Comments.createRoute(postId))
+                        },
+                        onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
+                    )
+                }
+
+                composable(route = Routes.CreatePost.route) {
+                    CreatePostScreen(
+                        currentUserAvatar = currentUser?.avatarUrl,
+                        currentUserName = currentUser?.fullName ?: "",
+                        onClose = { navController.popBackStack() },
+                        onSubmit = { content, product ->
                         }
                     )
                 }

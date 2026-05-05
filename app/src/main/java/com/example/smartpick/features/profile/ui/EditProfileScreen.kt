@@ -318,7 +318,7 @@ fun EditProfileContent(
             ) {
                 ProfileAvatar(
                     avatarUrl = avatarUrl,
-                    selectedImage = selectedImage
+                    selectedImage = selectedImage,
                 )
 
                 if (isUploading) {

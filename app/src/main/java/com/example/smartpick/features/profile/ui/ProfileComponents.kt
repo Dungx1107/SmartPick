@@ -27,6 +27,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -40,17 +41,21 @@ import com.example.smartpick.core.theme.*
 fun ProfileAvatar(
     avatarUrl: String?,
     selectedImage: Any? = null,
-    modifier: Modifier = Modifier
+    size: Dp = 100.dp
 ) {
+    val hasImage = selectedImage != null || !avatarUrl.isNullOrEmpty()
+
     Box(
-        modifier = modifier
-            .size(100.dp)
+        modifier = Modifier
+            .size(size)
             .clip(CircleShape)
             .border(3.dp, White.copy(alpha = 0.4f), CircleShape)
-            .background(White.copy(alpha = 0.2f)),
+            .background(White.copy(alpha = 0.2f))
+            .border(2.dp, SmartPickColor.copy(alpha = 0.3f), CircleShape)
+            .background(if (hasImage) Color.White else Color(0xFFF1F5F9)),
         contentAlignment = Alignment.Center
     ) {
-        val imageModel = selectedImage ?: avatarUrl
+        val imageModel = selectedImage ?: avatarUrl ?: Icons.Default.Person
 
         if (avatarUrl != null) {
             AsyncImage(
@@ -64,13 +69,14 @@ fun ProfileAvatar(
         } else {
             Icon(
                 imageVector = Icons.Default.Person,
-                contentDescription = stringResource(R.string.default_avatar),
-                tint = White,
-                modifier = Modifier.size(48.dp)
+                contentDescription = null,
+                modifier = Modifier.size(size * 0.6f),
+                tint = Color(0xFF94A3B8)
             )
         }
     }
 }
+
 @Composable
 fun CameraBadgeButton(
     onClick: () -> Unit,
@@ -93,6 +99,7 @@ fun CameraBadgeButton(
         )
     }
 }
+
 @Composable
 fun ProfileHeaderCard(
     user: User?,
@@ -124,7 +131,7 @@ fun ProfileHeaderCard(
                     ?: stringResource(R.string.user),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = White
+                color = White,
             )
 
             // Email
@@ -273,6 +280,9 @@ fun ProfileTextField(
         singleLine = true
     )
 }
+
+
+// ----------------------------------- PREVIEW --------------------------------------------------
 
 @Preview(showBackground = true)
 @Composable
