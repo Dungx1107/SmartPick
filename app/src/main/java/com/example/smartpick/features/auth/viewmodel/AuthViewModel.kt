@@ -1,5 +1,6 @@
 package com.example.smartpick.features.auth.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.User
@@ -77,11 +78,13 @@ class AuthViewModel @Inject constructor(
                         _currentUser.value = user
                         _isInitializing.value = false
                     }
+
                     is SessionStatus.NotAuthenticated -> {
                         // Reset trạng thái người dùng về null khi phiên kết thúc hoặc không tồn tại
                         _currentUser.value = null
                         _isInitializing.value = false
                     }
+
                     else -> {
                         // Xử lý các trạng thái trung gian khác từ SDK nếu cần
                     }
@@ -142,9 +145,14 @@ class AuthViewModel @Inject constructor(
     fun onSignUp(email: String, pass: String, name: String, user: String, phone: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
+
+            // 1. Kiểm tra tính khả dụng của Email và Username
             val availabilityResult = authRepository.checkAvailability(user, email)
 
             availabilityResult.onSuccess { response ->
+                // Log để debug chính xác dữ liệu từ Database trả về
+                Log.d("AUTH_DEBUG", "Kết quả check: username_taken=${response.usernameTaken}, email_taken=${response.emailTaken}")
+
                 if (response.emailTaken) {
                     _authState.value = AuthState.Error(Constants.ValidationError.EMAIL_ALREADY_EXISTS)
                     return@launch
@@ -154,14 +162,20 @@ class AuthViewModel @Inject constructor(
                     return@launch
                 }
 
+                // 2. Chỉ khi không trùng mới tiến hành đăng ký
                 val result = authRepository.signUpManual(email, pass, name, user, phone)
                 result.onSuccess {
                     _authState.value = AuthState.Success
                 }.onFailure { exception ->
+                    // Phân loại lỗi đăng ký (Lỗi SQL, lỗi server...)
                     _authState.value = AuthState.Error(exception.message ?: "Đăng ký thất bại")
                 }
-            }.onFailure {
-                _authState.value = AuthState.Error("Lỗi kết nối hệ thống")
+
+            }.onFailure { error ->
+                // QUAN TRỌNG: Nếu vào đây nghĩa là lỗi MẠNG/DNS (Unable to resolve host)
+                // Tuyệt đối không báo "Username đã tồn tại" tại đây
+                Log.e("AUTH", "Lỗi kết nối khi check trùng lặp: ${error.message}")
+                _authState.value = AuthState.Error("Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.")
             }
         }
     }

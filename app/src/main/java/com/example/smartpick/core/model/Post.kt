@@ -1,10 +1,10 @@
 package com.example.smartpick.core.model
 
 data class Post(
-    val id:String,
-    val idUser:String,
-    val content:String?=null,
-    val createAt:String,
-    val images:List<String> = emptyList(),
-
+    val id: String = "",
+    val userId: String,
+    val productId: String? = null,
+    val content: String? = null,
+    val createdAt: String = "",
+    val mediaUrls: List<String> = emptyList() // Chứa link ảnh/video đính kèm của bài đăng
 )

@@ -9,7 +9,7 @@ data class User(
     val email: String? = null,
     val username: String? = null,
 
-    @SerialName("fullname")
+    @SerialName("full_name")
     val fullName: String? = null,
 
     @SerialName("avatar_url")

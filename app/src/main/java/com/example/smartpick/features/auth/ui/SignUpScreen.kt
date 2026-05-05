@@ -327,8 +327,7 @@ fun SignUpContent(
         // Hiển thị lớp phủ Loading khi isLoading = true
         if (isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier = Modifier.fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {

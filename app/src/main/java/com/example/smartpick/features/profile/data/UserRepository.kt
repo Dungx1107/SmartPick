@@ -1,5 +1,12 @@
 package com.example.smartpick.features.profile.data
 
+import com.example.smartpick.core.utils.Constants.TABLE_USERS
+import com.example.smartpick.core.utils.Constants.UserMetadata.AVATARS
+import com.example.smartpick.core.utils.Constants.UserMetadata.AVATAR_URL
+import com.example.smartpick.core.utils.Constants.UserMetadata.EMAIL
+import com.example.smartpick.core.utils.Constants.UserMetadata.FULL_NAME
+import com.example.smartpick.core.utils.Constants.UserMetadata.PHONE_NUMBER
+import com.example.smartpick.core.utils.Constants.UserMetadata.USERNAME
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.storage.storage
@@ -19,7 +26,7 @@ class UserRepository @Inject constructor(
     suspend fun uploadAvatar(userId: String, imageBytes: ByteArray): String {
 
         // Lấy reference tới bucket "avatars" trên Supabase Storage
-        val bucket = supabase.storage.from("avatars")
+        val bucket = supabase.storage.from(AVATARS)
 
         /* Tạo tên file duy nhất:
          - gồm userId
@@ -46,10 +53,10 @@ class UserRepository @Inject constructor(
      */
     suspend fun updateUserAvatar(userId: String, newUrl: String) {
         // Gọi tới bảng "users"
-        supabase.from("users").update(
+        supabase.from(TABLE_USERS).update(
             // Dữ liệu cần update:
             // set cột avatar_url = newUrl
-            mapOf("avatar_url" to newUrl)
+            mapOf(AVATAR_URL to newUrl)
         ) {
             // Điều kiện WHERE id = userId
             filter {
@@ -72,14 +79,14 @@ class UserRepository @Inject constructor(
         val updateData = mutableMapOf<String, String>()
 
         // Chỉ thêm avatar_url vào map nếu nó không null
-        avatarUrl?.let { updateData["avatar_url"] = it }
+        avatarUrl?.let { updateData[AVATAR_URL] = it }
 
-        updateData["fullname"] = fullName
-        updateData["username"] = username
-        updateData["phone_number"] = phone
-        updateData["email"] = email
+        updateData[FULL_NAME] = fullName
+        updateData[USERNAME] = username
+        updateData[PHONE_NUMBER] = phone
+        updateData[EMAIL] = email
 
-        supabase.from("users").update(updateData) {
+        supabase.from(TABLE_USERS).update(updateData) {
             filter { eq("id", userId) }
         }
     }

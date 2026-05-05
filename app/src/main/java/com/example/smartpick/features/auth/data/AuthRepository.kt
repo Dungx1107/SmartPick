@@ -1,6 +1,7 @@
 package com.example.smartpick.features.auth.data
 
 import android.util.Log
+import com.example.smartpick.BuildConfig
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.network.SupabaseClient
 import com.example.smartpick.core.network.SupabaseClient.supabaseClient
@@ -13,6 +14,7 @@ import io.github.jan.supabase.gotrue.providers.builtin.IDToken
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
@@ -35,16 +37,29 @@ class AuthRepository @Inject constructor() {
             // 1. Kiểm tra xem Supabase Auth có session nào đang chạy không
             val authUser = supabase.auth.currentUserOrNull() ?: return@withContext null
 
-            // 2. Lấy data từ bảng users khớp với ID của Auth
-            val result = supabase.postgrest["users"]
-                .select {
-                    filter {
-                        eq("id", authUser.id)
-                    }
-                }
-                .decodeSingle<User>()
+            // Thử lấy dữ liệu tối đa 3 lần nếu chưa thấy trong DB
+            var result: User? = null
+            repeat(3) { i ->
+                result = try {
+                    supabase.postgrest["users"]
+                        .select { filter { eq("id", authUser.id) } }
+                        .decodeSingle<User>()
+                } catch (e: Exception) { null }
 
-            Log.d("AUTH", "Đã lấy được user hiện tại: ${result.fullName}")
+                if (result != null) return@withContext result
+                delay(500) // Đợi 0.5s trước khi thử lại
+            }
+
+            // 2. Lấy data từ bảng users khớp với ID của Auth
+//            val result = supabase.postgrest["users"]
+//                .select {
+//                    filter {
+//                        eq("id", authUser.id)
+//                    }
+//                }
+//                .decodeSingle<User>()
+//            Log.d("AUTH", "Đã lấy được user hiện tại: ${result.fullName}")
+
             return@withContext result
         } catch (e: Exception) {
             Log.e("AUTH", "Lỗi khi lấy user hiện tại: ${e.message}")
@@ -65,9 +80,6 @@ class AuthRepository @Inject constructor() {
              * tránh block luồng chính của UI
              */
             try {
-                // lay instance Supabase da khoi tao san (singleton)
-                val supabaseClient = SupabaseClient.supabaseClient
-
                 /**
                  * Bước 1: Đăng nhập Supabase bằng ID token từ Google
                  * signInWith: phương thức đăng nhập với các provider
@@ -155,25 +167,30 @@ class AuthRepository @Inject constructor() {
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             supabase.auth.signUpWith(Email) {
-                this.email = email
-                password = pass
+                this.email = email.trim()
+                password = pass.trim()
                 data = buildJsonObject {
-                    put(Constants.UserMetadata.FULL_NAME, name)
-                    put(Constants.UserMetadata.USERNAME, user)
-                    put(Constants.UserMetadata.PHONE_NUMBER, phone)
+                    put(Constants.UserMetadata.FULL_NAME.trim(), name)
+                    put(Constants.UserMetadata.USERNAME.trim(), user)
+                    put(Constants.UserMetadata.PHONE_NUMBER.trim(), phone)
                 }
             }
             Result.success(Unit)
         } catch (e: Exception) {
-            val errorMsg = when {
-                // Lỗi email đã tồn tại (Supabase trả về 400 hoặc 422)
-                e.message?.contains("already registered", ignoreCase = true) == true ->
-                    "Email này đã được sử dụng."
-                // Lỗi trùng Username từ bảng public.users
-                e.message?.contains("duplicate key", ignoreCase = true) == true ->
-                    "Username này đã tồn tại, vui lòng chọn tên khác."
+            val message = e.message ?: ""
+            Log.e("AUTH_ERROR", "Raw error: $message") // In log để xem lỗi thật từ Supabase
 
-                else -> e.message ?: "Lỗi đăng ký không xác định"
+            val errorMsg = when {
+                message.contains("already registered", ignoreCase = true) ->
+                    "Email này đã được đăng ký bởi một tài khoản khác."
+
+                message.contains("duplicate key", ignoreCase = true) ->
+                    "Tên đăng nhập (Username) đã có người sử dụng."
+
+                message.contains("Network", ignoreCase = true) ->
+                    "Lỗi kết nối mạng, vui lòng thử lại."
+
+                else -> "Đăng ký thất bại: $message"
             }
             Result.failure(Exception(errorMsg))
         }
@@ -183,6 +200,7 @@ class AuthRepository @Inject constructor() {
     suspend fun checkAvailability(username: String, email: String):
             Result<AvailabilityResponse> = withContext(Dispatchers.IO) {
         try {
+            Log.d("AUTH_DEBUG", "Đang kết nối tới: ${BuildConfig.SUPABASE_URL}")
             val response = supabase.postgrest.rpc(
                 function = "check_user_availability",
                 parameters = mapOf(

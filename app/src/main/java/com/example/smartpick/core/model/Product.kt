@@ -1,10 +1,13 @@
 package com.example.smartpick.core.model
-
 data class Product(
-    val id: String,
+    val id: String = "",
+    val ownerId: String,
     val name: String,
-    val branch: String,
-    val price: Double? = 0.0,
+    val brand: String? = null,
+    val price: Double = 0.0,
     val category: String,
-    val imageUrl: String? = null
+    val imageUrls: List<String> = emptyList(),
+    val videoUrl: String? = null,
+    val status: String = "active"
 )
+

@@ -203,41 +203,41 @@ fun FeedScreenPreview() {
         avatarUrl = null
     )
 
-    val mockPosts = listOf(
-        Pair(
-            Post(
-                id = "p1",
-                idUser = "u1",
-                content = "Trải nghiệm tính năng SmartPick AI tìm kiếm sản phẩm qua hình ảnh cực mượt! 🚀",
-                createAt = "5 phút trước",
-                images = listOf("https://via.placeholder.com/600")
-            ),
-            mockUser
-        ),
-        Pair(
-            Post(
-                id = "p2",
-                idUser = "u2",
-                content = "Hôm nay tôi đang tìm kiếm một chiếc bàn phím cơ mới cho dự án Android.",
-                createAt = "1 giờ trước",
-                images = emptyList()
-            ),
-            User(id = "u2", fullName = "Lê Hải An", avatarUrl = null)
-        )
-    )
+//    val mockPosts = listOf(
+//        Pair(
+//            Post(
+//                id = "p1",
+//                idUser = "u1",
+//                content = "Trải nghiệm tính năng SmartPick AI tìm kiếm sản phẩm qua hình ảnh cực mượt! 🚀",
+//                createAt = "5 phút trước",
+//                images = listOf("https://via.placeholder.com/600")
+//            ),
+//            mockUser
+//        ),
+//        Pair(
+//            Post(
+//                id = "p2",
+//                idUser = "u2",
+//                content = "Hôm nay tôi đang tìm kiếm một chiếc bàn phím cơ mới cho dự án Android.",
+//                createAt = "1 giờ trước",
+//                images = emptyList()
+//            ),
+//            User(id = "u2", fullName = "Lê Hải An", avatarUrl = null)
+//        )
+//    )
 
     // 2. Render UI ở trạng thái Success
-    MaterialTheme {
-        FeedContent(
-            uiState = FeedUiState.Success(mockPosts),
-            paddingValues = PaddingValues(0.dp),
-            onPostClick = {},
-            onCommentClick = {},
-            onCreatePostClick = {},
-            currentUserAvatar = null
-
-        )
-    }
+//    MaterialTheme {
+//        FeedContent(
+//            uiState = FeedUiState.Success(mockPosts),
+//            paddingValues = PaddingValues(0.dp),
+//            onPostClick = {},
+//            onCommentClick = {},
+//            onCreatePostClick = {},
+//            currentUserAvatar = null
+//
+//        )
+//    }
 }
 
 @Preview(showBackground = true, name = "Feed Screen Loading")

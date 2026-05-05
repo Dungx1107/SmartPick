@@ -93,20 +93,20 @@ fun PostDetailScreenPreview() {
         avatarUrl = null
     )
 
-    val mockPost = Post(
-        id = "post1",
-        idUser = "user1",
-        content = "Góc setup làm việc tối giản với chiếc bàn nâng hạ và màn hình 4K. Trải nghiệm cực kỳ đã khi code Android 🚀",
-        createAt = "2 giờ trước",
-        images = listOf("https://via.placeholder.com/600")
-    )
+//    val mockPost = Post(
+//        id = "post1",
+//        idUser = "user1",
+//        content = "Góc setup làm việc tối giản với chiếc bàn nâng hạ và màn hình 4K. Trải nghiệm cực kỳ đã khi code Android 🚀",
+//        createAt = "2 giờ trước",
+//        images = listOf("https://via.placeholder.com/600")
+//    )
 
-    MaterialTheme {
-        PostDetailScreen(
-            post = mockPost,
-            user = mockUser,
-            onBackClick = {},
-            onCommentClick = {}
-        )
-    }
+//    MaterialTheme {
+//        PostDetailScreen(
+//            post = mockPost,
+//            user = mockUser,
+//            onBackClick = {},
+//            onCommentClick = {}
+//        )
+//    }
 }

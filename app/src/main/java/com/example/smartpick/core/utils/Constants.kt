@@ -10,9 +10,13 @@ object Constants {
 
     // Database Tables
     object UserMetadata {
-        const val FULL_NAME = "fullname"
+        const val FULL_NAME = "full_name"
         const val USERNAME = "username"
+        const val AVATAR_URL = "avatar_url"
         const val PHONE_NUMBER = "phone_number"
+        const val EMAIL = "email"
+        const val AVATARS = "avatars"
+
     }
 
     // Validation Messages

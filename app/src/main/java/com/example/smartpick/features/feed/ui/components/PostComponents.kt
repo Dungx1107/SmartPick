@@ -1,6 +1,7 @@
 package com.example.smartpick.features.feed.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
@@ -69,17 +70,17 @@ fun PostHeader(
     }
 }
 
-// ======================= CONTENT =======================
+// ======================= CONTENT OPTIMIZED =======================
 
 @Composable
 fun PostContent(
     content: String?,
-    images: List<String>,
+    mediaUrls: List<String>, // Đổi từ images sang mediaUrls
     maxLines: Int = Int.MAX_VALUE,
+    onMediaClick: (Int) -> Unit = {}, // Click vào để xem chi tiết ảnh/video
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
-
         content?.let {
             Text(
                 text = it,
@@ -92,17 +93,98 @@ fun PostContent(
             )
         }
 
-        if (images.isNotEmpty()) {
+        if (mediaUrls.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
+            MediaGrid(
+                mediaUrls = mediaUrls,
+                onMediaClick = onMediaClick
+            )
+        }
+    }
+}
 
-            AsyncImage(
-                model = images.first(),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(Color(0xFFF0F2F5)),
-                contentScale = ContentScale.FillWidth
+@Composable
+fun MediaGrid(
+    mediaUrls: List<String>,
+    onMediaClick: (Int) -> Unit
+) {
+    val count = mediaUrls.size
+
+    // Box này sẽ chứa layout dựa trên số lượng ảnh
+    Box(modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)) {
+        when (count) {
+            1 -> MediaItem(mediaUrls[0], Modifier.fillMaxWidth().aspectRatio(16f/9f)) { onMediaClick(0) }
+            2 -> Row(Modifier.fillMaxWidth().height(250.dp)) {
+                MediaItem(mediaUrls[0], Modifier.weight(1f).fillMaxHeight()) { onMediaClick(0) }
+                Spacer(Modifier.width(2.dp))
+                MediaItem(mediaUrls[1], Modifier.weight(1f).fillMaxHeight()) { onMediaClick(1) }
+            }
+            3 -> Row(Modifier.fillMaxWidth().height(300.dp)) {
+                MediaItem(mediaUrls[0], Modifier.weight(1f).fillMaxHeight()) { onMediaClick(0) }
+                Spacer(Modifier.width(2.dp))
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    MediaItem(mediaUrls[1], Modifier.weight(1f).fillMaxWidth()) { onMediaClick(1) }
+                    Spacer(Modifier.height(2.dp))
+                    MediaItem(mediaUrls[2], Modifier.weight(1f).fillMaxWidth()) { onMediaClick(2) }
+                }
+            }
+            else -> { // Trường hợp 4 ảnh hoặc nhiều hơn
+                Column(Modifier.fillMaxWidth().height(400.dp)) {
+                    MediaItem(mediaUrls[0], Modifier.weight(1f).fillMaxWidth()) { onMediaClick(0) }
+                    Spacer(Modifier.height(2.dp))
+                    Row(Modifier.weight(1f).fillMaxWidth()) {
+                        MediaItem(mediaUrls[1], Modifier.weight(1f).fillMaxHeight()) { onMediaClick(1) }
+                        Spacer(Modifier.width(2.dp))
+                        MediaItem(mediaUrls[2], Modifier.weight(1f).fillMaxHeight()) { onMediaClick(2) }
+                        Spacer(Modifier.width(2.dp))
+
+                        // Ảnh cuối cùng kèm lớp phủ nếu > 4
+                        Box(Modifier.weight(1f).fillMaxHeight()) {
+                            MediaItem(mediaUrls[3], Modifier.fillMaxSize()) { onMediaClick(3) }
+                            if (count > 4) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(Color.Black.copy(alpha = 0.5f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "+${count - 3}",
+                                        color = Color.White,
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MediaItem(
+    url: String,
+    modifier: Modifier,
+    onClick: () -> Unit
+) {
+    Box(modifier = modifier.clickable { onClick() }) {
+        AsyncImage(
+            model = url,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize().background(Color(0xFFF0F2F5)),
+            contentScale = ContentScale.Crop
+        )
+
+        // Hiện icon Play nếu là Video (Logic giả định đuôi file)
+        if (url.contains(".mp4") || url.contains("video")) {
+            Icon(
+                imageVector = Icons.Outlined.PlayCircle,
+                contentDescription = "Play Video",
+                tint = Color.White,
+                modifier = Modifier.size(48.dp).align(Alignment.Center)
             )
         }
     }
@@ -180,46 +262,10 @@ private fun PostActionButton(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PostHeaderPreview() {
-    val mockUser = com.example.smartpick.core.model.User(
-        id = "1",
-        email = "test@gmail.com",
-        fullName = "Nguyễn Văn A",
-        username = "nguyenvana",
-        avatarUrl = null,
-        phoneNumber = "0123456789"
-    )
-
-    PostHeader(
-        user = mockUser,
-        createdAt = "2 giờ trước"
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PostContentPreview() {
-    PostContent(
-        content = "Đây là một bài post demo rất dài để test UI hiển thị nội dung trong feed. Nhìn cho giống Facebook 😄",
-        images = listOf(
-            "https://via.placeholder.com/600x400"
-        )
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PostFooterPreview() {
-    PostFooterActions(
-        onCommentClick = {}
-    )
-}
-
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(showBackground = true, showSystemUi = true, name = "Full Post - 3 Media")
 @Composable
 fun FullPostPreview() {
+
     val mockUser = User(
         id = "1",
         email = "test@gmail.com",
@@ -241,16 +287,35 @@ fun FullPostPreview() {
         )
 
         PostContent(
-            content = "Đây là bài viết test full layout. UI cần nhìn giống Facebook để user quen thuộc.",
-            images = listOf("https://via.placeholder.com/600x400")
+            content = "Đây là bài viết test UI feed SmartPick. Layout đã tối ưu media grid 🔥",
+            mediaUrls = listOf(
+                "https://via.placeholder.com/600",
+                "https://via.placeholder.com/600",
+                "https://via.placeholder.com/600"
+            )
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Divider(color = Color(0xFFE4E6EB))
+        HorizontalDivider(color = Color(0xFFE4E6EB))
 
         PostFooterActions(
             onCommentClick = {}
         )
     }
+}
+
+@Preview(showBackground = true, name = "Media Grid - 5 items")
+@Composable
+fun MediaGridPreview() {
+    PostContent(
+        content = "Test nhiều ảnh để check overlay + layout",
+        mediaUrls = listOf(
+            "https://via.placeholder.com/600",
+            "https://via.placeholder.com/600",
+            "https://via.placeholder.com/600",
+            "https://via.placeholder.com/600",
+            "https://via.placeholder.com/600"
+        )
+    )
 }

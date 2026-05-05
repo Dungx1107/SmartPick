@@ -84,4 +84,5 @@
     <string name="BaiViet">Bài viết</string>
     <string name="back">Back</string>
     <string name="create_post">Create Post</string>
+    <string name="bulb_icon">Bulb Icon</string>
 </resources>

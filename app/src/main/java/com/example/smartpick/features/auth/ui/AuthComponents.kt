@@ -13,7 +13,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.smartpick.R
 import com.example.smartpick.core.theme.CardLight
 import com.example.smartpick.core.theme.DividerColor
 import com.example.smartpick.core.theme.LoginBlue
@@ -34,7 +36,7 @@ fun BulbIconLight() {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Icon(
                 imageVector = Icons.Filled.Lightbulb,
-                contentDescription = "Bulb Icon",
+                contentDescription = stringResource(R.string.bulb_icon),
                 modifier = Modifier.size(32.dp),
                 tint = LoginBlue
             )
