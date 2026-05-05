@@ -137,4 +137,7 @@ dependencies {
     ksp("com.google.dagger:hilt-android-compiler:2.51.1")
 
     implementation("io.coil-kt:coil-compose:2.6.0")
+    // Thêm thư viện hỗ trợ video cho Coil
+    implementation("io.coil-kt:coil-video:2.6.0")
+
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +37,9 @@ import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
 import com.example.smartpick.features.profile.ui.ProfileAvatar
+import coil.decode.VideoFrameDecoder
+import coil.request.ImageRequest
+import com.example.smartpick.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,12 +89,18 @@ fun CreatePostScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Tạo bài viết", fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        stringResource(R.string.TaoBaiViet),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onClose) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Đóng"
+                            contentDescription = stringResource(R.string.Dong)
                         )
                     }
                 },
@@ -116,7 +127,11 @@ fun CreatePostScreen(
                         modifier = Modifier.padding(end = 8.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
                     ) {
-                        Text("ĐĂNG", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(
+                            stringResource(R.string.Dang),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
@@ -168,7 +183,8 @@ fun CreatePostScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
-                            text = currentUser?.fullName ?: "Người dùng SmartPick",
+                            text = currentUser?.fullName
+                                ?: stringResource(R.string.NguoiDungSmartPick),
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp
                         )
@@ -178,7 +194,9 @@ fun CreatePostScreen(
                             shape = RoundedCornerShape(4.dp)
                         ) {
                             Text(
-                                text = if (selectedTabIndex == 1) "🛒 Đang bán hàng" else "🌎 Công khai",
+                                text = if (selectedTabIndex == 1) stringResource(R.string.DangBanHang) else stringResource(
+                                    R.string.CongKhai
+                                ),
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
@@ -269,23 +287,45 @@ fun CreatePostScreen(
                         items(selectedMediaUris) { uri ->
                             Box(modifier = Modifier.size(100.dp)) {
                                 AsyncImage(
-                                    model = uri,
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(uri)
+                                        .decoderFactory(VideoFrameDecoder.Factory())// Giúp hiện hình video
+                                        .crossfade(true)
+                                        .build(),
                                     contentDescription = null,
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop
                                 )
+                                // Nếu là video, hãy thêm một icon "Play" đè lên cho người dùng biết
+                                if (context.contentResolver.getType(uri)
+                                        ?.contains("video") == true
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayCircle,
+                                        contentDescription = null,
+                                        tint = Color.White.copy(alpha = 0.8f),
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .size(32.dp)
+                                    )
+                                }
                                 // Nút xóa ảnh đã chọn
                                 IconButton(
                                     onClick = { selectedMediaUris = selectedMediaUris - uri },
-                                    modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(24.dp)
                                 ) {
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = null,
                                         tint = Color.White,
-                                        modifier = Modifier.background(Color.Black.copy(0.5f), CircleShape)
+                                        modifier = Modifier.background(
+                                            Color.Black.copy(0.5f),
+                                            CircleShape
+                                        )
                                     )
                                 }
                             }

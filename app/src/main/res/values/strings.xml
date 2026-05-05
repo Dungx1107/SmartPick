@@ -85,4 +85,10 @@
     <string name="back">Back</string>
     <string name="create_post">Create Post</string>
     <string name="bulb_icon">Bulb Icon</string>
+    <string name="Dang">ĐĂNG</string>
+    <string name="TaoBaiViet">Tạo bài viết</string>
+    <string name="Dong">Đóng</string>
+    <string name="NguoiDungSmartPick">Người dùng SmartPick</string>
+    <string name="CongKhai">🌎 Công khai</string>
+    <string name="DangBanHang">🛒 Đang bán hàng</string>
 </resources>
