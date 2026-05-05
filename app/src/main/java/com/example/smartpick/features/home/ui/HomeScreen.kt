@@ -102,14 +102,14 @@ fun HomeScreen(
         }
 
         // 5. Social Feed (Danh sách bài đăng tích hợp sản phẩm)
-        items(posts, key = { it.first.id }) { (post, author, product) ->
+        items(posts, key = { it.first.id.toString() }) { (post, author, product) ->
             Box(modifier = Modifier.padding(bottom = 8.dp)) {
                 PostItem(
                     post = post,
                     user = author,
                     product = product,
-                    onPostClick = { onPostClick(post.id) },
-                    onCommentClick = { onCommentClick(post.id) }
+                    onPostClick = { onPostClick(post.id.toString()) },
+                    onCommentClick = { onCommentClick(post.id.toString()) }
                 )
             }
         }

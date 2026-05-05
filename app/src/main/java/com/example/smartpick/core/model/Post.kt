@@ -1,10 +1,14 @@
 package com.example.smartpick.core.model
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Post(
-    val id: String = "",
-    val userId: String,
-    val productId: String? = null,
+    val id: String? = null, // UUID sẽ do DB tự tạo hoặc mình tạo
+    @SerialName("user_id") val userId: String,
+    @SerialName("product_id") val productId: String? = null,
     val content: String? = null,
-    val createdAt: String = "",
-    val mediaUrls: List<String> = emptyList() // Chứa link ảnh/video đính kèm của bài đăng
+    @SerialName("media_urls") val mediaUrls: List<String> = emptyList(),
+    @SerialName("created_at") val createdAt: String? = null
 )

@@ -112,12 +112,12 @@ fun FeedContent(
                     }
 
                     // Danh sách bài viết
-                    items(uiState.posts, key = { it.first.id }) { (post, user) ->
+                    items(uiState.posts, key = { it.first.id.toString() }) { (post, user) ->
                         PostItem(
                             post = post,
                             user = user,
-                            onPostClick = { onPostClick(post.id) },
-                            onCommentClick = { onCommentClick(post.id) }
+                            onPostClick = { onPostClick(post.id.toString()) },
+                            onCommentClick = { onCommentClick(post.id.toString()) }
                         )
                     }
                 }

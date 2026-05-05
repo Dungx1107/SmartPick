@@ -42,7 +42,7 @@ fun PostItem(
                 .padding(vertical = 8.dp)
         ) {
             // 1. Thông tin người đăng
-            PostHeader(user = user, createdAt = post.createdAt)
+            PostHeader(user = user, createdAt = post.createdAt.toString())
 
             // 2. Nội dung văn bản và Lưới đa phương tiện (Ảnh/Video)
             // Sử dụng mediaUrls thay vì images cũ
@@ -58,7 +58,7 @@ fun PostItem(
                 Spacer(modifier = Modifier.height(8.dp))
                 ProductTagCard(
                     product = it,
-                    onClick = { onProductClick(it.id) }
+                    onClick = { onProductClick(it.id.toString()) }
                 )
             }
 

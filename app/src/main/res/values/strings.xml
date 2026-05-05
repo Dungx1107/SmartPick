@@ -91,4 +91,7 @@
     <string name="NguoiDungSmartPick">Người dùng SmartPick</string>
     <string name="CongKhai">🌎 Công khai</string>
     <string name="DangBanHang">🛒 Đang bán hàng</string>
+    <string name="ThaoLuan">Thảo luận</string>
+    <string name="DangBan">Đăng bán</string>
+    <string name="Anhr">Ảnh</string>
 </resources>

@@ -180,14 +180,6 @@ fun AppNavigation(
                         onClose = {
                             navController.popBackStack()
                         },
-                        onSubmit = { content, product, mediaUris ->
-                            // TODO: Xử lý logic đăng bài tại đây
-                            // 1. Upload mediaUris lên Supabase Storage để lấy List URL
-                            // 2. Nếu có 'product', gọi repository.createProduct(product) trước để lấy productId
-                            // 3. Gọi repository.createPost(content, productId, mediaUrls)
-
-                            navController.popBackStack()
-                        }
                     )
                 }
             }
