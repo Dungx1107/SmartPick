@@ -7,6 +7,8 @@ object Constants {
     // Social Providers
     const val PROVIDER_GOOGLE = "google"
     const val TABLE_USERS = "users"
+    const val TABLE_POSTS = "posts"
+    const val TABLE_PRODUCTS = "products"
 
     // Database Tables
     object UserMetadata {

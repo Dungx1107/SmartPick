@@ -24,6 +24,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,12 +34,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
-import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.theme.AccentBlue
 import com.example.smartpick.core.theme.DividerColor
@@ -82,53 +83,70 @@ fun FeedContent(
     onCommentClick: (String) -> Unit,
     onCreatePostClick: () -> Unit,
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(PageBg)
             .padding(paddingValues)
     ) {
-        when (uiState) {
-            is FeedUiState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
+        // --- PHẦN 1: KHU VỰC TẠO BÀI VIẾT (Nền Trắng) ---
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = White,
+            shadowElevation = 2.dp // Đổ bóng nhẹ
+        ) {
+            CreatePostPrompt(
+                avatarUrl = currentUserAvatar,
+                onClick = onCreatePostClick,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
 
-            is FeedUiState.Success -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        vertical = 8.dp,
-                        horizontal = 12.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+        Spacer(modifier = Modifier.height(8.dp))
 
-                    // Entry point: Khung đăng bài
-                    item {
-                        CreatePostPrompt(
-                            avatarUrl = currentUserAvatar,
-                            onClick = onCreatePostClick
-                        )
-                    }
+        Text(
+            text = "Dành cho bạn",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            color = MaterialTheme.colorScheme.onSurface
+        )
 
-                    // Danh sách bài viết
-                    items(uiState.posts, key = { it.first.id.toString() }) { (post, user) ->
-                        PostItem(
-                            post = post,
-                            user = user,
-                            onPostClick = { onPostClick(post.id.toString()) },
-                            onCommentClick = { onCommentClick(post.id.toString()) }
-                        )
+        Box(modifier = Modifier.weight(1f)) {
+            when (uiState) {
+                is FeedUiState.Loading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+
+                is FeedUiState.Success -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            vertical = 8.dp,
+                            horizontal = 12.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Danh sách bài viết
+                        items(uiState.posts, key = { it.first.id.toString() }) { (post, user) ->
+                            PostItem(
+                                post = post,
+                                user = user,
+                                onPostClick = { onPostClick(post.id.toString()) },
+                                onCommentClick = { onCommentClick(post.id.toString()) }
+                            )
+                        }
+
                     }
                 }
-            }
 
-            is FeedUiState.Error -> {
-                Text(
-                    text = uiState.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                is FeedUiState.Error -> {
+                    Text(
+                        text = uiState.message,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
         }
     }
@@ -192,53 +210,6 @@ private fun CreatePostPrompt(
     }
 }
 
-
-@Preview(showBackground = true, name = "Feed Screen Success")
-@Composable
-fun FeedScreenPreview() {
-    // 1. Khởi tạo dữ liệu mẫu
-    val mockUser = User(
-        id = "u1",
-        fullName = "Nguyễn Xuân Dũng",
-        avatarUrl = null
-    )
-
-//    val mockPosts = listOf(
-//        Pair(
-//            Post(
-//                id = "p1",
-//                idUser = "u1",
-//                content = "Trải nghiệm tính năng SmartPick AI tìm kiếm sản phẩm qua hình ảnh cực mượt! 🚀",
-//                createAt = "5 phút trước",
-//                images = listOf("https://via.placeholder.com/600")
-//            ),
-//            mockUser
-//        ),
-//        Pair(
-//            Post(
-//                id = "p2",
-//                idUser = "u2",
-//                content = "Hôm nay tôi đang tìm kiếm một chiếc bàn phím cơ mới cho dự án Android.",
-//                createAt = "1 giờ trước",
-//                images = emptyList()
-//            ),
-//            User(id = "u2", fullName = "Lê Hải An", avatarUrl = null)
-//        )
-//    )
-
-    // 2. Render UI ở trạng thái Success
-//    MaterialTheme {
-//        FeedContent(
-//            uiState = FeedUiState.Success(mockPosts),
-//            paddingValues = PaddingValues(0.dp),
-//            onPostClick = {},
-//            onCommentClick = {},
-//            onCreatePostClick = {},
-//            currentUserAvatar = null
-//
-//        )
-//    }
-}
 
 @Preview(showBackground = true, name = "Feed Screen Loading")
 @Composable

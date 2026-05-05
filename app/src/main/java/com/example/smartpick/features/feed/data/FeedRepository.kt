@@ -4,6 +4,9 @@ import android.content.Context
 import android.net.Uri
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.model.User
+import com.example.smartpick.core.utils.Constants.TABLE_POSTS
+import com.example.smartpick.core.utils.Constants.TABLE_PRODUCTS
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.storage
@@ -12,9 +15,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.util.Log
+import androidx.compose.foundation.layout.size
 
 /**
  * Repository xử lý toàn bộ logic liên quan đến Feed:
@@ -127,7 +134,7 @@ class FeedRepository @Inject constructor(
              * insert + select():
              * → trả về object vừa insert (để lấy ID)
              */
-            val savedProduct = supabase.postgrest["products"]
+            val savedProduct = supabase.postgrest[TABLE_PRODUCTS]
                 .insert(newProduct) {
                     select()
                 }
@@ -146,8 +153,59 @@ class FeedRepository @Inject constructor(
         )
 
         // Insert vào bảng posts
-        supabase.postgrest["posts"].insert(newPost)
+        supabase.postgrest[TABLE_POSTS].insert(newPost)
     }
+
+    @Serializable
+    data class PostWithUserResponse(
+        val id: String? = null,
+        @SerialName("user_id") val userId: String,
+        @SerialName("product_id") val productId: String? = null,
+        val content: String? = null,
+        @SerialName("media_urls") val mediaUrls: List<String> = emptyList(),
+        @SerialName("created_at") val createdAt: String? = null,
+        val users: User? = null // Đây là nơi thông tin User lồng vào
+    )
+
+    /**
+     * Lấy danh sách bài đăng từ Database, kèm theo thông tin User
+     * Trả về: Danh sách các cặp (Bài đăng, Người đăng)
+     */
+    suspend fun getPostsWithUsers(): List<Pair<Post, User>> = withContext(Dispatchers.IO) {
+        try {
+            Log.d("FEED_DEBUG", "Bắt đầu tải bài viết từ Supabase...")
+
+            // Lấy dữ liệu từ bảng posts và "nhúng" luôn dữ liệu từ bảng users vào
+            // columns = "*, users(*)" nghĩa là: lấy hết cột của post và lấy hết cột của user liên quan
+            val response = supabase.postgrest[TABLE_POSTS]
+                .select(columns = io.github.jan.supabase.postgrest.query.Columns.raw("*, users(*)")) {
+                    order("created_at", io.github.jan.supabase.postgrest.query.Order.DESCENDING) // Bài mới nhất lên đầu
+                }
+
+            // Giải mã kết quả trả về
+            // Lưu ý: Bạn cần một class trung gian hoặc map thủ công
+            val rawData = response.decodeList<PostWithUserResponse>()
+            Log.d("FEED_DEBUG", "Đã lấy được ${rawData.size} bài viết")
+
+            rawData.map { item ->
+                val post = Post(
+                    id = item.id,
+                    userId = item.userId,
+                    productId = item.productId,
+                    content = item.content,
+                    mediaUrls = item.mediaUrls,
+                    createdAt = item.createdAt
+                )
+                val user = item.users ?: User(id = item.userId, fullName = "Người dùng SmartPick")
+                Pair(post, user)
+            }
+        } catch (e: Exception) {
+            Log.e("FEED_DEBUG", "Lỗi tải dữ liệu: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
 
     /**
      * Hàm kiểm tra bài đăng mới nhất của một User

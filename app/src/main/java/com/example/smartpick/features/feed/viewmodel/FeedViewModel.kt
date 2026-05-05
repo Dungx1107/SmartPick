@@ -37,11 +37,12 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = FeedUiState.Loading
             try {
-                // Tạm thời trả về danh sách trống vì chưa cấu hình lấy dữ liệu từ DB
-                // Sau này bạn sẽ viết hàm repository.getPosts() để lấy dữ liệu thật
-                _uiState.value = FeedUiState.Success(emptyList())
+                // Gọi repository để lấy dữ liệu thật từ Database
+                val postsWithUsers = repository.getPostsWithUsers()
+                _uiState.value = FeedUiState.Success(postsWithUsers)
+
             } catch (e: Exception) {
-                _uiState.value = FeedUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = FeedUiState.Error(e.message ?: "Lỗi tải dữ liệu")
             }
         }
     }
