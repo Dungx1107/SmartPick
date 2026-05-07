@@ -30,8 +30,7 @@ import com.example.smartpick.features.chatbot.ui.ChatbotScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
-import com.example.smartpick.features.feed.ui.components.CreatePostScreen
-import com.example.smartpick.features.feed.ui.components.PostDetailScreen
+import com.example.smartpick.features.post_creation.ui.CreatePostScreen
 import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.EditProfileScreen

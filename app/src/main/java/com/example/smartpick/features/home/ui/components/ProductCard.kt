@@ -29,9 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.theme.AccentBlue
-import com.example.smartpick.core.theme.TextMuted
-import com.example.smartpick.core.theme.White
+import com.example.smartpick.core.ui.theme.AccentBlue
+import com.example.smartpick.core.ui.theme.TextMuted
+import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun ProductCard(product: Product, modifier: Modifier = Modifier) {

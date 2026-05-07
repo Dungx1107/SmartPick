@@ -1,4 +1,4 @@
-package com.example.smartpick.core.components
+package com.example.smartpick.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
@@ -31,9 +31,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.SocialButtonLightColor
-import com.example.smartpick.core.theme.TextPrimary
-import com.example.smartpick.core.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.SocialButtonLightColor
+import com.example.smartpick.core.ui.theme.TextPrimary
+import com.example.smartpick.core.ui.theme.TextSecondary
 
 /**
  * Nhãn tiêu đề phía trên các ô nhập liệu.

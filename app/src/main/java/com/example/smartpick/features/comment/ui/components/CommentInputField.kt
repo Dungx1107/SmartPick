@@ -17,7 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.features.profile.ui.ProfileAvatar
+import com.example.smartpick.core.ui.components.ProfileAvatar
 
 @Composable
 fun CommentInputField(
@@ -82,15 +82,4 @@ fun CommentInputField(
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun CommentInputFieldPreview() {
-    CommentInputField(
-        commentText = "",
-        avatarAuthorUrl = null,
-        onCommentChange = {},
-        onSend = {}
-    )
 }

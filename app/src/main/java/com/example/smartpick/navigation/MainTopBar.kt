@@ -25,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.SmartPickColor
 
 @Composable
 fun MainTopBar(

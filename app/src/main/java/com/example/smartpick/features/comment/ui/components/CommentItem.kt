@@ -17,7 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.features.profile.ui.ProfileAvatar
+import com.example.smartpick.core.ui.components.ProfileAvatar
 
 
 /**

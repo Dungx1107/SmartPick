@@ -50,16 +50,6 @@ class AuthRepository @Inject constructor() {
                 delay(500) // Đợi 0.5s trước khi thử lại
             }
 
-            // 2. Lấy data từ bảng users khớp với ID của Auth
-//            val result = supabase.postgrest["users"]
-//                .select {
-//                    filter {
-//                        eq("id", authUser.id)
-//                    }
-//                }
-//                .decodeSingle<User>()
-//            Log.d("AUTH", "Đã lấy được user hiện tại: ${result.fullName}")
-
             return@withContext result
         } catch (e: Exception) {
             Log.e("AUTH", "Lỗi khi lấy user hiện tại: ${e.message}")

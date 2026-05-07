@@ -13,8 +13,11 @@ import androidx.compose.ui.unit.dp
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.theme.DividerColor
-import com.example.smartpick.core.theme.White
+import com.example.smartpick.core.ui.components.PostFooterActions
+import com.example.smartpick.core.ui.components.PostHeader
+import com.example.smartpick.core.ui.theme.DividerColor
+import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.core.ui.components.ProfileAvatar
 
 @Composable
 fun PostItem(
@@ -45,7 +48,6 @@ fun PostItem(
             PostHeader(user = user, createdAt = post.createdAt.toString())
 
             // 2. Nội dung văn bản và Lưới đa phương tiện (Ảnh/Video)
-            // Sử dụng mediaUrls thay vì images cũ
             PostContent(
                 content = post.content,
                 mediaUrls = post.mediaUrls,
@@ -69,9 +71,23 @@ fun PostItem(
             )
 
             // 4. Các nút tương tác (Like, Comment, Share)
-            PostFooterActions(onCommentClick = onCommentClick)
+            PostFooterActions(
+                onLikeClick = {},
+                onCommentClick = onCommentClick,
+                onShareClick = {}
+            )
         }
     }
+}
+
+@Composable
+fun PostContent(
+    content: String?,
+    mediaUrls: List<String>,
+    maxLines: Int,
+    onMediaClick: (Int) -> Unit
+) {
+    TODO("Not yet implemented")
 }
 
 /**
@@ -96,7 +112,7 @@ fun ProductTagCard(
             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
         ) {
             // Ảnh nhỏ sản phẩm
-            com.example.smartpick.features.profile.ui.ProfileAvatar(
+            ProfileAvatar(
                 avatarUrl = product.imageUrls.firstOrNull(),
                 size = 50.dp
             )

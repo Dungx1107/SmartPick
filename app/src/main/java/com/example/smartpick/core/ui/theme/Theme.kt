@@ -1,4 +1,4 @@
-package com.example.smartpick.core.theme
+package com.example.smartpick.core.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

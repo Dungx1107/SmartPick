@@ -32,10 +32,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.theme.ErrorRed
-import com.example.smartpick.core.theme.ErrorRedBg
-import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.core.theme.TextMuted
+import com.example.smartpick.core.ui.theme.ErrorRed
+import com.example.smartpick.core.ui.theme.ErrorRedBg
+import com.example.smartpick.core.ui.theme.PageBg
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.navigation.Routes
 

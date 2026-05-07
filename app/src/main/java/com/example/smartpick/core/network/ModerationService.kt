@@ -75,7 +75,7 @@ class ModerationService @Inject constructor(
 
         /* Endpoint Gemini API */
         val url =
-            "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=$geminiApiKey"
+            "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=$geminiApiKey"
 
         Logger.d(TAG, "Gemini Endpoint đã được tạo")
 

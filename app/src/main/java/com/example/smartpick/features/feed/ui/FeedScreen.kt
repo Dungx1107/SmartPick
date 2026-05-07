@@ -40,18 +40,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
-import com.example.smartpick.core.model.User
-import com.example.smartpick.core.theme.AccentBlue
-import com.example.smartpick.core.theme.DividerColor
-import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.core.theme.SurfaceCard
-import com.example.smartpick.core.theme.TextMuted
-import com.example.smartpick.core.theme.TextSecondary
-import com.example.smartpick.core.theme.White
+import com.example.smartpick.core.ui.components.ProfileAvatar
+import com.example.smartpick.core.ui.theme.AccentBlue
+import com.example.smartpick.core.ui.theme.DividerColor
+import com.example.smartpick.core.ui.theme.PageBg
+import com.example.smartpick.core.ui.theme.SurfaceCard
+import com.example.smartpick.core.ui.theme.TextMuted
+import com.example.smartpick.core.ui.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.features.feed.ui.components.PostItem
 import com.example.smartpick.features.feed.viewmodel.FeedUiState
 import com.example.smartpick.features.feed.viewmodel.FeedViewModel
-import com.example.smartpick.features.profile.ui.ProfileAvatar
 
 @Composable
 fun FeedScreen(
@@ -63,7 +62,6 @@ fun FeedScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Stateful chỉ làm nhiệm vụ kết nối ViewModel với UI
     FeedContent(
         currentUserAvatar = null,
         uiState = uiState,
@@ -89,11 +87,10 @@ fun FeedContent(
             .background(PageBg)
             .padding(paddingValues)
     ) {
-        // --- PHẦN 1: KHU VỰC TẠO BÀI VIẾT (Nền Trắng) ---
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = White,
-            shadowElevation = 2.dp // Đổ bóng nhẹ
+            shadowElevation = 2.dp
         ) {
             CreatePostPrompt(
                 avatarUrl = currentUserAvatar,
@@ -127,7 +124,6 @@ fun FeedContent(
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Danh sách bài viết
                         items(uiState.posts, key = { it.first.id.toString() }) { (post, user) ->
                             PostItem(
                                 post = post,
@@ -152,7 +148,6 @@ fun FeedContent(
     }
 }
 
-// Khối UI nhập nháy để đăng bài
 @Composable
 private fun CreatePostPrompt(
     avatarUrl: String?,
@@ -166,8 +161,6 @@ private fun CreatePostPrompt(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-
-            // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ProfileAvatar(avatarUrl = avatarUrl, size = 42.dp)
 
@@ -190,12 +183,9 @@ private fun CreatePostPrompt(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-
             HorizontalDivider(color = DividerColor.copy(alpha = 0.4f))
-
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Action
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround
@@ -207,21 +197,5 @@ private fun CreatePostPrompt(
                 }
             }
         }
-    }
-}
-
-
-@Preview(showBackground = true, name = "Feed Screen Loading")
-@Composable
-fun FeedScreenLoadingPreview() {
-    MaterialTheme {
-        FeedContent(
-            uiState = FeedUiState.Loading,
-            paddingValues = PaddingValues(0.dp),
-            onPostClick = {},
-            onCommentClick = {},
-            onCreatePostClick = {},
-            currentUserAvatar = null
-        )
     }
 }

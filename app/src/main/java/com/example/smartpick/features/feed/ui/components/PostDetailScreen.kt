@@ -14,10 +14,9 @@ import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.theme.DividerColor
-import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.core.theme.White
-import com.example.smartpick.features.comment.ui.CommentsScreen
+import com.example.smartpick.core.ui.theme.DividerColor
+import com.example.smartpick.core.ui.theme.PageBg
+import com.example.smartpick.core.ui.theme.White
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

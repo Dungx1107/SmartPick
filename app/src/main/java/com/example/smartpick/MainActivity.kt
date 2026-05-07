@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.smartpick.navigation.AppNavigation
-import com.example.smartpick.core.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

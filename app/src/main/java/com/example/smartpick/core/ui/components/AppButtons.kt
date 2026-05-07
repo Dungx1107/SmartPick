@@ -1,4 +1,4 @@
-package com.example.smartpick.core.components
+package com.example.smartpick.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,10 +31,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.DividerColor
-import com.example.smartpick.core.theme.LoginBlue
-import com.example.smartpick.core.theme.LoginBlueGradientEnd
-import com.example.smartpick.core.theme.SocialButtonLightColor
+import com.example.smartpick.core.ui.theme.DividerColor
+import com.example.smartpick.core.ui.theme.LoginBlue
+import com.example.smartpick.core.ui.theme.LoginBlueGradientEnd
+import com.example.smartpick.core.ui.theme.SocialButtonLightColor
 import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
 
 

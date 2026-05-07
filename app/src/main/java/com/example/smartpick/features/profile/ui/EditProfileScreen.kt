@@ -53,9 +53,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.core.theme.SmartPickColor
-import com.example.smartpick.core.theme.White
+import com.example.smartpick.core.ui.components.ProfileAvatar
+import com.example.smartpick.core.ui.theme.PageBg
+import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.profile.viewmodel.EditProfileViewModel
 
@@ -319,6 +320,7 @@ fun EditProfileContent(
                 ProfileAvatar(
                     avatarUrl = avatarUrl,
                     selectedImage = selectedImage,
+                    size = 100.dp
                 )
 
                 if (isUploading) {

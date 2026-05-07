@@ -1,4 +1,4 @@
-package com.example.smartpick.core.components
+package com.example.smartpick.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.BrightBackground
+import com.example.smartpick.core.ui.theme.BrightBackground
 
 @Composable
 fun FullScreenLoadingOverlay() {

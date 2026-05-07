@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.AccentBlue
+import com.example.smartpick.core.ui.theme.AccentBlue
 
 @Composable
 fun MainBottomBar(

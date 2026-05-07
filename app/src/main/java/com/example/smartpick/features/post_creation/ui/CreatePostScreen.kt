@@ -1,9 +1,10 @@
-package com.example.smartpick.features.feed.ui.components
+package com.example.smartpick.features.post_creation.ui
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -37,12 +38,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
-import com.example.smartpick.features.profile.ui.ProfileAvatar
+import com.example.smartpick.core.ui.components.ProfileAvatar
 import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
 import com.example.smartpick.R
-import com.example.smartpick.features.feed.viewmodel.CreatePostUiState
-import com.example.smartpick.features.feed.viewmodel.CreatePostViewModel
+import com.example.smartpick.features.post_creation.viewmodel.CreatePostUiState
+import com.example.smartpick.features.post_creation.viewmodel.CreatePostViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -262,7 +263,7 @@ fun CreatePostScreen(
                                 .weight(1f)
                                 .height(50.dp),
                             shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(
+                            border = BorderStroke(
                                 1.dp,
                                 Color(0xFFE4E6EB)
                             )
@@ -286,7 +287,7 @@ fun CreatePostScreen(
                                 .weight(1f)
                                 .height(50.dp),
                             shape = RoundedCornerShape(8.dp),
-                            border = androidx.compose.foundation.BorderStroke(
+                            border = BorderStroke(
                                 1.dp,
                                 Color(0xFFE4E6EB)
                             )

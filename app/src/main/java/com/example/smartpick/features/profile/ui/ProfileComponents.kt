@@ -3,18 +3,34 @@ package com.example.smartpick.features.profile.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.HelpCenter
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,60 +38,21 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.theme.*
-
-
-// 1. Thành phần Avatar
-@Composable
-fun ProfileAvatar(
-    avatarUrl: String?,
-    selectedImage: Any? = null,
-    size: Dp = 100.dp
-) {
-    val hasImage = selectedImage != null || !avatarUrl.isNullOrEmpty()
-
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .border(3.dp, White.copy(alpha = 0.4f), CircleShape)
-            .background(White.copy(alpha = 0.2f))
-            .border(2.dp, SmartPickColor.copy(alpha = 0.3f), CircleShape)
-            .background(if (hasImage) Color.White else Color(0xFFF1F5F9)),
-        contentAlignment = Alignment.Center
-    ) {
-        val imageModel = selectedImage ?: avatarUrl ?: Icons.Default.Person
-
-        if (avatarUrl != null) {
-            AsyncImage(
-                model = imageModel, // Coil tự động xử lý Uri, Bitmap hoặc String URL
-                contentDescription = stringResource(R.string.avatar),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
-        } else {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier.size(size * 0.6f),
-                tint = Color(0xFF94A3B8)
-            )
-        }
-    }
-}
+import com.example.smartpick.core.ui.components.ProfileAvatar
+import com.example.smartpick.core.ui.theme.BadgeOrange
+import com.example.smartpick.core.ui.theme.CardLight
+import com.example.smartpick.core.ui.theme.PrimaryGradient
+import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun CameraBadgeButton(
@@ -119,8 +96,8 @@ fun ProfileHeaderCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // ProfileAvatar
-            ProfileAvatar(avatarUrl = user?.avatarUrl)
+            // Sử dụng ProfileAvatar từ core
+            ProfileAvatar(avatarUrl = user?.avatarUrl, size = 100.dp)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -173,8 +150,8 @@ fun SettingsBentoGrid() {
             SettingItemCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.History,
-                iconBgColor = CardLight, // Cập nhật từ CardLightBlue thành CardLight[cite: 1]
-                iconColor = SmartPickColor, // Cập nhật từ PrimaryBlue thành SmartPickColor[cite: 1]
+                iconBgColor = CardLight,
+                iconColor = SmartPickColor,
                 title = stringResource(R.string.LichSuMuaHang),
                 description = stringResource(R.string.XemDonHang)
             )
@@ -192,7 +169,7 @@ fun SettingsBentoGrid() {
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.NotificationsActive,
                 iconBgColor = Color(0xFFFFF3E0),
-                iconColor = BadgeOrange, // Cập nhật từ WarningOrange thành BadgeOrange[cite: 1]
+                iconColor = BadgeOrange,
                 title = stringResource(R.string.ThongBao),
                 description = stringResource(R.string.TuyChinhCachNhanTinTuc)
             )
@@ -243,12 +220,12 @@ fun SettingItemCard(
                 text = title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = SmartPickColor // Cập nhật từ TextMain thành SmartPickColor[cite: 1]
+                color = SmartPickColor
             )
             Text(
                 text = description,
                 fontSize = 11.sp,
-                color = TextSecondary, // Cập nhật từ TextBody thành TextSecondary[cite: 1]
+                color = TextSecondary,
                 lineHeight = 16.sp
             )
         }
@@ -299,39 +276,4 @@ fun PreviewProfileHeaderCard() {
         user = mockUser,
         onEditProfile = {}
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSettingsBentoGrid() {
-    Box(modifier = Modifier.padding(16.dp)) {
-        SettingsBentoGrid()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSettingItemCard() {
-    SettingItemCard(
-        modifier = Modifier.padding(16.dp),
-        icon = Icons.Default.History,
-        iconBgColor = CardLight,
-        iconColor = SmartPickColor,
-        title = "Lịch sử mua hàng",
-        description = "Xem lại đơn hàng của bạn"
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewProfileTextField() {
-    var text by remember { mutableStateOf("Nguyễn Văn A") }
-
-    Column(modifier = Modifier.padding(16.dp)) {
-        ProfileTextField(
-            label = "Họ và tên",
-            value = text,
-            onValueChange = { text = it }
-        )
-    }
 }

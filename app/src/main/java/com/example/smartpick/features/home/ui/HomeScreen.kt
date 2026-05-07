@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,9 +20,9 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.theme.PageBg
-import com.example.smartpick.core.theme.TextPrimary
-import com.example.smartpick.core.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.PageBg
+import com.example.smartpick.core.ui.theme.TextPrimary
+import com.example.smartpick.core.ui.theme.TextSecondary
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.feed.ui.components.PostItem
 import com.example.smartpick.features.home.ui.components.AICuratorBanner

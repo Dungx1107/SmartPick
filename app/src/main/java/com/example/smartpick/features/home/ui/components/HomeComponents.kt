@@ -34,10 +34,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.theme.AccentBlue
-import com.example.smartpick.core.theme.TextMuted
-import com.example.smartpick.core.theme.TextSecondary
-import com.example.smartpick.core.theme.White
+import com.example.smartpick.core.ui.theme.AccentBlue
+import com.example.smartpick.core.ui.theme.TextMuted
+import com.example.smartpick.core.ui.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.White
 
 
 @Composable
