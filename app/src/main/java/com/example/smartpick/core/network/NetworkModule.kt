@@ -11,6 +11,7 @@ import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.storage.Storage
+import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
 @Module
@@ -35,5 +36,18 @@ object NetworkModule {
     fun providePostgrest(client: SupabaseClient): Postgrest {
         // Hilt sửa lỗi MissingBinding cho FeedRepositoryImpl
         return client.postgrest
+    }
+
+    // --- THÊM 2 HÀM NÀY CHO KIỂM DUYỆT ---
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder().build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideModerationService(client: OkHttpClient): ModerationService {
+        return ModerationService(client)
     }
 }

@@ -15,8 +15,12 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
 }
-val supabaseUrl = localProperties.getProperty("SUPABASE_URL") ?: ""
-val supabaseKey = localProperties.getProperty("SUPABASE_KEY") ?: ""
+val supabaseUrl = localProperties.getProperty("SUPABASE_URL")?.trim() ?: ""
+val supabaseKey = localProperties.getProperty("SUPABASE_KEY")?.trim() ?: ""
+
+val sightengineUser = localProperties.getProperty("SIGHTENGINE_USER")?.trim() ?: ""
+val sightengineSecret = localProperties.getProperty("SIGHTENGINE_SECRET")?.trim() ?: ""
+val geminiKey = localProperties.getProperty("GEMINI_KEY")?.trim() ?: ""
 
 
 android {
@@ -49,6 +53,14 @@ android {
         //------------------------
         println("DEBUG: Supabase URL là: $supabaseUrl")
 
+        // SIGHTENGINE --------------------
+        buildConfigField("String", "SIGHTENGINE_USER", "\"$sightengineUser\"")
+        buildConfigField("String", "SIGHTENGINE_SECRET", "\"$sightengineSecret\"")
+        //------------------------
+
+        // GEMINI_KEY ----------------------
+        buildConfigField("String", "GEMINI_KEY", "\"$geminiKey\"")
+        println("BUILD_INFO: Gemini Key length: ${geminiKey.length}")
     }
 
 
@@ -77,6 +89,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    testOptions {
+        unitTests.all {
+            it.jvmArgs("-XX:+EnableDynamicAgentLoading")
+        }
     }
 }
 
@@ -139,5 +157,15 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     // Thêm thư viện hỗ trợ video cho Coil
     implementation("io.coil-kt:coil-video:2.6.0")
+
+    // OkHttp (Sử dụng cho ModerationService)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Testing
+    testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+    testImplementation("org.slf4j:slf4j-simple:2.0.7")
 
 }
