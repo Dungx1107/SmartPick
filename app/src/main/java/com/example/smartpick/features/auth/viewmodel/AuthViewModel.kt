@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.utils.Constants
+import com.example.smartpick.core.utils.EmailHelper
 import com.example.smartpick.features.auth.data.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.jan.supabase.gotrue.SessionStatus

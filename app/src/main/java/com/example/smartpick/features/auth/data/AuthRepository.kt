@@ -3,9 +3,9 @@ package com.example.smartpick.features.auth.data
 import android.util.Log
 import com.example.smartpick.BuildConfig
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.network.SupabaseClient
 import com.example.smartpick.core.network.SupabaseClient.supabaseClient
 import com.example.smartpick.core.utils.Constants
+import com.example.smartpick.core.utils.EmailHelper
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
@@ -18,6 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import javax.inject.Inject
@@ -26,9 +27,10 @@ import javax.inject.Singleton
 @Singleton
 class AuthRepository @Inject constructor() {
     private val supabase = supabaseClient
-    
+
     // Luồng trạng thái session từ SDK
     val sessionStatus: Flow<SessionStatus> = supabase.auth.sessionStatus
+
     /**
      * Hàm lấy thông tin user hiện tại từ Database
      */
@@ -44,7 +46,9 @@ class AuthRepository @Inject constructor() {
                     supabase.postgrest["users"]
                         .select { filter { eq("id", authUser.id) } }
                         .decodeSingle<User>()
-                } catch (e: Exception) { null }
+                } catch (e: Exception) {
+                    null
+                }
 
                 if (result != null) return@withContext result
                 delay(500) // Đợi 0.5s trước khi thử lại
@@ -120,6 +124,17 @@ class AuthRepository @Inject constructor() {
                         username = currentUser.email?.substringBefore("@") // Lấy phần trước dấu @ làm username
                     )
 
+                    // Phân biệt user mới hay cũ bằng cách check DB
+                    val existingUser = try {
+                        supabaseClient.postgrest["users"]
+                            .select { filter { eq("id", currentUser.id) } }
+                            .decodeSingleOrNull<User>()
+                    } catch (e: Exception) {
+                        null
+                    }
+
+                    val isNewUser = existingUser == null  // ← Không có trong DB = user mới
+
                     /**
                      * Bước 2: Lưu user vào bảng "users" trong database
                      * postgrest: công cụ tương tác với database qua API
@@ -128,9 +143,19 @@ class AuthRepository @Inject constructor() {
                      */
                     supabaseClient.postgrest["users"].upsert(myUser)
 
-                    Log.d("AUTH", "Lưu Database xong: ${myUser.fullName}")
+                    // Gửi email đúng loại
+                    currentUser.email?.let { email ->
+                        if (isNewUser) {
+                            EmailHelper.send(email, EmailHelper.EmailType.WELCOME, fullName ?: "")
+                        } else {
+                            EmailHelper.send(
+                                email,
+                                EmailHelper.EmailType.LOGIN_GOOGLE,
+                                fullName ?: ""
+                            )
+                        }
+                    }
 
-                    // CỰC KỲ QUAN TRỌNG: Trả về myUser để ViewModel nhận được dữ liệu
                     return@withContext myUser
                 } else {
                     return@withContext null
@@ -144,7 +169,17 @@ class AuthRepository @Inject constructor() {
 
     suspend fun signOut() {
         withContext(Dispatchers.IO) {
-            supabase.auth.signOut()
+            try {
+                supabase.auth.signOut()
+            } catch (e: Exception) {
+                // Session đã hết hạn trên server → vẫn xoá local session
+                Log.w("AUTH", "SignOut lỗi (bỏ qua): ${e.message}")
+                try {
+                    supabase.auth.signOut(io.github.jan.supabase.gotrue.SignOutScope.LOCAL)
+                } catch (e2: Exception) {
+                    Log.e("AUTH", "Không thể signOut local: ${e2.message}")
+                }
+            }
         }
     }
 
@@ -165,6 +200,14 @@ class AuthRepository @Inject constructor() {
                     put(Constants.UserMetadata.PHONE_NUMBER.trim(), phone)
                 }
             }
+
+            // Gửi email welcome sau khi đăng ký thành công
+            EmailHelper.send(
+                email = email.trim(),
+                type = EmailHelper.EmailType.WELCOME,
+                name = name
+            )
+
             Result.success(Unit)
         } catch (e: Exception) {
             val message = e.message ?: ""
@@ -212,6 +255,23 @@ class AuthRepository @Inject constructor() {
                 this.email = email
                 password = pass
             }
+
+            // Lấy user hiện tại
+            val currentUser = supabase.auth.currentUserOrNull()
+
+            // Lấy full name từ metadata
+            val fullName = currentUser?.userMetadata
+                ?.get(Constants.UserMetadata.FULL_NAME)
+                ?.jsonPrimitive
+                ?.contentOrNull
+
+            // Gửi email login
+            EmailHelper.send(
+                email = email.trim(),
+                type = EmailHelper.EmailType.LOGIN_MANUAL,
+                name = fullName ?: ""
+            )
+
             Result.success(Unit)
         } catch (e: Exception) {
             val errorMsg = when {

@@ -201,4 +201,7 @@ dependencies {
     androidTestImplementation("io.mockk:mockk-android:1.13.5")
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
 }
