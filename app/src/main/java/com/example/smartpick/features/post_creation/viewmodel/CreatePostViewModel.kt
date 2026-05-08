@@ -20,7 +20,6 @@ class CreatePostViewModel @Inject constructor(
     private val postCreationRepository: PostCreationRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
-
     private val _uiState = MutableStateFlow<CreatePostUiState>(CreatePostUiState.Idle)
     val uiState = _uiState.asStateFlow()
 

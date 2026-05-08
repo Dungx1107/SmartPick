@@ -80,7 +80,7 @@ fun PostMainContent(
 
         if (mediaUrls.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
-            MediaGrid(mediaUrls = mediaUrls, onMediaClick = onMediaClick)
+            MediaGrid(mediaUrls = mediaUrls)
         }
 
         product?.let {

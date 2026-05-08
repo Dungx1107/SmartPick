@@ -49,13 +49,11 @@ fun AuthPrimaryButton(
     text: String,
     showArrow: Boolean = true,
     onClick: () -> Unit,
-    enabled: Boolean = true // Thêm tham số này
+    enabled: Boolean = true
 ) {
-    // 1. Định nghĩa màu sắc dựa trên trạng thái enabled
     val gradientBrush = if (enabled) {
         Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
     } else {
-        // Khi disable thì dùng một màu xám cố định thay vì gradient
         SolidColor(Color.LightGray)
     }
 
@@ -65,7 +63,7 @@ fun AuthPrimaryButton(
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
-            // 2. Quan trọng: Truyền enabled vào clickable để chặn click khi đang load
+            /* Truyền enabled vào clickable để chặn click khi đang load */
             .clickable(enabled = enabled, onClick = onClick)
             .border(
                 width = 1.dp,
@@ -75,9 +73,7 @@ fun AuthPrimaryButton(
         shape = RoundedCornerShape(12.dp),
         color = Color.Transparent
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
+        Row(modifier = Modifier.fillMaxSize()
                 .background(gradientBrush),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
@@ -110,8 +106,8 @@ fun SocialAuthButton(
     text: String,
     brand: String,
     onClick: () -> Unit,
-    enabled: Boolean = true, // Thêm tham số kiểm soát trạng thái
-    loading: Boolean = false  // Thêm tham số hiển thị loading
+    enabled: Boolean = true, // tham số kiểm soát trạng thái
+    loading: Boolean = false  // tham số hiển thị loading
 ) {
     // Xác định màu sắc dựa trên trạng thái
     val backgroundColor = if (enabled && !loading) SocialButtonLightColor else Color.LightGray
@@ -133,7 +129,7 @@ fun SocialAuthButton(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center // Căn giữa nội dung
+            horizontalArrangement = Arrangement.Center
         ) {
             if (loading) {
                 // Hiển thị vòng xoay khi đang xử lý token Google

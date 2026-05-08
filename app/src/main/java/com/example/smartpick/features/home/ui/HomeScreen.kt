@@ -1,9 +1,18 @@
 package com.example.smartpick.features.home.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,11 +29,11 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.ui.components.ProductVerticalCard
 import com.example.smartpick.core.ui.theme.PageBg
 import com.example.smartpick.core.ui.theme.TextPrimary
 import com.example.smartpick.core.ui.theme.TextSecondary
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import com.example.smartpick.features.feed.ui.components.PostItem
 import com.example.smartpick.features.home.ui.components.AICuratorBanner
 import com.example.smartpick.features.home.ui.components.HeroBanner
 import com.example.smartpick.features.home.ui.components.SearchBar
@@ -57,58 +66,67 @@ fun HomeScreen(
     onCommentClick: (String) -> Unit = {},
     onCreatePostClick: () -> Unit = {}
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
         modifier = Modifier
             .fillMaxSize()
             .background(PageBg),
-        contentPadding = PaddingValues(bottom = 24.dp)
+        contentPadding = PaddingValues(
+            start = 12.dp,
+            end = 12.dp,
+            bottom = 24.dp,
+            top = 0.dp // Bạn có thể chỉnh lại giá trị top tùy ý
+        ), horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // 1. Header & Search Bar
-        item {
-            Spacer(Modifier.height(12.dp))
-            SearchBar()
+        // --- PHẦN HEADER (Mỗi cái là 1 item riêng để tối ưu cuộn) ---
+
+        item(span = { GridItemSpan(2) }) {
+            Column {
+                Spacer(Modifier.height(12.dp))
+                SearchBar()
+            }
         }
 
-        // 2. Hero Banner (Khuyến mãi/Sự kiện)
-        item {
-            Spacer(Modifier.height(16.dp))
+        item(span = { GridItemSpan(2) }) {
             HeroBanner()
         }
 
-        // 3. AI Curator (Tính năng đặc trưng của SmartPick)
-        item {
-            Spacer(Modifier.height(16.dp))
+        item(span = { GridItemSpan(2) }) {
             AICuratorBanner()
         }
 
-        // 4. Section Title
-        item {
-            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp)) {
+        item(span = { GridItemSpan(2) }) {
+            Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
                 Text(
                     text = stringResource(R.string.GoiYChoBan),
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary
                 )
                 user.fullName?.let {
                     Text(
                         text = stringResource(R.string.DuaTrenSoThich, it),
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         color = TextSecondary
                     )
                 }
             }
         }
 
-        // 5. Social Feed (Danh sách bài đăng tích hợp sản phẩm)
-        items(posts, key = { it.first.id.toString() }) { (post, author, product) ->
-            Box(modifier = Modifier.padding(bottom = 8.dp)) {
-                PostItem(
-                    post = post,
-                    user = author,
-                    product = product,
-                    onPostClick = { onPostClick(post.id.toString()) },
-                    onCommentClick = { onCommentClick(post.id.toString()) }
+        // --- PHẦN GRID SẢN PHẨM (Tự động chia 2 cột) ---
+
+        val productItems = posts.filter { it.third != null }
+
+        items(
+            items = productItems,
+            key = { it.first.id.toString() }
+        ) { (post, author, product) ->
+            product?.let {
+                ProductVerticalCard(
+                    product = it,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { onPostClick(post.id.toString()) }
                 )
             }
         }

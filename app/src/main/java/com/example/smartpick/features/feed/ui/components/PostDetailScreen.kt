@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.ui.components.PostItem
 import com.example.smartpick.core.ui.theme.DividerColor
 import com.example.smartpick.core.ui.theme.PageBg
 import com.example.smartpick.core.ui.theme.White
@@ -65,7 +66,7 @@ fun PostDetailScreen(
                 user = user,
                 onPostClick = {},
                 onCommentClick = onCommentClick,
-                showFullContent = true
+//                showFullContent = true
             )
 
             Spacer(modifier = Modifier.height(12.dp))

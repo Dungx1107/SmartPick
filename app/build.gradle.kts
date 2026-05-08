@@ -9,6 +9,7 @@ plugins {
 
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
+    id("kotlin-parcelize")
 }
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
@@ -45,7 +46,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.smartpick.HiltTestRunner"
 
         // SUPABASE -----------------------
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
@@ -94,6 +95,21 @@ android {
     testOptions {
         unitTests.all {
             it.jvmArgs("-XX:+EnableDynamicAgentLoading")
+        }
+    }
+
+    packaging {
+        resources {
+            // Loại bỏ các file license và notice gây xung đột
+            excludes += "/META-INF/LICENSE.md"
+            excludes += "/META-INF/LICENSE-notice.md"
+            excludes += "/META-INF/NOTICE.md"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE.txt"
+
+            // Loại bỏ các file liên quan đến JUnit 5 và Coroutines nếu cần
+            excludes += "/META-INF/AL2.0"
+            excludes += "/META-INF/LGPL2.1"
         }
     }
 }
@@ -168,4 +184,21 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation("org.slf4j:slf4j-simple:2.0.7")
 
+// --- HILT TESTING FIX ---
+    val hiltVersion = "2.51.1"
+
+    // Thư viện Hilt cho Android Test
+    androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
+
+    // QUAN TRỌNG: KSP compiler dành riêng cho Android Test
+    kspAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
+
+    // Các thư viện hỗ trợ chạy test
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    // -------------------------
+
+    androidTestImplementation("io.mockk:mockk-android:1.13.5")
+    androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    androidTestImplementation("androidx.test:core-ktx:1.5.0")
 }

@@ -2,6 +2,7 @@ package com.example.smartpick.features.post_creation.data
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.utils.Constants.TABLE_POSTS
@@ -19,28 +20,125 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Repository xử lý logic tạo bài viết và upload media lên Supabase.
+ *
+ * Chức năng chính:
+ * - Upload ảnh/video lên Supabase Storage.
+ * - Tạo bài viết mới.
+ * - Tạo sản phẩm đi kèm bài viết bán hàng.
+ * - Kiểm tra bài viết mới nhất của người dùng.
+ *
+ * @property supabase Client dùng để thao tác với Supabase.
+ */
 @Singleton
 class PostCreationRepository @Inject constructor(
     private val supabase: SupabaseClient
 ) {
 
-    private suspend fun uploadMedia(uri: Uri, context: Context): String = withContext(Dispatchers.IO) {
-        try {
-            val contentResolver = context.contentResolver
-            val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
-            val extension = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType) ?: ""
-            val fileName = "post_media_${UUID.randomUUID()}.${extension}".removeSuffix(".")
+    /**
+     * Upload file media từ Uri lên Supabase Storage.
+     *
+     * Hàm hỗ trợ upload:
+     * - Ảnh (jpg, png, webp, ...)
+     * - Video (mp4, mov, ...)
+     * - Các loại file media khác.
+     *
+     * Quy trình xử lý:
+     * 1. Lấy MIME type thực tế từ Uri.
+     * 2. Chuyển MIME type thành extension file.
+     * 3. Sinh tên file ngẫu nhiên bằng UUID.
+     * 4. Đọc dữ liệu file thành ByteArray.
+     * 5. Upload file lên bucket "media".
+     * 6. Trả về public URL sau khi upload thành công.
+     *
+     * Ví dụ:
+     * - image/png  -> .png
+     * - video/mp4 -> .mp4
+     *
+     * @param uri Uri của media cần upload.
+     * @param context Context dùng để truy cập ContentResolver.
+     *
+     * @return Public URL của file nếu upload thành công,
+     *         trả về chuỗi rỗng ("") nếu xảy ra lỗi.
+     */
+    private suspend fun uploadMedia(
+        uri: Uri,
+        context: Context
+    ): String = withContext(Dispatchers.IO) {
 
-            val bytes = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext ""
+        try {
+
+            val contentResolver = context.contentResolver
+
+            // Lấy MIME type thực tế của file
+            // Ví dụ: image/png, video/mp4
+            val mimeType =
+                contentResolver.getType(uri)
+                    ?: "application/octet-stream"
+
+            // Chuyển MIME type sang extension
+            // Ví dụ: image/png -> png
+            val extension =
+                android.webkit.MimeTypeMap.getSingleton()
+                    .getExtensionFromMimeType(mimeType)
+                    ?: ""
+
+            // Tạo tên file duy nhất bằng UUID
+            // Nếu không lấy được extension thì chỉ dùng UUID
+            val fileName =
+                if (extension.isNotEmpty()) {
+                    "post_media_${UUID.randomUUID()}.$extension"
+                } else {
+                    "post_media_${UUID.randomUUID()}"
+                }
+
+            // Đọc toàn bộ dữ liệu file thành ByteArray
+            val bytes =
+                contentResolver.openInputStream(uri)
+                    ?.use { it.readBytes() }
+                    ?: return@withContext ""
+
+            // Truy cập bucket "media" trên Supabase Storage
             val bucket = supabase.storage.from("media")
-            bucket.upload(path = fileName, data = bytes, upsert = false)
+
+            // Upload file lên Supabase
+            bucket.upload(
+                path = fileName,
+                data = bytes,
+                upsert = false
+            )
+
+            // Trả về public URL của file
             return@withContext bucket.publicUrl(fileName)
+
         } catch (e: Exception) {
+
+            // In lỗi để debug
             e.printStackTrace()
+
+            // Trả về chuỗi rỗng nếu upload thất bại
             return@withContext ""
         }
     }
 
+    /**
+     * Tạo bài viết hoàn chỉnh kèm media và sản phẩm (nếu có).
+     *
+     * Quy trình:
+     * 1. Upload toàn bộ media song song bằng coroutine.
+     * 2. Nếu có dữ liệu sản phẩm:
+     *    - Tạo Product mới.
+     *    - Gán ảnh/video tương ứng.
+     *    - Lưu vào bảng products.
+     * 3. Tạo Post mới và lưu vào bảng posts.
+     *
+     * @param userId ID người tạo bài viết.
+     * @param content Nội dung bài viết.
+     * @param mediaUris Danh sách Uri media cần upload.
+     * @param productData Dữ liệu sản phẩm (nullable).
+     * @param context Context dùng để đọc media.
+     */
     suspend fun createFullPost(
         userId: String,
         content: String,
@@ -48,40 +146,107 @@ class PostCreationRepository @Inject constructor(
         productData: Product?,
         context: Context
     ) = withContext(Dispatchers.IO) {
-        val uploadedUrls = coroutineScope {
-            mediaUris.map { uri -> async { uploadMedia(uri, context) } }.awaitAll().filter { it.isNotEmpty() }
-        }
+        try {
+            // Upload media song song
+            val uploadedUrls = coroutineScope {
+                mediaUris.map { uri ->
+                    async {
+                        uploadMedia(uri, context)
+                    }
+                }.awaitAll().filter { it.isNotEmpty() }
+            }
 
-        var finalProductId: String? = null
+            var finalProductId: String? = null
 
-        productData?.let {
-            val newProduct = it.copy(
+            // Nếu là bài đăng bán hàng thì tạo Product
+            productData?.let {
+
+                val newProduct = it.copy(
+                    id = UUID.randomUUID().toString(),
+                    ownerId = userId,
+
+                    // Chỉ lấy ảnh
+                    imageUrls = uploadedUrls.filter { url ->
+                        !url.contains(".mp4")
+                    },
+
+                    // Lấy video đầu tiên nếu có
+                    videoUrl = uploadedUrls.find { url ->
+                        url.contains(".mp4")
+                    }
+                )
+
+                // Lưu Product vào database
+                val savedProduct =
+                    supabase.postgrest[TABLE_PRODUCTS]
+                        .insert(newProduct) {
+                            select()
+                        }
+                        .decodeSingle<Product>()
+
+                finalProductId = savedProduct.id
+            }
+
+            // Tạo bài viết
+            val newPost = Post(
                 id = UUID.randomUUID().toString(),
-                ownerId = userId,
-                imageUrls = uploadedUrls.filter { url -> !url.contains(".mp4") },
-                videoUrl = uploadedUrls.find { url -> url.contains(".mp4") }
+                userId = userId,
+                productId = finalProductId,
+                content = content,
+                mediaUrls = uploadedUrls
             )
-            val savedProduct = supabase.postgrest[TABLE_PRODUCTS].insert(newProduct) { select() }.decodeSingle<Product>()
-            finalProductId = savedProduct.id
+
+            // Lưu bài viết vào database
+            supabase.postgrest[TABLE_POSTS]
+                .insert(newPost)
+        } catch (e: Exception) {
+            // In ra toàn bộ nội dung lỗi để đọc
+            Log.e("POST_CREATION", "Lỗi chi tiết: ${e.localizedMessage}")
+            e.printStackTrace()
+            throw e // Ném lỗi để UI nhận biết
         }
 
-        val newPost = Post(
-            id = UUID.randomUUID().toString(),
-            userId = userId,
-            productId = finalProductId,
-            content = content,
-            mediaUrls = uploadedUrls
-        )
-        supabase.postgrest[TABLE_POSTS].insert(newPost)
     }
 
-    suspend fun checkLastPost(userId: String): Post? = withContext(Dispatchers.IO) {
+    /**
+     * Kiểm tra bài viết mới nhất của người dùng.
+     *
+     * Sử dụng để:
+     * - Kiểm tra spam bài viết.
+     * - Giới hạn tần suất đăng bài.
+     * - Hiển thị bài viết gần nhất.
+     *
+     * @param userId ID người dùng cần kiểm tra.
+     *
+     * @return Post mới nhất nếu tồn tại,
+     *         trả về null nếu không có hoặc xảy ra lỗi.
+     */
+    suspend fun checkLastPost(
+        userId: String
+    ): Post? = withContext(Dispatchers.IO) {
+
         try {
-            supabase.postgrest[TABLE_POSTS].select {
-                filter { eq("user_id", userId) }
-                order("created_at", Order.DESCENDING)
-                limit(1)
-            }.decodeSingleOrNull<Post>()
+
+            supabase.postgrest[TABLE_POSTS]
+                .select {
+
+                    // Lọc theo user_id
+                    filter {
+                        eq("user_id", userId)
+                    }
+
+                    // Sắp xếp mới nhất
+                    order(
+                        "created_at",
+                        Order.DESCENDING
+                    )
+
+                    // Chỉ lấy 1 bài
+                    limit(1)
+
+                }
+                .decodeSingleOrNull<Post>()
+
         } catch (e: Exception) {
             null
         }

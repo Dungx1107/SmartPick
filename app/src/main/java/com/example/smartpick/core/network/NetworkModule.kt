@@ -10,7 +10,9 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.github.jan.supabase.storage.Storage
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
@@ -28,6 +30,12 @@ object NetworkModule {
             install(Auth)
             install(Postgrest)
             install(Storage)
+
+            defaultSerializer = KotlinXSerializer(Json {
+                ignoreUnknownKeys = true // Bỏ qua nếu JSON có trường mà code không có
+                coerceInputValues = true
+                encodeDefaults = true
+            })
         }
     }
 

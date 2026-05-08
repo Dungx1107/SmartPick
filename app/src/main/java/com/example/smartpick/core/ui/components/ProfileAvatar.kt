@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.smartpick.R
 import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun ProfileAvatar(

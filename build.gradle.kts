@@ -6,4 +6,5 @@ plugins {
     alias(libs.plugins.ksp) apply false
 
     id("com.google.dagger.hilt.android") version "2.51.1" apply false
+    id("de.mannodermaus.android-junit5") version "1.10.0.0" apply false
 }
