@@ -83,3 +83,33 @@ fun CommentInputField(
         }
     }
 }
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun CommentInputFieldPreview() {
+    var comment by remember {
+        mutableStateOf("Sản phẩm này nhìn ổn đấy!")
+    }
+
+    MaterialTheme {
+        CommentInputField(
+            commentText = comment,
+            onCommentChange = { comment = it },
+            onSend = {},
+            avatarAuthorUrl = null
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Empty Comment")
+@Composable
+fun CommentInputFieldEmptyPreview() {
+    MaterialTheme {
+        CommentInputField(
+            commentText = "",
+            onCommentChange = {},
+            onSend = {},
+            avatarAuthorUrl = null
+        )
+    }
+}

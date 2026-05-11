@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
@@ -153,6 +154,27 @@ fun BadgeAuthor() {
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF1E3A8A)
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun CommentItemPreview() {
+    MaterialTheme {
+        CommentItem(
+            state = CommentUIState(
+                id = "1",
+                authorName = "Nguyễn Văn A",
+                authorAvatar = null,
+                content = "Sản phẩm này dùng rất ổn, pin khá trâu và thiết kế đẹp.",
+                timeAgo = "2 giờ trước",
+                likesCount = 12,
+                isLiked = true,
+                isAuthor = true
+            ),
+            onLikeClick = {},
+            onReplyClick = {}
         )
     }
 }

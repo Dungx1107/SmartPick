@@ -35,6 +35,7 @@ import com.example.smartpick.features.profile.ui.ProfileScreen
 import com.example.smartpick.features.profile.ui.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.EditProfileScreen
 import com.example.smartpick.features.home.ui.HomeScreenRoute
+import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 
 @Composable
 fun AppNavigation(
@@ -147,17 +148,18 @@ fun AppNavigation(
                     EditProfileScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
+                // Trong NavHost của AppNavigation.kt
                 composable(
                     route = Routes.PostDetail.route,
                     arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
                         type = NavType.StringType
                     })
-                ) { entry ->
-                    val postId = entry.arguments?.getString(Routes.PostDetail.ARG_POST_ID) ?: ""
-//                    PostDetailScreen(
-//                        postId = postId,
-//                        onBackClick = { navController.popBackStack() }
-//                    )
+                ) { backStackEntry ->
+                    // Lưu ý: Chúng ta không cần lấy postId ở đây nữa
+                    // vì ViewModel sẽ tự lấy từ SavedStateHandle
+                    PostDetailScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
                 }
 
                 composable(route = Routes.Feed.route) {
