@@ -1,12 +1,25 @@
 package com.example.smartpick.features.post_detail.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -17,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.R
@@ -27,9 +39,7 @@ import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.PostFooterActions
 import com.example.smartpick.core.ui.components.PostHeader
 import com.example.smartpick.core.ui.components.ProductAttachmentCard
-import com.example.smartpick.core.ui.components.ProfileAvatar
 import com.example.smartpick.core.ui.theme.PageBg
-import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailUiState
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
@@ -45,12 +55,11 @@ fun PostDetailScreen(
         uiState = uiState,
         onBackClick = onBackClick,
         onRetry = {
-            // Nếu có lỗi, cho phép tải lại
-            uiState.post?.id?.let { viewModel.loadPostDetail(it) }
+            uiState.post?.id?.let { viewModel.loadPostDetail(it) }  // Nếu có lỗi, cho phép tải lại
+
         }
     )
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailContent(
@@ -94,7 +103,7 @@ fun PostDetailContent(
                 }
 
                 uiState.post != null -> {
-                    val post = uiState.post!!
+                    val post = uiState.post
                     val user = uiState.user!!
 
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -132,30 +141,10 @@ fun PostDetailContent(
                         item { PostFooterActions(onLikeClick = {}, onCommentClick = {}) }
 
                         // Khoảng trống dưới cùng để không bị che bởi BottomBar sau này
-                        item { Spacer(modifier = Modifier.height(32.dp)) }
+//                        item { Spacer(modifier = Modifier.height(32.dp)) }
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun PostDetailHeader(
-    userName: String,
-    avatarUrl: String?,
-    time: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        ProfileAvatar(avatarUrl = avatarUrl, size = 42.dp)
-        Column(modifier = Modifier.padding(start = 12.dp)) {
-            Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-            Text(text = time, color = TextMuted, fontSize = 12.sp)
         }
     }
 }

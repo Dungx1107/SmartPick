@@ -49,6 +49,8 @@ fun AppNavigation(
     val currentUser by authViewModel.currentUser.collectAsState()// Lắng nghe thông tin User hiện tại
     val isInitializing by authViewModel.isInitializing.collectAsState()
 
+    val isMainScreen = shouldShowBottomBar(currentRoute)
+
     // Tự động điều hướng khi trạng thái đăng nhập thay đổi
     LaunchedEffect(currentUser) {
         if (currentUser != null && currentRoute == Routes.Login.route) {
@@ -68,7 +70,7 @@ fun AppNavigation(
     } else {
         Scaffold(
             topBar = {
-                if (shouldShowBottomBar(currentRoute)) {
+                if (isMainScreen) {
                     MainTopBar(
                         onMenuClick = {
                             // TODO: Mở navigation drawer
@@ -87,7 +89,7 @@ fun AppNavigation(
                 }
             },
             bottomBar = {
-                if (shouldShowBottomBar(currentRoute)) {
+                if (isMainScreen) {
                     MainBottomBar(
                         navController = navController,
                         onNavigate = { route ->
@@ -108,7 +110,7 @@ fun AppNavigation(
             NavHost(
                 navController = navController,
                 startDestination = Routes.Login.route,
-                modifier = Modifier.padding(padding)
+                modifier = if (isMainScreen) Modifier.padding(padding) else Modifier.fillMaxSize()
             ) {
                 composable(route = Routes.SignUp.route) {
                     SignUpScreen(
