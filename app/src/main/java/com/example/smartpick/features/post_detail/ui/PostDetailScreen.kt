@@ -39,8 +39,10 @@ import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.PostFooterActions
 import com.example.smartpick.core.ui.components.PostHeader
 import com.example.smartpick.core.ui.components.ProductAttachmentCard
+import com.example.smartpick.core.ui.components.VideoPlayer
 import com.example.smartpick.core.ui.theme.PageBg
 import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.core.utils.FileUtils
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailUiState
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
 
@@ -127,21 +129,25 @@ fun PostDetailContent(
                             }
                         }
 
-                        // Hiển thị danh sách ảnh tách biệt (Theo yêu cầu của bạn)
-                        items(post.mediaUrls) { imageUrl ->
-                            AsyncImage(
-                                model = imageUrl,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                contentScale = ContentScale.FillWidth
-                            )
+                        items(post.mediaUrls) { url ->
+                            if (FileUtils.isVideoUrl(url)) {// Nếu là video, gọi trình phát chuyên dụng
+                                VideoPlayer(
+                                    videoUrl = url,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            } else {
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    contentScale = ContentScale.FillWidth
+                                )
+                            }
                         }
                         item { PostFooterActions(onLikeClick = {}, onCommentClick = {}) }
 
-                        // Khoảng trống dưới cùng để không bị che bởi BottomBar sau này
-//                        item { Spacer(modifier = Modifier.height(32.dp)) }
                     }
                 }
             }
