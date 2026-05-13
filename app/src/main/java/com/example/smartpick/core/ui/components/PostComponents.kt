@@ -169,9 +169,12 @@ fun PostItem(
     onPostClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
     onProductClick: (Product) -> Unit = {},
-    onViewImagesGalleryRequest: (List<String>, Int) -> Unit = { _, _ -> }, isDetailView: Boolean,
+    onViewImagesGalleryRequest: (List<String>, Int) -> Unit = { _, _ -> },
+    isDetailView: Boolean = false,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable { onPostClick() },
         colors = CardDefaults.cardColors(containerColor = Color.White),

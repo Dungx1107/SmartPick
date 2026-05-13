@@ -34,7 +34,6 @@ fun CommentInputField(
     ) {
         Row(
             modifier = Modifier
-                .windowInsetsPadding(WindowInsets.ime) // Tối ưu hơn imePadding() cho Layout
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

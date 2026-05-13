@@ -41,7 +41,7 @@ fun FeedScreen(
     viewModel: FeedViewModel = hiltViewModel(),
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit = {},
-    onCommentClick: (String) -> Unit = {},
+    onCommentClick: (String, String) -> Unit = { _, _ -> },
     onCreatePostClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -62,7 +62,7 @@ fun FeedContent(
     uiState: FeedUiState,
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit,
-    onCommentClick: (String) -> Unit,
+    onCommentClick: (String, String) -> Unit = { _, _ -> },
     onCreatePostClick: () -> Unit,
 ) {
     Box(
@@ -132,7 +132,7 @@ fun FeedContent(
                                 onPostClick(post.id.toString())
                             },
                             onCommentClick = {
-                                onCommentClick(post.id.toString())
+                                onCommentClick(post.id.toString(), user.id)
                             },
                             onProductClick = { },
                             onViewImagesGalleryRequest = { imageUrls, index ->
@@ -244,7 +244,7 @@ private fun FeedContentPreview() {
             uiState = FeedUiState.Success(fakePosts),
             paddingValues = PaddingValues(),
             onPostClick = {},
-            onCommentClick = {},
+            onCommentClick = { _, _ -> },
             onCreatePostClick = {}
         )
     }

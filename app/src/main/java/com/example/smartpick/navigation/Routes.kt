@@ -15,11 +15,11 @@ sealed class Routes(val route: String) {
     object Notifications : Routes("notifications")
 
     object PostDetail : Routes("post_detail/{postId}") {
-        const val ARG_POST_ID = "postId" // Đặt hằng số để dùng chung
+        const val ARG_POST_ID = "postId"
         fun createRoute(postId: String) = "post_detail/$postId"
     }
 
-    object Comments : Routes("comments/{postId}") {
-        fun createRoute(postId: String) = "comments/$postId"
+    object Comments : Routes("comments/{postId}/{postOwnerId}") {
+        fun createRoute(postId: String, postOwnerId: String) = "comments/$postId/$postOwnerId"
     }
 }

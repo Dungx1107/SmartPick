@@ -29,6 +29,7 @@ import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.chatbot.ui.ChatbotScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
+import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
 import com.example.smartpick.features.post_creation.ui.CreatePostScreen
 import com.example.smartpick.features.profile.ui.ProfileScreen
@@ -150,16 +151,32 @@ fun AppNavigation(
                     EditProfileScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
-                // Trong NavHost của AppNavigation.kt
                 composable(
                     route = Routes.PostDetail.route,
                     arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
                         type = NavType.StringType
                     })
-                ) { backStackEntry ->
-                    // Lưu ý: Chúng ta không cần lấy postId ở đây nữa
-                    // vì ViewModel sẽ tự lấy từ SavedStateHandle
+                ) {
                     PostDetailScreen(
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    route = Routes.Comments.route,
+                    arguments = listOf(
+                        navArgument("postId") { type = NavType.StringType },
+                        navArgument("postOwnerId") { type = NavType.StringType }
+                    )
+                ) { backStackEntry ->
+                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                    val postOwnerId = backStackEntry.arguments?.getString("postOwnerId") ?: ""
+                    val currentUser by authViewModel.currentUser.collectAsState()
+
+                    CommentsScreen(
+                        postId = postId,
+                        postOwnerId = postOwnerId,
+                        currentUserId = currentUser?.id ?: "",
                         onBackClick = { navController.popBackStack() }
                     )
                 }
@@ -170,8 +187,10 @@ fun AppNavigation(
                         onPostClick = { postId ->
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
-                        onCommentClick = { postId ->
-                            navController.navigate(Routes.Comments.createRoute(postId))
+                        onCommentClick = { postId, ownerId ->
+                            currentUser?.id?.let { //Chỉ chuyển trang khi người dùng đã đăng nhập
+                                navController.navigate(Routes.Comments.createRoute(postId, ownerId))
+                            }
                         },
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
