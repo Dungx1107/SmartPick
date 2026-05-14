@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartpick.features.profile.data.UserRepository
+import com.example.smartpick.features.profile.data.UserProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository    // Inject repository để gọi upload + update database
+    private val userProfileRepository: UserProfileRepository    // Inject repository để gọi upload + update database
 ) : ViewModel() {
     private val _isUploading =
         MutableStateFlow(false)    // State dùng để báo UI biết đang upload hay không (loading)
@@ -58,12 +58,12 @@ class EditProfileViewModel @Inject constructor(
                     }
 
                     if (imageBytes != null) {
-                        finalAvatarUrl = userRepository.uploadAvatar(userId, imageBytes)
+                        finalAvatarUrl = userProfileRepository.uploadAvatar(userId, imageBytes)
                     }
                 }
 
                 // 2. Cập nhật database
-                userRepository.updateUserProfile(
+                userProfileRepository.updateUserProfile(
                     userId = userId,
                     avatarUrl = finalAvatarUrl,
                     fullName = name,
@@ -76,7 +76,7 @@ class EditProfileViewModel @Inject constructor(
 
                 // 2. Cập nhật Database với URL ảnh (mới hoặc cũ)
                 if (finalAvatarUrl != null) {
-                    userRepository.updateUserAvatar(userId, finalAvatarUrl)
+                    userProfileRepository.updateUserAvatar(userId, finalAvatarUrl)
                     onSuccess(finalAvatarUrl) // Gọi callback để AuthViewModel đồng bộ app
                 }
 

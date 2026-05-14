@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
@@ -103,18 +102,32 @@ fun PostFooterActions(
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
     onShareClick: () -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
+    Column(modifier = Modifier) {
         HorizontalDivider(
             modifier = Modifier.padding(horizontal = 12.dp),
             thickness = 0.5.dp,
             color = Color(0xFFE4E6EB)
         )
         Row(modifier = Modifier.fillMaxWidth()) {
-            PostActionButton(Icons.Outlined.FavoriteBorder, stringResource(R.string.thich), onLikeClick, Modifier.weight(1f))
-            PostActionButton(Icons.Outlined.ChatBubbleOutline, stringResource(R.string.BinhLuan), onCommentClick, Modifier.weight(1f))
-            PostActionButton(Icons.Outlined.Share, stringResource(R.string.ChiaSe), onShareClick, Modifier.weight(1f))
+            PostActionButton(
+                Icons.Outlined.FavoriteBorder,
+                stringResource(R.string.thich),
+                onLikeClick,
+                Modifier.weight(1f)
+            )
+            PostActionButton(
+                Icons.Outlined.ChatBubbleOutline,
+                stringResource(R.string.BinhLuan),
+                onCommentClick,
+                Modifier.weight(1f)
+            )
+            PostActionButton(
+                Icons.Outlined.Share,
+                stringResource(R.string.ChiaSe),
+                onShareClick,
+                Modifier.weight(1f)
+            )
         }
     }
 }
@@ -134,7 +147,12 @@ private fun PostActionButton(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, null, modifier = Modifier.size(20.dp), tint = Color(0xFF65676B))
             Spacer(modifier = Modifier.width(6.dp))
-            Text(text = text, fontSize = 13.sp, color = Color(0xFF65676B), fontWeight = FontWeight.SemiBold)
+            Text(
+                text = text,
+                fontSize = 13.sp,
+                color = Color(0xFF65676B),
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
@@ -151,11 +169,11 @@ fun PostItem(
     onPostClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
     onProductClick: (Product) -> Unit = {},
-    onMediaClick: (Int) -> Unit = {},
-    modifier: Modifier = Modifier
+    onViewImagesGalleryRequest: (List<String>, Int) -> Unit = { _, _ -> },
+    isDetailView: Boolean = false,
 ) {
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable { onPostClick() },
@@ -169,8 +187,11 @@ fun PostItem(
                 content = post.content,
                 mediaUrls = post.mediaUrls,
                 product = product,
-                onMediaClick = onMediaClick,
-                onProductClick = onProductClick
+                // Ánh xạ sự kiện click ảnh trong grid sang yêu cầu xem gallery
+                onMediaClick = { clickedIndex ->
+                    // Truyền toàn bộ danh sách ảnh của bài viết và vị trí được nhấp
+                    onViewImagesGalleryRequest(post.mediaUrls, clickedIndex)
+                }, onProductClick = onProductClick
             )
             Spacer(modifier = Modifier.height(8.dp))
             PostFooterActions(onCommentClick = onCommentClick)

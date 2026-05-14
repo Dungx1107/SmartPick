@@ -15,13 +15,13 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
 //        lifecycleScope.launch {
 //            SupabaseTest.testConnection()
 //        }
 
-        enableEdgeToEdge()
         setContent {
             SmartPickTheme {
                 AppNavigation()

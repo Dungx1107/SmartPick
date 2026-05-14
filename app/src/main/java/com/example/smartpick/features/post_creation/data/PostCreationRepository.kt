@@ -73,16 +73,15 @@ class PostCreationRepository @Inject constructor(
 
             // Lấy MIME type thực tế của file
             // Ví dụ: image/png, video/mp4
-            val mimeType =
-                contentResolver.getType(uri)
-                    ?: "application/octet-stream"
+            val mimeType = contentResolver.getType(uri)
+                ?: "application/octet-stream"
 
             // Chuyển MIME type sang extension
             // Ví dụ: image/png -> png
-            val extension =
-                android.webkit.MimeTypeMap.getSingleton()
-                    .getExtensionFromMimeType(mimeType)
-                    ?: ""
+            val extension = android.webkit.MimeTypeMap
+                .getSingleton()
+                .getExtensionFromMimeType(mimeType)
+                ?: ""
 
             // Tạo tên file duy nhất bằng UUID
             // Nếu không lấy được extension thì chỉ dùng UUID
@@ -94,10 +93,9 @@ class PostCreationRepository @Inject constructor(
                 }
 
             // Đọc toàn bộ dữ liệu file thành ByteArray
-            val bytes =
-                contentResolver.openInputStream(uri)
-                    ?.use { it.readBytes() }
-                    ?: return@withContext ""
+            val bytes = contentResolver.openInputStream(uri)
+                ?.use { it.readBytes() }
+                ?: return@withContext ""
 
             // Truy cập bucket "media" trên Supabase Storage
             val bucket = supabase.storage.from("media")
@@ -109,16 +107,12 @@ class PostCreationRepository @Inject constructor(
                 upsert = false
             )
 
-            // Trả về public URL của file
-            return@withContext bucket.publicUrl(fileName)
+            return@withContext bucket.publicUrl(fileName) // Trả về public URL của file
 
         } catch (e: Exception) {
+            e.printStackTrace()  // In lỗi để debug
+            return@withContext ""  // Trả về chuỗi rỗng nếu upload thất bại
 
-            // In lỗi để debug
-            e.printStackTrace()
-
-            // Trả về chuỗi rỗng nếu upload thất bại
-            return@withContext ""
         }
     }
 

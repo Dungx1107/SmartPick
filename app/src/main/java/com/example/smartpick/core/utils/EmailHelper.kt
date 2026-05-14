@@ -25,7 +25,10 @@ object EmailHelper {
         type: EmailType,
         name: String = ""
     ) {
-        if (email.isBlank()) return
+        if (email.isBlank()) {
+            Log.w("EmailHelper", "⚠️ Email trống, bỏ qua gửi email.")
+            return
+        }
 
         withContext(Dispatchers.IO) {
             try {
@@ -35,18 +38,27 @@ object EmailHelper {
                     put("type", type.value)
                 }.toString().toRequestBody("application/json".toMediaType())
 
+                val supabaseKey = BuildConfig.SUPABASE_KEY.trim()
                 val request = Request.Builder()
                     .url("${BuildConfig.SUPABASE_URL}/functions/v1/send-app-email")
                     .post(body)
+                    .addHeader("apikey", supabaseKey)
                     .addHeader("Authorization", "Bearer ${BuildConfig.SUPABASE_KEY}")
                     .addHeader("Content-Type", "application/json")
                     .build()
 
-                val response = client.newCall(request).execute()
-                Log.d("EmailHelper", "✅ [${type.value}] → $email | ${response.code}")
+                // Sử dụng .use {} để đảm bảo response được đóng tự động
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        Log.d("EmailHelper", "✅ Gửi email thành công [${type.value}] → $email")
+                    } else {
+                        val errorBody = response.body?.string()
+                        Log.e("EmailHelper", "❌ Lỗi Server (${response.code}): $errorBody")
+                    }
+                }
 
             } catch (e: Exception) {
-                Log.e("EmailHelper", "❌ Failed: ${e.message}")
+                Log.e("EmailHelper", "❌ Lỗi kết nối khi gửi email: ${e.message}")
             }
         }
     }
