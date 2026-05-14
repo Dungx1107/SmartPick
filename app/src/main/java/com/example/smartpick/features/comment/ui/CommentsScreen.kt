@@ -68,7 +68,6 @@ fun CommentsScreen(
         replyingTo = replyingTo,
     )
 }
-
 @Composable
 fun CommentsContent(
     comments: List<CommentUIState>,
@@ -88,9 +87,7 @@ fun CommentsContent(
         containerColor = Color(0xFFF8FAFC),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-
             val bottomPadding = WindowInsets.navigationBars.union(WindowInsets.ime)
-
             Box(modifier = Modifier.windowInsetsPadding(bottomPadding)) {
                 CommentInputField(
                     commentText = commentText,
@@ -126,31 +123,22 @@ fun CommentsContent(
                             onReplyClick = onReplyClick
                         )
 
-                        // Tầng 2: Container chứa các reply có đường kẻ dọc
+                        // Tầng 2: Danh sách các reply
+                        // Loại bỏ padding(start = 40.dp) và drawBehind tại đây
                         if (parentComment.replies.isNotEmpty()) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(start = 40.dp)
-                                    .drawBehind {
-                                        drawLine(
-                                            color = Color(0xFFE2E8F0),
-                                            start = Offset(0f, 0f),
-                                            end = Offset(0f, size.height - 24.dp.toPx()),
-                                            strokeWidth = 2.dp.toPx()
-                                        )
-                                    }
-                            ) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
                                 parentComment.replies.forEachIndexed { index, reply ->
                                     CommentItem(
                                         state = reply,
                                         onLikeClick = onLikeClick,
-                                        onReplyClick = onReplyClick, // Cho phép reply cả ở tầng 2
+                                        onReplyClick = onReplyClick,
                                         isReply = true,
                                         isLastReply = index == parentComment.replies.size - 1
                                     )
                                 }
                             }
                         }
+
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,

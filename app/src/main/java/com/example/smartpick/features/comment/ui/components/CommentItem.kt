@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,49 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.smartpick.features.comment.viewmodel.CommentUIState
-//
-//@Composable
-//fun CommentItem(
-//    modifier: Modifier = Modifier,
-//    state: CommentUIState,
-//    onLikeClick: (String) -> Unit,
-//    onReplyClick: (CommentUIState) -> Unit,
-//    isReply: Boolean = false,
-//    isLastReply: Boolean = false
-//) {
-//
-//    Row(
-//        modifier = modifier
-//            .fillMaxWidth()
-//            .height(IntrinsicSize.Min)
-//            .padding(
-//                start = 16.dp,
-//                end = 16.dp
-//            ),
-//        verticalAlignment = Alignment.Top
-//    ) {
-//
-//        if (isReply) {
-//            ReplyConnector(isLastReply = isLastReply)
-//        }
-//        CommentAvatar(
-//            avatarUrl = state.authorAvatar,
-//            isReply = isReply
-//        )
-//        Spacer(modifier = Modifier.width(12.dp))
-//        CommentBody(
-//            state = state,
-//            modifier = Modifier.weight(1f),
-//            onReplyClick = { onReplyClick(state) }
-//        )
-//        LikeSection(
-//            id = state.id,
-//            isLiked = state.isLiked,
-//            count = state.likesCount,
-//            onLikeClick = onLikeClick
-//        )
-//    }
-//}
 
 @Composable
 fun CommentItem(
@@ -68,19 +26,26 @@ fun CommentItem(
     isReply: Boolean = false,
     isLastReply: Boolean = false
 ) {
-
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Min) // Quan trọng: Để Canvas nhận đúng chiều cao Row
     ) {
-
-        // DRAW CONNECTOR BEHIND
+        // DRAW CONNECTOR
         if (isReply) {
-            FacebookReplyConnector(
+            // Vẽ connector cho reply
+            ReplyConnector(
+                modifier = Modifier.fillMaxHeight(),
+                isReply = true,
                 isLastReply = isLastReply
             )
+        } else if (state.replies.isNotEmpty()) {
+            // Vẽ connector cho CHA nếu có con ở dưới
+            ReplyConnector(
+                modifier = Modifier.fillMaxHeight(),
+                isParent = true
+            )
         }
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -92,7 +57,6 @@ fun CommentItem(
                 ),
             verticalAlignment = Alignment.Top
         ) {
-
             CommentAvatar(
                 avatarUrl = state.authorAvatar,
                 isReply = isReply
@@ -103,9 +67,7 @@ fun CommentItem(
             CommentBody(
                 modifier = Modifier.weight(1f),
                 state = state,
-                onReplyClick = {
-                    onReplyClick(state)
-                }
+                onReplyClick = { onReplyClick(state) }
             )
 
             LikeSection(

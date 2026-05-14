@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,7 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -37,89 +34,53 @@ import com.example.smartpick.core.ui.components.ProfileAvatar
 import com.example.smartpick.features.comment.viewmodel.CommentUIState
 
 @Composable
-fun FacebookReplyConnector(
-    isLastReply: Boolean
+fun ReplyConnector(
+    modifier: Modifier = Modifier,
+    isReply: Boolean = false,
+    isParent: Boolean = false,
+    isLastReply: Boolean = false
 ) {
-
-    Canvas(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-
-        val lineColor = Color(0xFFE2E8F0)
-
+    Canvas(modifier = modifier) {
+        val lineColor = Color(0xFFDADDE1)
         val strokeWidth = 1.5.dp.toPx()
 
-        // vị trí line dọc
-        val verticalX = 28.dp.toPx()
+        // Tọa độ X luôn là tâm avatar cha: 16dp padding + 20dp bán kính = 36dp
+        val verticalX = 36.dp.toPx()
 
-        // tâm avatar reply
-        val avatarCenterY = 20.dp.toPx()
+        if (isParent) {
+            // NẾU LÀ CHA: Vẽ từ tâm avatar (4dp padding + 20dp bán kính = 24dp) xuống đáy
+            val parentAvatarCenterY = 24.dp.toPx()
+            drawLine(
+                color = lineColor,
+                start = Offset(verticalX, parentAvatarCenterY),
+                end = Offset(verticalX, size.height),
+                strokeWidth = strokeWidth
+            )
+        } else if (isReply) {
+            // NẾU LÀ CON (REPLY):
+            val replyAvatarCenterY = 20.dp.toPx() // 4dp padding + 16dp bán kính
+            val horizontalEndX = 68.dp.toPx()   // 52dp padding + 16dp bán kính
 
-        // line dọc
-        drawLine(
-            color = lineColor,
-            start = Offset(verticalX, 0f),
-            end = Offset(
-                verticalX,
-                if (isLastReply)
-                    avatarCenterY
-                else
-                    size.height
-            ),
-            strokeWidth = strokeWidth
-        )
+            // Vẽ đường dọc: Luôn bắt đầu từ đỉnh (0f) để nối tiếp từ trên xuống
+            drawLine(
+                color = lineColor,
+                start = Offset(verticalX, 0f),
+                end = Offset(
+                    verticalX,
+                    if (isLastReply) replyAvatarCenterY else size.height
+                ),
+                strokeWidth = strokeWidth
+            )
 
-        // line ngang
-        drawLine(
-            color = lineColor,
-            start = Offset(verticalX, avatarCenterY),
-            end = Offset(52.dp.toPx(), avatarCenterY),
-            strokeWidth = strokeWidth
-        )
+            // Vẽ đường ngang sang tâm avatar con
+            drawLine(
+                color = lineColor,
+                start = Offset(verticalX, replyAvatarCenterY),
+                end = Offset(horizontalEndX, replyAvatarCenterY),
+                strokeWidth = strokeWidth
+            )
+        }
     }
-}
-@Composable
-fun ReplyConnector(
-    isLastReply: Boolean
-) {
-    Box(
-        modifier = Modifier
-            .width(24.dp)
-            .fillMaxHeight()
-            .drawBehind {
-
-                val lineColor = Color(0xFFE2E8F0)
-                val stroke = 1.5.dp.toPx()
-
-                val centerX = size.width / 2
-
-                // avatar reply = 32dp
-                val avatarRadius = 16.dp.toPx()
-
-                // tâm avatar
-                val centerY = avatarRadius
-
-                // line dọc
-                drawLine(
-                    color = lineColor,
-                    start = Offset(centerX, 0f),
-                    end = Offset(
-                        centerX,
-                        if (isLastReply) centerY else size.height
-                    ),
-                    strokeWidth = stroke
-                )
-
-                // line ngang
-                drawLine(
-                    color = lineColor,
-                    start = Offset(centerX, centerY),
-                    end = Offset(size.width, centerY),
-                    strokeWidth = stroke
-                )
-            }
-    )
 }
 
 @Composable
