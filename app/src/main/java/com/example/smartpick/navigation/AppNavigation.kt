@@ -36,7 +36,6 @@ import com.example.smartpick.features.home.ui.HomeScreen
 import com.example.smartpick.features.profile.ui.main.ProfileScreen
 import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
-import com.example.smartpick.features.home.ui.HomeScreenRoute
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 
 

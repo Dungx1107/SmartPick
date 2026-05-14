@@ -97,4 +97,7 @@
     <string name="DanhChoBan">Dành cho bạn</string>
     <string name="BaiVietCuaBan">Bài viết của bạn</string>
     <string name="ChuaCoBaiViet">Chưa có bài viết</string>
+    <string name="NoiTenSanPhamBanMuonTim">Nói tên sản phẩm bạn muốn tìm...</string>
+    <string name="cart">Cart</string>
+    <string name="KoTimThaySanPhamNao">Không tìm thấy sản phẩm nào.</string>
 </resources>

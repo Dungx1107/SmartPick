@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/home/data/HomeRepository.kt
 package com.example.smartpick.features.home.data
 
 import com.example.smartpick.core.model.Product

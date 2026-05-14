@@ -1,9 +1,9 @@
-// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,9 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.smartpick.R
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.features.home.ui.components.CartBottomSheet
 import com.example.smartpick.features.home.ui.components.ProductDetailContent
@@ -66,11 +68,17 @@ fun HomeScreen(
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói tên sản phẩm bạn muốn tìm...")
+            putExtra(RecognizerIntent.EXTRA_PROMPT,
+                context.getString(R.string.NoiTenSanPhamBanMuonTim))
         }
         try {
             speechRecognizerLauncher.launch(intent)
         } catch (e: Exception) {
+            Log.e(
+                "VOICE_SEARCH",
+                "Lỗi nhận diện giọng nói: ${e.message}",
+                e
+            )
             Toast.makeText(context, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show()
         }
     }
@@ -81,13 +89,15 @@ fun HomeScreen(
             if (cartItems.isNotEmpty()) {
                 FloatingActionButton(onClick = { showCart = true }) {
                     BadgedBox(badge = { Badge { Text(cartItems.size.toString()) } }) {
-                        Icon(Icons.Default.ShoppingCart, "Cart")
+                        Icon(Icons.Default.ShoppingCart, stringResource(R.string.cart))
                     }
                 }
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+        Column(modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()) {
 
             // Thanh Tìm kiếm (Chữ + Giọng nói)
             SearchBar(
@@ -100,13 +110,15 @@ fun HomeScreen(
             )
 
             // Danh sách sản phẩm
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Box(modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     is HomeUiState.Error -> Text("Lỗi: ${state.message}", modifier = Modifier.align(Alignment.Center))
                     is HomeUiState.Success -> {
                         if (state.products.isEmpty()) {
-                            Text("Không tìm thấy sản phẩm nào.", modifier = Modifier.align(Alignment.Center))
+                            Text(stringResource(R.string.KoTimThaySanPhamNao), modifier = Modifier.align(Alignment.Center))
                         } else {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
