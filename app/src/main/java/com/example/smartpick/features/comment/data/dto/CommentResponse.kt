@@ -17,5 +17,7 @@ data class CommentResponse(
 
     // Dữ liệu tính toán (Aggregated)
     @SerialName("likes_count") val likesCount: Int = 0,
-    @SerialName("is_liked") val isLiked: Boolean = false
+    @SerialName("is_liked") val isLiked: Boolean = false,
+    @SerialName("parent_id") val parentId: String? = null
+
 )
