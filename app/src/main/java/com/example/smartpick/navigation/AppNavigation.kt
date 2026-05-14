@@ -32,11 +32,13 @@ import com.example.smartpick.features.auth.ui.SignUpScreen
 import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
 import com.example.smartpick.features.post_creation.ui.CreatePostScreen
+import com.example.smartpick.features.home.ui.HomeScreen
 import com.example.smartpick.features.profile.ui.main.ProfileScreen
 import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.home.ui.HomeScreenRoute
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
+
 
 @Composable
 fun AppNavigation(
@@ -154,7 +156,10 @@ fun AppNavigation(
                 }
 
                 composable(route = Routes.Home.route) {
-                    HomeScreenRoute()
+                    HomeScreen(
+                        navController = navController,
+                        paddingValues = PaddingValues(0.dp)
+                    )
                 }
 
                 // Các màn hình đơn giản khác cũng làm tương tự

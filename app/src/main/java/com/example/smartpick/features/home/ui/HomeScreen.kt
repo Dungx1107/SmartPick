@@ -1,194 +1,174 @@
+// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import android.app.Activity
+import android.content.Intent
+import android.speech.RecognizerIntent
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.smartpick.R
-import com.example.smartpick.core.model.Post
+import androidx.navigation.NavController
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.model.User
-import com.example.smartpick.core.ui.components.ProductVerticalCard
-import com.example.smartpick.core.ui.theme.PageBg
-import com.example.smartpick.core.ui.theme.TextPrimary
-import com.example.smartpick.core.ui.theme.TextSecondary
-import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import com.example.smartpick.features.home.ui.components.AICuratorBanner
-import com.example.smartpick.features.home.ui.components.HeroBanner
+import com.example.smartpick.features.home.ui.components.CartBottomSheet
+import com.example.smartpick.features.home.ui.components.ProductDetailContent
+import com.example.smartpick.features.home.ui.components.ProductGridCard
 import com.example.smartpick.features.home.ui.components.SearchBar
+import com.example.smartpick.features.home.viewmodel.HomeUiState
+import com.example.smartpick.features.home.viewmodel.HomeViewModel
+import com.example.smartpick.navigation.Routes
+import kotlinx.coroutines.launch
 
-@Composable
-fun HomeScreenRoute(
-    authViewModel: AuthViewModel = hiltViewModel(),
-    // viewModel: HomeViewModel = hiltViewModel(), // Quản lý dữ liệu Feed/Home
-    onPostClick: (String) -> Unit = {},
-    onCommentClick: (String) -> Unit = {}
-) {
-    val user by authViewModel.currentUser.collectAsState()
-    // val posts by viewModel.posts.collectAsState()
-
-    user?.let { currentUser ->
-        HomeScreen(
-            user = currentUser,
-            posts = emptyList(), // Sẽ thay bằng dữ liệu từ ViewModel
-            onPostClick = onPostClick,
-            onCommentClick = onCommentClick
-        )
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    user: User,
-    posts: List<Triple<Post, User, Product?>> = emptyList(),
-    onPostClick: (String) -> Unit = {},
-    onCommentClick: (String) -> Unit = {},
-    onCreatePostClick: () -> Unit = {}
+    navController: NavController,
+    paddingValues: PaddingValues,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PageBg),
-        contentPadding = PaddingValues(
-            start = 12.dp,
-            end = 12.dp,
-            bottom = 24.dp,
-            top = 0.dp // Bạn có thể chỉnh lại giá trị top tùy ý
-        ), horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        // --- PHẦN HEADER (Mỗi cái là 1 item riêng để tối ưu cuộn) ---
+    val uiState by viewModel.uiState.collectAsState()
+    val cartItems by viewModel.cartItems.collectAsState()
 
-        item(span = { GridItemSpan(2) }) {
-            Column {
-                Spacer(Modifier.height(12.dp))
-                SearchBar()
-            }
+    var showCart by remember { mutableStateOf(false) }
+    var selectedProduct by remember { mutableStateOf<Product?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Khởi tạo Launcher Lắng nghe giọng nói (Speech-to-Text)
+    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            val recognizedText = data?.get(0) ?: ""
+            searchQuery = recognizedText
+            viewModel.searchProducts(recognizedText) // Lọc list tự động
         }
+    }
 
-        item(span = { GridItemSpan(2) }) {
-            HeroBanner()
+    // Hàm gọi Mic Android
+    fun startSpeechToText() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Nói tên sản phẩm bạn muốn tìm...")
         }
-
-        item(span = { GridItemSpan(2) }) {
-            AICuratorBanner()
+        try {
+            speechRecognizerLauncher.launch(intent)
+        } catch (e: Exception) {
+            Toast.makeText(context, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show()
         }
+    }
 
-        item(span = { GridItemSpan(2) }) {
-            Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 16.dp)) {
-                Text(
-                    text = stringResource(R.string.GoiYChoBan),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                user.fullName?.let {
-                    Text(
-                        text = stringResource(R.string.DuaTrenSoThich, it),
-                        fontSize = 12.sp,
-                        color = TextSecondary
-                    )
+    Scaffold(
+        modifier = Modifier.padding(paddingValues),
+        floatingActionButton = {
+            if (cartItems.isNotEmpty()) {
+                FloatingActionButton(onClick = { showCart = true }) {
+                    BadgedBox(badge = { Badge { Text(cartItems.size.toString()) } }) {
+                        Icon(Icons.Default.ShoppingCart, "Cart")
+                    }
                 }
             }
         }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
 
-        // --- PHẦN GRID SẢN PHẨM (Tự động chia 2 cột) ---
+            // Thanh Tìm kiếm (Chữ + Giọng nói)
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = {
+                    searchQuery = it
+                    viewModel.searchProducts(it)
+                },
+                onMicClick = { startSpeechToText() }
+            )
 
-        val productItems = posts.filter { it.third != null }
-
-        items(
-            items = productItems,
-            key = { it.first.id.toString() }
-        ) { (post, author, product) ->
-            product?.let {
-                ProductVerticalCard(
-                    product = it,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { onPostClick(post.id.toString()) }
-                )
+            // Danh sách sản phẩm
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when (val state = uiState) {
+                    is HomeUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    is HomeUiState.Error -> Text("Lỗi: ${state.message}", modifier = Modifier.align(Alignment.Center))
+                    is HomeUiState.Success -> {
+                        if (state.products.isEmpty()) {
+                            Text("Không tìm thấy sản phẩm nào.", modifier = Modifier.align(Alignment.Center))
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                contentPadding = PaddingValues(8.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(state.products) { product ->
+                                    ProductGridCard(
+                                        product = product,
+                                        onProductClick = { selectedProduct = product },
+                                        onAddToCart = {
+                                            viewModel.addToCart(it)
+                                            Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
-}
 
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-fun HomeScreenPreview() {
-    val sampleUser = User(
-        id = "123",
-        fullName = "Nguyễn Xuân Dũng",
-        username = "dungx1107",
-        email = "dung.nx@vnu.edu.vn",
-        avatarUrl = null
-    )
+    if (selectedProduct != null) {
+        ModalBottomSheet(
+            onDismissRequest = { selectedProduct = null },
+            sheetState = sheetState,
+            modifier = Modifier.fillMaxHeight(0.9f),
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            ProductDetailContent(
+                product = selectedProduct!!,
+                onViewFeed = {
+                    scope.launch {
+                        val postId = viewModel.getPostId(selectedProduct!!.id ?: "")
+                        if (postId != null) {
+                            selectedProduct = null
+                            navController.navigate(Routes.PostDetail.createRoute(postId))
+                        } else {
+                            Toast.makeText(context, "Sản phẩm này chưa có bài đăng!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                onAddToCart = {
+                    viewModel.addToCart(selectedProduct!!)
+                    Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show()
+                },
+                onBuyNow = {
+                    selectedProduct = null
+                    showCart = true
+                }
+            )
+        }
+    }
 
-    val mockProducts = listOf(
-        Product(
-            id = "pro_1",
-            ownerId = "123",
-            name = "Tai nghe chống ồn WH-1000XM5",
-            brand = "SONY",
-            price = 8490000.0,
-            category = "Audio",
-            imageUrls = listOf("https://via.placeholder.com/150")
-        )
-    )
-
-    val mockPosts = listOf(
-        Triple(
-            Post(
-                id = "p1",
-                userId = "123",
-                productId = "pro_1",
-                content = "Nghe nhạc cực đỉnh với con Sony XM5 này, chống ồn 10/10 luôn!",
-                createdAt = "2 giờ trước",
-                mediaUrls = listOf("https://via.placeholder.com/600x400")
-            ),
-            sampleUser,
-            mockProducts[0]
-        ),
-        Triple(
-            Post(
-                id = "p2",
-                userId = "456",
-                content = "Mọi người tư vấn giúp mình có nên nâng cấp lên iPad M4 lúc này không?",
-                createdAt = "5 giờ trước",
-                mediaUrls = emptyList()
-            ),
-            User(id = "456", fullName = "Lê Hải An", avatarUrl = null),
-            null
-        )
-    )
-
-    MaterialTheme {
-        HomeScreen(
-            user = sampleUser,
-            posts = mockPosts,
-            onPostClick = {},
-            onCommentClick = {},
-            onCreatePostClick = {}
+    if (showCart) {
+        CartBottomSheet(
+            cartItems = cartItems,
+            onDismiss = { showCart = false },
+            onRemoveItem = { viewModel.removeFromCart(it) },
+            onCheckout = { /* TODO: Xử lý thanh toán */ }
         )
     }
 }
