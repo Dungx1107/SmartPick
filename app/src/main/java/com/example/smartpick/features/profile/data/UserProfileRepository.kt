@@ -95,11 +95,5 @@ class UserProfileRepository @Inject constructor(
         }
     }
 
-    suspend fun getUserPosts(userId: String): List<PostDetailResponse> {
-        return supabase.postgrest["posts"]
-            .select(columns = Columns.raw("*, users(*), products(*)")) {
-                filter { eq("user_id", userId) }
-                order("created_at", Order.DESCENDING)
-            }.decodeList<PostDetailResponse>()
-    }
+
 }

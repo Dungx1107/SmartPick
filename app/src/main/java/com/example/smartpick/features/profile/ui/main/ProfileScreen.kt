@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.R
+import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.core.ui.components.PostItem
@@ -61,7 +62,7 @@ fun ProfileScreen(
             navController.navigate(Routes.CreatePost.route)
         },
         onPostClick = { postId ->
-            navController.navigate("${Routes.PostDetail.route}/$postId")
+            navController.navigate(Routes.PostDetail.createRoute(postId))
         }
     )
 }
@@ -145,7 +146,7 @@ fun ProfileContent(
                 key = { it.id } // Sử dụng ID bài viết làm key để tối ưu performance
             ) { postDetail ->
                 // Ánh xạ dữ liệu từ DTO sang Model Post
-                val post = com.example.smartpick.core.model.Post(
+                val post = Post(
                     id = postDetail.id,
                     userId = postDetail.user.id,
                     productId = postDetail.product?.id,
@@ -154,14 +155,12 @@ fun ProfileContent(
                     createdAt = postDetail.createdAt
                 )
 
-                // Sử dụng PostItem dùng chung thay vì UserPostItem placeholder
-                com.example.smartpick.core.ui.components.PostItem(
+                PostItem(
                     post = post,
                     user = postDetail.user,
                     product = postDetail.product,
                     onPostClick = { onPostClick(post.id.toString()) },
                     onCommentClick = {
-                        // Có thể điều hướng trực tiếp vào chi tiết để xem comment
                         onPostClick(post.id.toString())
                     },
                     onProductClick = { product ->
