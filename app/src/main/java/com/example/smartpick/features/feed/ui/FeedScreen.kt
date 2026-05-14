@@ -32,22 +32,25 @@ import com.example.smartpick.core.ui.components.PostItem
 import com.example.smartpick.core.ui.theme.PageBg
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.White
-import com.example.smartpick.features.feed.ui.components.CreatePostPrompt
+import com.example.smartpick.core.ui.components.CreatePostPrompt
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.feed.viewmodel.FeedUiState
 import com.example.smartpick.features.feed.viewmodel.FeedViewModel
 
 @Composable
 fun FeedScreen(
     viewModel: FeedViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit = {},
     onCommentClick: (String, String) -> Unit = { _, _ -> },
     onCreatePostClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentUser by authViewModel.currentUser.collectAsState()
 
     FeedContent(
-        currentUserAvatar = null,
+        currentUser = currentUser,
         uiState = uiState,
         paddingValues = paddingValues,
         onPostClick = onPostClick,
@@ -58,7 +61,7 @@ fun FeedScreen(
 
 @Composable
 fun FeedContent(
-    currentUserAvatar: String?,
+    currentUser: User?,
     uiState: FeedUiState,
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit,
@@ -96,7 +99,7 @@ fun FeedContent(
                             shadowElevation = 2.dp
                         ) {
                             CreatePostPrompt(
-                                avatarUrl = currentUserAvatar,
+                                user = currentUser,
                                 onClick = onCreatePostClick,
                                 modifier = Modifier.padding(16.dp)
                             )
@@ -240,7 +243,7 @@ private fun FeedContentPreview() {
 
     SmartPickTheme {
         FeedContent(
-            currentUserAvatar = "https://i.pravatar.cc/300?img=12",
+            currentUser = fakeUser1,
             uiState = FeedUiState.Success(fakePosts),
             paddingValues = PaddingValues(),
             onPostClick = {},

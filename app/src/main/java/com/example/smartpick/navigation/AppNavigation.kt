@@ -32,9 +32,9 @@ import com.example.smartpick.features.auth.ui.SignUpScreen
 import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
 import com.example.smartpick.features.post_creation.ui.CreatePostScreen
-import com.example.smartpick.features.profile.ui.ProfileScreen
-import com.example.smartpick.features.profile.ui.SavedCollectionScreen
-import com.example.smartpick.features.profile.ui.EditProfileScreen
+import com.example.smartpick.features.profile.ui.main.ProfileScreen
+import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
+import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.home.ui.HomeScreenRoute
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 
@@ -53,11 +53,29 @@ fun AppNavigation(
     val isMainScreen = shouldShowBottomBar(currentRoute)
 
     // Tự động điều hướng khi trạng thái đăng nhập thay đổi
-    LaunchedEffect(currentUser) {
-        if (currentUser != null && currentRoute == Routes.Login.route) {
-            // Nếu đã có user mà đang ở màn Login -> Nhảy vào Home luôn
-            navController.navigate(Routes.Home.route) {
-                popUpTo(Routes.Login.route) { inclusive = true }
+    LaunchedEffect(currentUser, isInitializing) {
+        // 1. Nếu đang khởi tạo thì không làm gì cả
+        if (isInitializing) return@LaunchedEffect
+
+        // 2. Kiểm tra xem NavController đã sẵn sàng chưa (tránh crash "graph not set")
+        // Nếu currentDestination == null nghĩa là NavHost chưa gắn graph thành công
+        val destination = navController.currentDestination ?: return@LaunchedEffect
+        val route = destination.route
+
+        if (currentUser != null) {
+            // Nếu đã có user mà đang ở màn Auth -> Nhảy vào Home
+            if (route == Routes.Login.route || route == Routes.SignUp.route) {
+                navController.navigate(Routes.Home.route) {
+                    popUpTo(Routes.Login.route) { inclusive = true }
+                }
+            }
+        } else {
+            // Nếu currentUser == null (đã logout hoặc chưa login)
+            // Chỉ navigate nếu đang ở các màn hình bên trong (không phải Login/SignUp)
+            if (route != Routes.Login.route && route != Routes.SignUp.route) {
+                navController.navigate(Routes.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                }
             }
         }
     }

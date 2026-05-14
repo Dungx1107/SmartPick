@@ -1,4 +1,4 @@
-package com.example.smartpick.features.profile.ui
+package com.example.smartpick.features.profile.ui.saved
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

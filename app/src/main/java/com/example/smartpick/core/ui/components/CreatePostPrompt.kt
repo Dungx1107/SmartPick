@@ -1,4 +1,4 @@
-package com.example.smartpick.features.feed.ui.components
+package com.example.smartpick.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.components.ProfileAvatar
+import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.theme.AccentBlue
 import com.example.smartpick.core.ui.theme.DividerColor
 import com.example.smartpick.core.ui.theme.SmartPickTheme
@@ -43,10 +43,11 @@ import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun CreatePostPrompt(
-    avatarUrl: String?,
+    user: User?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val avatarUrl = user?.avatarUrl
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),
@@ -98,15 +99,12 @@ fun CreatePostPrompt(
 @Preview(showBackground = true)
 @Composable
 fun CreatePostPromptNoAvatarPreview() {
-
     SmartPickTheme {
-
         Surface(
             modifier = Modifier.fillMaxSize()
         ) {
-
             CreatePostPrompt(
-                avatarUrl = null,
+                user = null,
                 onClick = {},
                 modifier = Modifier.padding(16.dp)
             )

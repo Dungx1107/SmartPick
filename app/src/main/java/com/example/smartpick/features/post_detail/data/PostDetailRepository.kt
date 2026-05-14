@@ -22,12 +22,4 @@ class PostDetailRepository @Inject constructor(
             }.decodeSingleOrNull<PostDetailResponse>()
     }
 
-//    // Lấy danh sách bình luận của bài viết
-//    suspend fun getComments(postId: String): List<Comment> = withContext(Dispatchers.IO) {
-//        return@withContext supabase.postgrest["comments"]
-//            .select {
-//                kotlinx.coroutines.flow.filter { eq("post_id", postId) }
-//                order("created_at", Order.DESCENDING)
-//            }.decodeList<Comment>()
-//    }
 }

@@ -95,4 +95,6 @@
     <string name="DangBan">Đăng bán</string>
     <string name="Anhr">Ảnh</string>
     <string name="DanhChoBan">Dành cho bạn</string>
+    <string name="BaiVietCuaBan">Bài viết của bạn</string>
+    <string name="ChuaCoBaiViet">Chưa có bài viết</string>
 </resources>

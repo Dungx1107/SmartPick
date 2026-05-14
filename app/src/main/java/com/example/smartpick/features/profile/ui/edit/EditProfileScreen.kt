@@ -1,4 +1,4 @@
-package com.example.smartpick.features.profile.ui
+package com.example.smartpick.features.profile.ui.edit
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -53,11 +53,14 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
+import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.ProfileAvatar
 import com.example.smartpick.core.ui.theme.PageBg
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
+import com.example.smartpick.features.profile.ui.main.CameraBadgeButton
+import com.example.smartpick.features.profile.ui.main.ProfileTextField
 import com.example.smartpick.features.profile.viewmodel.EditProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -392,7 +395,7 @@ fun EditProfileContent(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun EditProfilePreview() {
-    val mockUser = com.example.smartpick.core.model.User(
+    val mockUser = User(
         id = "123",
         email = "dung.nx@smartpick.com",
         fullName = "Nguyễn Xuân Dũng",
