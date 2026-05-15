@@ -2,6 +2,9 @@ package com.example.smartpick.features.auth.data
 
 import android.util.Log
 import com.example.smartpick.BuildConfig
+import com.example.smartpick.core.data.dto.UserDto
+import com.example.smartpick.core.data.mapper.toDomain
+import com.example.smartpick.core.data.mapper.toDto
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.core.utils.EmailHelper
@@ -45,8 +48,10 @@ class AuthRepository @Inject constructor(
                 result = try {
                     supabase.postgrest["users"]
                         .select { filter { eq("id", authUser.id) } }
-                        .decodeSingle<User>()
+                        .decodeSingle<UserDto>() // Đọc bằng Dto
+                        .toDomain()              // Chuyển sang Domain Model
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     null
                 }
 
@@ -128,9 +133,12 @@ class AuthRepository @Inject constructor(
                     val existingUser = try {
                         supabase.postgrest["users"]
                             .select { filter { eq("id", currentUser.id) } }
-                            .decodeSingleOrNull<User>()
+                            .decodeSingleOrNull<UserDto>() // Đọc bằng Dto
+                            ?.toDomain()
                     } catch (e: Exception) {
-                        null
+                        e.printStackTrace()
+                        Log.e("AUTH", "Lỗi khi lưu user: ${e.message}")
+                        throw e
                     }
 
                     val isNewUser = existingUser == null  // ← Không có trong DB = user mới
@@ -141,7 +149,7 @@ class AuthRepository @Inject constructor(
                      * ["users"]: chọn bảng users (Dũng nhớ check lại tên bảng trên Supabase nhé)
                      * upsert: update nếu đã tồn tại, insert nếu chưa có
                      */
-                    supabase.postgrest["users"].upsert(myUser)
+                    supabase.postgrest["users"].upsert(myUser.toDto())
 
                     // Gửi email đúng loại
                     currentUser.email?.let { email ->

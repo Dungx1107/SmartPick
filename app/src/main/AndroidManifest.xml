@@ -18,7 +18,10 @@
         android:theme="@style/Theme.SmartPick"
         android:exported="true"
         android:screenOrientation="landscape"
-        android:configChanges="orientation|screenSize|screenLayout">
+        android:configChanges="orientation|screenSize|screenLayout"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="m"
+        >
         <activity
             android:name=".MainActivity"
             android:exported="true"

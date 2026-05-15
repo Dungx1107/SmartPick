@@ -2,6 +2,7 @@ package com.example.smartpick.features.comment.data
 
 import com.example.smartpick.core.model.Notification
 import android.util.Log
+import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Comment
 import com.example.smartpick.core.utils.Constants.TABLE_COMMENTS
 import com.example.smartpick.core.utils.Constants.TABLE_COMMENT_LIKES
@@ -32,19 +33,7 @@ class CommentRepository @Inject constructor(
             }.decodeList<CommentResponse>()
 
         // Chuyển đổi DTO sang Domain Model
-        return@withContext response.map { dto ->
-            Comment(
-                id = dto.id,
-                postId = dto.postId,
-                userId = dto.userId,
-                content = dto.content,
-                createdAt = dto.createdAt,
-                user = dto.user,
-                likesCount = dto.likesCount,
-                isLiked = dto.isLiked,
-                parentId = dto.parentId
-            )
-        }
+        return@withContext response.map { it.toDomain() }
     }
 
     // Gửi bình luận mới

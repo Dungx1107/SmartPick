@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.R
+import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.CreatePostPrompt
@@ -157,8 +158,8 @@ fun ProfileContent(
 
                 PostItem(
                     post = post,
-                    user = postDetail.user,
-                    product = postDetail.product,
+                    user = postDetail.user.toDomain(),
+                    product = postDetail.product?.toDomain(),
                     onPostClick = { onPostClick(post.id.toString()) },
                     onCommentClick = {
                         onPostClick(post.id.toString())

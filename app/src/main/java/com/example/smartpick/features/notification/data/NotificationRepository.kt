@@ -1,5 +1,8 @@
 package com.example.smartpick.features.notification.data
 
+import com.example.smartpick.core.data.dto.NotificationDto
+import com.example.smartpick.core.data.mapper.toDomain
+import com.example.smartpick.core.data.mapper.toDto
 import com.example.smartpick.core.model.Notification
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
@@ -28,21 +31,25 @@ class NotificationRepository @Inject constructor(
             table = "notifications"
             filter = "receiver_id=eq.$userId"
         }.map {
-            // Fetch lại data khi có thay đổi
-            supabase.postgrest.from("notifications")
+            // 1. Decode ra danh sách DTO thay vì Domain Model
+            val listDto = supabase.postgrest.from("notifications")
                 .select {
                     filter { eq("receiver_id", userId) }
-                    order("created_at", Order.DESCENDING) // Đưa ra ngoài block filter
+                    order("created_at", Order.DESCENDING)
                 }
-                .decodeList<Notification>()
+                .decodeList<NotificationDto>()
+
+            // 2. Map từng phần tử sang Domain Model dùng cho UI
+            listDto.map { it.toDomain() }
         }.onStart {
-            val initial = supabase.postgrest.from("notifications")
+            val initialDto = supabase.postgrest.from("notifications")
                 .select {
                     filter { eq("receiver_id", userId) }
-                    order("created_at", Order.DESCENDING) // Đưa ra ngoài block filter
+                    order("created_at", Order.DESCENDING)
                 }
-                .decodeList<Notification>()
-            emit(initial)
+                .decodeList<NotificationDto>()
+
+            emit(initialDto.map { it.toDomain() })
             channel.subscribe()
         }
     }
@@ -50,7 +57,7 @@ class NotificationRepository @Inject constructor(
     suspend fun sendNotification(notification: Notification): Result<Unit> =
         withContext(Dispatchers.IO) {
             try {
-                supabase.postgrest.from("notifications").insert(notification)
+                supabase.postgrest.from("notifications").insert(notification.toDto())
                 println("DEBUG_NOTIFICATION: Gửi thông báo thành công cho ${notification.receiverId}")
                 Result.success(Unit)
             } catch (e: Exception) {
