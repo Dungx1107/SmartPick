@@ -1,15 +1,13 @@
 package com.example.smartpick.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,7 +31,7 @@ fun MainTopBar(
     onMenuClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
     tagText: String? = null,
-    showNotificationBadge: Boolean = false
+    showNotificationBadge: Int = 0
 ) {
     MainTopBarContent(
         onMenuClick = onMenuClick,
@@ -49,7 +47,7 @@ fun MainTopBarContent(
     onMenuClick: () -> Unit,
     onNotificationClick: () -> Unit,
     tagText: String? = null,
-    showNotificationBadge: Boolean
+    showNotificationBadge: Int
 ) {
     TopAppBar(
         title = {
@@ -63,7 +61,7 @@ fun MainTopBarContent(
             IconButton(onClick = onMenuClick) {
                 Icon(
                     Icons.Default.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(R.string.menu),
                     tint = SmartPickColor
                 )
             }
@@ -85,21 +83,31 @@ fun MainTopBarContent(
                 }
             }
 
-            Box {
+            BadgedBox(
+                badge = {
+                    var text = showNotificationBadge.toString()
+                    if (showNotificationBadge > 0) {
+                        if (showNotificationBadge > 9) {
+                            text = stringResource(R.string._9cong)
+                        }
+                        Badge(
+                            modifier = Modifier.offset(x = (-6).dp, y = 2.dp),
+                            containerColor = Color.Red,
+                            contentColor = Color.White
+                        ) {
+                            Text(
+                                text = text,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            ) {
                 IconButton(onClick = onNotificationClick) {
                     Icon(
                         Icons.Default.Notifications,
-                        contentDescription = "Notifications",
+                        contentDescription = stringResource(R.string.notifications),
                         tint = Color(0xFF1E3A8A)
-                    )
-                }
-
-                if (showNotificationBadge) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp, top = 12.dp) // Căn chỉnh lại vị trí dấu chấm đỏ cho khớp với chuông
-                            .size(8.dp)
-                            .background(Color.Red, CircleShape)
                     )
                 }
             }
@@ -117,7 +125,7 @@ fun MainTopBarPreview() {
         onMenuClick = {},
         onNotificationClick = {},
         tagText = "AI Assist",
-        showNotificationBadge = false
+        showNotificationBadge = 0
     )
 }
 
@@ -127,7 +135,7 @@ fun MainTopBarWithBadgePreview() {
     MainTopBarContent(
         onMenuClick = {},
         onNotificationClick = {},
-        showNotificationBadge = true
+        showNotificationBadge = 1
     )
 }
 
@@ -137,6 +145,6 @@ fun MainTopBarCustomTitlePreview() {
     MainTopBarContent(
         onMenuClick = {},
         onNotificationClick = {},
-        showNotificationBadge = false
+        showNotificationBadge = 1000
     )
 }

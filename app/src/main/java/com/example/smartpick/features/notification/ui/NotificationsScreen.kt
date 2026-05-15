@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.features.notification.data.AppNotification
@@ -16,40 +17,48 @@ import com.example.smartpick.features.notification.data.NotificationType
 import com.example.smartpick.features.notification.ui.components.NotificationFilterRow
 import com.example.smartpick.features.notification.ui.components.NotificationItem
 import com.example.smartpick.features.notification.viewmodel.NotificationViewModel
-
+import com.example.smartpick.R
 @Composable
 fun NotificationsScreen(
     paddingValues: PaddingValues,
     viewModel: NotificationViewModel = hiltViewModel(),
-    currentUserId: String, // Cần truyền ID người dùng hiện tại từ AppNavigation
+    currentUserId: String,
     onNotificationClick: (AppNotification) -> Unit = {}
 ) {
-    // 1. Lắng nghe dữ liệu từ ViewModel
-    val notifications by viewModel.uiNotifications.collectAsState()
-    var selectedFilter by rememberSaveable { mutableStateOf("Tất cả") }
+    val labelAll = stringResource(R.string.TatCa)
+    val labelUnread = stringResource(R.string.ChuaDoc)
+    val labelOrder = stringResource(R.string.DonHang)
+    val labelCommunity = stringResource(R.string.CongDong)
+    val labelPromo = stringResource(R.string.KhuyenMai)
+    val labelSystem = stringResource(R.string.HeThong)
 
-    // 2. Kích hoạt lấy dữ liệu khi màn hình mở ra
+    val notifications by viewModel.uiNotifications.collectAsState()
+    var selectedFilter by rememberSaveable { mutableStateOf(labelAll) }
+
     LaunchedEffect(currentUserId) {
-        viewModel.subscribeToNotifications(currentUserId)
+        if (currentUserId.isNotEmpty()) {
+            viewModel.subscribeToNotifications(currentUserId)
+        }
     }
 
-    // 3. Logic lọc dữ liệu (Filter)
-    val filteredNotifications = rememberSaveable(notifications, selectedFilter) {
+    val filteredNotifications = remember(notifications, selectedFilter) {
         when (selectedFilter) {
-            "Chưa đọc" -> notifications.filter { it.isUnread }
-            "Đơn hàng" -> notifications.filter { it.type == NotificationType.ORDER }
-            "Cộng đồng" -> notifications.filter { it.type == NotificationType.COMMUNITY }
+            labelUnread -> notifications.filter { it.isUnread }
+            labelOrder -> notifications.filter { it.type == NotificationType.ORDER }
+            labelCommunity -> notifications.filter { it.type == NotificationType.COMMUNITY }
+            labelPromo -> notifications.filter { it.type == NotificationType.PROMO }
+            labelSystem -> notifications.filter { it.type == NotificationType.SYSTEM }
             else -> notifications
         }
     }
 
     NotificationsContent(
         paddingValues = paddingValues,
-        notifications = filteredNotifications, // Dùng danh sách đã lọc
+        notifications = filteredNotifications,
         selectedFilter = selectedFilter,
         onFilterSelected = { selectedFilter = it },
         onNotificationClick = { notification ->
-            viewModel.markAsRead(notification.id) // Đánh dấu đã đọc khi click
+            viewModel.markAsRead(notification.id)
             onNotificationClick(notification)
         }
     )

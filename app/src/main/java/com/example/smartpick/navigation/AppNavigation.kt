@@ -117,10 +117,11 @@ fun AppNavigation(
                             Routes.Saved.route -> stringResource(R.string.saved)
                             Routes.Profile.route -> stringResource(R.string.profile)
                             Routes.CreatePost.route -> stringResource(R.string.create_post)
+                            Routes.Notifications.route -> stringResource(R.string.notifications)
                             else -> null
                         },
-                        // Hiển thị Badge nếu số thông báo chưa đọc > 0
-                        showNotificationBadge = unreadCount > 0
+
+                        showNotificationBadge = unreadCount
                     )
                 }
             },

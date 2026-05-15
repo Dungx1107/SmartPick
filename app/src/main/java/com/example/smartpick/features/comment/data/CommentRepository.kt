@@ -1,8 +1,10 @@
 package com.example.smartpick.features.comment.data
 
-import Notification
+import com.example.smartpick.core.model.Notification
 import android.util.Log
 import com.example.smartpick.core.model.Comment
+import com.example.smartpick.core.utils.Constants.TABLE_COMMENTS
+import com.example.smartpick.core.utils.Constants.TABLE_COMMENT_LIKES
 import com.example.smartpick.features.comment.data.dto.CommentResponse
 import com.example.smartpick.features.notification.data.NotificationRepository
 import com.example.smartpick.features.notification.data.NotificationType
@@ -23,7 +25,7 @@ class CommentRepository @Inject constructor(
 ) {
     // Lấy danh sách bình luận kèm thông tin User
     suspend fun getComments(postId: String): List<Comment> = withContext(Dispatchers.IO) {
-        val response = supabase.postgrest["comments"]
+        val response = supabase.postgrest[TABLE_COMMENTS]
             .select(columns = Columns.raw("*, users(*)")) {
                 filter { eq("post_id", postId) }
                 order("created_at", Order.ASCENDING)
@@ -67,7 +69,7 @@ class CommentRepository @Inject constructor(
 
         // 1. Lưu bình luận vào bảng comments
         Log.d("CommentDebug", "Repository INSERT: $data")
-        supabase.postgrest["comments"].insert(data)
+        supabase.postgrest[TABLE_COMMENTS].insert(data)
 
         // 2. Logic gửi thông báo:
         // Chỉ gửi nếu người bình luận (userId) KHÔNG PHẢI là chủ bài viết (postOwnerId)
@@ -78,7 +80,7 @@ class CommentRepository @Inject constructor(
                 receiverId = receiverId,
                 senderId = userId,
                 postId = postId,
-                type = NotificationType.COMMUNITY.toString(),
+                type = NotificationType.COMMUNITY.databaseValue,
                 title = notificationTitle,
                 content = content.trim(),
                 targetId = postId // điều hướng về đúng bài viết
@@ -91,14 +93,14 @@ class CommentRepository @Inject constructor(
     // Logic xử lý Like bình luận (sử dụng bảng comment_likes đã tạo)
     suspend fun toggleLike(commentId: String, userId: String, isLiked: Boolean) = withContext(Dispatchers.IO) {
         if (isLiked) {
-            supabase.postgrest["comment_likes"].delete {
+            supabase.postgrest[TABLE_COMMENT_LIKES].delete {
                 filter {
                     eq("comment_id", commentId)
                     eq("user_id", userId)
                 }
             }
         } else {
-            supabase.postgrest["comment_likes"].insert(mapOf(
+            supabase.postgrest[TABLE_COMMENT_LIKES].insert(mapOf(
                 "comment_id" to commentId,
                 "user_id" to userId
             ))

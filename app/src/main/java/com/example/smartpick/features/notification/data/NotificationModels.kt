@@ -1,20 +1,18 @@
 package com.example.smartpick.features.notification.data
 
-import Notification
+import com.example.smartpick.core.model.Notification
 import com.example.smartpick.core.utils.TimeFormatter
-
-
-enum class NotificationType {
-    ORDER,     // thông báo đơn hàng
-    COMMUNITY,// tương tác cộng đồng
-    PROMO, // khuyến mãi / ưu đãi
-    SYSTEM,// thông báo hệ thống
-
-    ;
+enum class NotificationType(val databaseValue: String) {
+    ORDER("ORDER"),
+    COMMUNITY("COMMUNITY"),
+    PROMO("PROMO"),
+    SYSTEM("SYSTEM");
 
     companion object {
         fun fromString(type: String): NotificationType {
-            return entries.find { it.name == type } ?: SYSTEM
+            return entries.find {
+                it.databaseValue.equals(type.trim(), ignoreCase = true)
+            } ?: SYSTEM
         }
     }
 }
@@ -35,8 +33,6 @@ fun Notification.toUiModel(): AppNotification {
         id = this.id ?: "",
         title = this.title,
         content = this.content,
-//        // Logic chuyển đổi thời gian (Cần thêm thư viện format date hoặc helper class)
-//        timeAgo = this.createdAt?.let { /* Gọi hàm format date tại đây */ "Vừa xong" } ?: "",
         timeAgo = TimeFormatter.formatTimeAgo(this.createdAt),
         type = NotificationType.fromString(this.type),
         isUnread = !this.isRead,

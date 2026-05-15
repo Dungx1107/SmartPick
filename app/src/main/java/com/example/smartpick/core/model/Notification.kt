@@ -1,9 +1,11 @@
+package com.example.smartpick.core.model
+
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
 
 @Serializable
 data class Notification(
-    @SerialName("id") val id: String? = null,
+    @SerialName("id") val id: String = "",
     @SerialName("receiver_id") val receiverId: String,
     @SerialName("sender_id") val senderId: String? = null,
     @SerialName("post_id") val postId: String? = null,

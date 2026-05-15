@@ -6,6 +6,7 @@ import com.example.smartpick.features.notification.data.NotificationRepository
 import com.example.smartpick.features.notification.data.AppNotification
 import com.example.smartpick.features.notification.data.toUiModel
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -17,7 +18,6 @@ import kotlin.collections.map
 class NotificationViewModel @Inject constructor(
     private val repository: NotificationRepository
 ) : ViewModel() {
-
     private val _unreadCount = MutableStateFlow(0)
     val unreadCount = _unreadCount.asStateFlow()
 
@@ -27,8 +27,15 @@ class NotificationViewModel @Inject constructor(
     private val _uiNotifications = MutableStateFlow<List<AppNotification>>(emptyList())
     val uiNotifications = _uiNotifications.asStateFlow()
 
+    // Khai báo Job để quản lý luồng real-time
+    private var notificationJob: Job? = null
+
     fun subscribeToNotifications(userId: String) {
+        // Hủy luồng lắng nghe cũ nếu có, tránh duplicate connection
+        notificationJob?.cancel()
+
         viewModelScope.launch {
+
             // repository.observeNotifications trả về Flow<List<Notification>>
             repository.observeNotifications(userId).collect { dataList ->
                 // dataList là List<Notification>
@@ -57,5 +64,10 @@ class NotificationViewModel @Inject constructor(
         viewModelScope.launch {
             repository.markAsRead(notificationId)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        notificationJob?.cancel()
     }
 }

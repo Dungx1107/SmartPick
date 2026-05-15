@@ -135,6 +135,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
+    implementation(kotlin("reflect"))
     /**
      * Supabase
      */
@@ -150,7 +151,7 @@ dependencies {
 
     // Ktor client (Supabase dùng cái này để gọi mạng)
     val ktorVersion = "2.3.8"
-    implementation("io.ktor:ktor-client-android:$ktorVersion")
+    implementation("io.ktor:ktor-client-okhttp:${ktorVersion}")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-utils:$ktorVersion")
 

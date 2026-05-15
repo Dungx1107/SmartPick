@@ -27,7 +27,9 @@ fun NotificationFilterRow(
         stringResource(R.string.TatCa),
         stringResource(R.string.ChuaDoc),
         stringResource(R.string.DonHang),
-        stringResource(R.string.CongDong)
+        stringResource(R.string.CongDong),
+        stringResource(R.string.KhuyenMai),
+        stringResource(R.string.HeThong)
     )
 
     LazyRow(
