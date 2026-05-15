@@ -216,4 +216,6 @@ dependencies {
 // Bắt buộc thêm thư viện này để xử lý thời gian (created_at) từ Database
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
 }

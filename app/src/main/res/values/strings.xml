@@ -125,4 +125,15 @@
     <string name="DaThemVaoGioHang">Đã thêm vào giỏ</string>
     <string name="SanPhamNayChuaCoBaiDang">Sản phẩm này chưa có bài đăng!</string>
     <string name="KoCoSanPham">Không có sản phẩm</string>
+    <string name="TaiKhoan">Tài khoản</string>
+    <string name="ThongBaoUngDung">Thông báo ứng dụng</string>
+    <string name="NhanTinNhanVeDonhang">Nhận tin nhắn về đơn hàng và ưu đãi</string>
+    <string name="GiaoDien">Giao diện</string>
+    <string name="Dangbat">Đang bật</string>
+    <string name="Dangtat">Đang tắt</string>
+    <string name="CaiDat">Cài đặt</string>
+    <string name="XacNhanDangXuat">Xác nhận đăng xuất</string>
+    <string name="CoChacMuonDangXuat">Bạn có chắc chắn muốn thoát khỏi tài khoản này không?</string>
+    <string name="Huy">Hủy</string>
+    <string name="CheDoToi">Chế độ tối</string>
 </resources>

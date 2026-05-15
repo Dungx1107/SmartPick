@@ -22,4 +22,6 @@ sealed class Routes(val route: String) {
     object Comments : Routes("comments/{postId}/{postOwnerId}") {
         fun createRoute(postId: String, postOwnerId: String) = "comments/$postId/$postOwnerId"
     }
+
+    object Settings : Routes("settings")
 }

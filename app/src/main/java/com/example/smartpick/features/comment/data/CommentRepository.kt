@@ -19,32 +19,41 @@ import kotlinx.datetime.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Repository xử lý dữ liệu bình luận và tương tác comment.
+ */
 @Singleton
 class CommentRepository @Inject constructor(
     private val supabase: SupabaseClient,
     private val notificationRepository: NotificationRepository
 ) {
-    // Lấy danh sách bình luận kèm thông tin User
+    /**
+     * Lấy toàn bộ comment của bài viết,
+     * kèm thông tin user và sắp xếp theo thời gian.
+     */
     suspend fun getComments(postId: String): List<Comment> = withContext(Dispatchers.IO) {
+        /* Query danh sách comment từ Supabase */
         val response = supabase.postgrest[TABLE_COMMENTS]
             .select(columns = Columns.raw("*, users(*)")) {
-                filter { eq("post_id", postId) }
-                order("created_at", Order.ASCENDING)
+                filter { eq("post_id", postId) }                /* Lọc comment theo postId */
+                order("created_at", Order.ASCENDING)                /* Sắp xếp comment cũ -> mới */
             }.decodeList<CommentResponse>()
+        return@withContext response.map { it.toDomain() }        /* Chuyển DTO sang Domain Model */
 
-        // Chuyển đổi DTO sang Domain Model
-        return@withContext response.map { it.toDomain() }
     }
 
-    // Gửi bình luận mới
+    /**
+     * Thêm comment mới và gửi notification nếu cần.
+     */
     suspend fun insertComment(
         postId: String,
         userId: String,
-        receiverId: String, // ID của người sẽ nhận thông báo (Chủ bài viết HOẶC chủ bình luận)
+        receiverId: String,
         content: String,
         parentId: String? = null
     ) = withContext(Dispatchers.IO) {
-        // Sử dụng mutableMapOf để có thể thêm phần tử sau khi khởi tạo
+
+        /* Tạo data comment để insert */
         val data = mutableMapOf(
             "post_id" to postId,
             "user_id" to userId,
@@ -52,19 +61,20 @@ class CommentRepository @Inject constructor(
             "created_at" to Clock.System.now().toString()
         )
 
+        /* Nếu là reply thì thêm parent_id */
         if (parentId != null) {
             data["parent_id"] = parentId
         }
 
-        // 1. Lưu bình luận vào bảng comments
-        Log.d("CommentDebug", "Repository INSERT: $data")
-        supabase.postgrest[TABLE_COMMENTS].insert(data)
+        Log.d("CommentDebug", "Repository INSERT: $data")        /* Log debug dữ liệu comment */
+        supabase.postgrest[TABLE_COMMENTS].insert(data)        /* Lưu comment vào database */
+        if (userId != receiverId) {        /* Không gửi notification cho chính mình */
+            /* Đổi title theo loại comment */
+            val notificationTitle =
+                if (parentId == null) "Bình luận mới"
+                else "Phản hồi mới"
 
-        // 2. Logic gửi thông báo:
-        // Chỉ gửi nếu người bình luận (userId) KHÔNG PHẢI là chủ bài viết (postOwnerId)
-        if (userId != receiverId) {
-            val notificationTitle = if (parentId == null) "Bình luận mới" else "Phản hồi mới"
-
+            /* Tạo object notification */
             val notification = Notification(
                 receiverId = receiverId,
                 senderId = userId,
@@ -72,27 +82,40 @@ class CommentRepository @Inject constructor(
                 type = NotificationType.COMMUNITY.databaseValue,
                 title = notificationTitle,
                 content = content.trim(),
-                targetId = postId // điều hướng về đúng bài viết
+                targetId = postId
             )
 
+            /* Gửi notification */
             notificationRepository.sendNotification(notification)
         }
     }
 
-    // Logic xử lý Like bình luận (sử dụng bảng comment_likes đã tạo)
-    suspend fun toggleLike(commentId: String, userId: String, isLiked: Boolean) = withContext(Dispatchers.IO) {
+    /**
+     * Xử lý like hoặc unlike comment.
+     */
+    suspend fun toggleLike(
+        commentId: String,
+        userId: String,
+        isLiked: Boolean
+    ) = withContext(Dispatchers.IO) {
+
+        /* Nếu đã like thì unlike */
         if (isLiked) {
             supabase.postgrest[TABLE_COMMENT_LIKES].delete {
+                /* Xóa like theo comment và user */
                 filter {
                     eq("comment_id", commentId)
                     eq("user_id", userId)
                 }
             }
         } else {
-            supabase.postgrest[TABLE_COMMENT_LIKES].insert(mapOf(
-                "comment_id" to commentId,
-                "user_id" to userId
-            ))
+            /* Nếu chưa like thì thêm mới */
+            supabase.postgrest[TABLE_COMMENT_LIKES].insert(
+                mapOf(
+                    "comment_id" to commentId,
+                    "user_id" to userId
+                )
+            )
         }
     }
 }

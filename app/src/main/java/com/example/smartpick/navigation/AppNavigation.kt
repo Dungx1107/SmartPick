@@ -39,6 +39,7 @@ import com.example.smartpick.features.profile.ui.main.ProfileScreen
 import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
+import com.example.smartpick.features.settings.ui.SettingsScreen
 
 
 @Composable
@@ -105,7 +106,7 @@ fun AppNavigation(
                 if (isMainScreen) {
                     MainTopBar(
                         onMenuClick = {
-                            // TODO: Mở navigation drawer
+                            navController.navigate(Routes.Settings.route)
                         },
                         onNotificationClick = {
                             navController.navigate(Routes.Notifications.route)
@@ -253,6 +254,17 @@ fun AppNavigation(
                             println("Clicked on notification: ${notification.title}")
                         },
                         currentUserId = currentUser?.id ?: ""
+                    )
+                }
+
+                composable(Routes.Settings.route) {
+                    SettingsScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onLogoutSuccess = {
+                            navController.navigate(Routes.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
                     )
                 }
             }

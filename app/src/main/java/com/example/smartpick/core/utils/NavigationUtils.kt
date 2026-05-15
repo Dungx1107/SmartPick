@@ -9,7 +9,8 @@ object NavigationUtils {
         Routes.SignUp.route,
         Routes.CreatePost.route,
         Routes.PostDetail.route,
-        Routes.Comments.route
+        Routes.Comments.route,
+        Routes.Settings.route
     )
 
     fun shouldShowBottomBar(currentRoute: String?): Boolean {
