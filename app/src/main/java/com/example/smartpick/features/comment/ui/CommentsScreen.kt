@@ -1,5 +1,7 @@
 package com.example.smartpick.features.comment.ui
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,13 +11,16 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.features.comment.ui.components.CommentInputField
 import com.example.smartpick.features.comment.ui.components.CommentItem
-import com.example.smartpick.features.comment.ui.components.CommentUIState
+import com.example.smartpick.features.comment.viewmodel.CommentUIState
 import com.example.smartpick.features.comment.viewmodel.CommentViewModel
 
 @Composable
@@ -26,9 +31,11 @@ fun CommentsScreen(
     viewModel: CommentViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
     val comments by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isSending by viewModel.isSending.collectAsState()
+    val replyingTo by viewModel.replyingTo.collectAsState()
 
     // Tự động load dữ liệu khi vào màn hình
     LaunchedEffect(postId) {
@@ -43,10 +50,24 @@ fun CommentsScreen(
             viewModel.sendComment(postId, currentUserId, text, postOwnerId)
         },
         onLikeClick = { /* Gọi viewModel toggleLike */ },
-        onReplyClick = { /* Xử lý reply */ }
+        onReplyClick = { comment ->
+
+            Log.d(
+                "CommentDebug",
+                "UI: Bấm trả lời comment ID=${comment.id} của ${comment.authorName}"
+            )
+            Toast.makeText(
+                context,
+                "Đang trả lời: ${comment.authorName}",
+                Toast.LENGTH_SHORT
+            ).show()
+            // Gán trạng thái đang trả lời vào ViewModel
+            viewModel.setReplyingTo(comment)
+        },
+        onCancelReply = { viewModel.setReplyingTo(null) },
+        replyingTo = replyingTo,
     )
 }
-
 @Composable
 fun CommentsContent(
     comments: List<CommentUIState>,
@@ -54,7 +75,9 @@ fun CommentsContent(
     isSending: Boolean,
     onSendComment: (String) -> Unit,
     onLikeClick: (String) -> Unit,
-    onReplyClick: (String) -> Unit
+    onReplyClick: (CommentUIState) -> Unit,
+    replyingTo: CommentUIState?,
+    onCancelReply: () -> Unit,
 ) {
     var commentText by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
@@ -64,9 +87,7 @@ fun CommentsContent(
         containerColor = Color(0xFFF8FAFC),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
-
             val bottomPadding = WindowInsets.navigationBars.union(WindowInsets.ime)
-            
             Box(modifier = Modifier.windowInsetsPadding(bottomPadding)) {
                 CommentInputField(
                     commentText = commentText,
@@ -81,29 +102,43 @@ fun CommentsContent(
             }
         }
     ) { innerPadding ->
-        // FIX 3: Vì contentWindowInsets = 0 nên innerPadding sẽ là 0. 
-        // Chúng ta áp dụng statusBarsPadding để nội dung không bị dính lên top.
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .statusBarsPadding() 
+                .statusBarsPadding()
         ) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
-                // FIX 4: LazyColumn sẽ tự động co lại khi Window resize do adjustResize
                 LazyColumn(
-                    state = listState, 
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp) // Thêm chút khoảng trống cuối danh sách
+                    state = listState,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    items(items = comments, key = { it.id }) { comment ->
+                    items(items = comments, key = { it.id }) { parentComment ->
+                        // Tầng 1: Bình luận cha
                         CommentItem(
-                            state = comment,
+                            state = parentComment,
                             onLikeClick = onLikeClick,
                             onReplyClick = onReplyClick
                         )
+
+                        // Tầng 2: Danh sách các reply
+                        // Loại bỏ padding(start = 40.dp) và drawBehind tại đây
+                        if (parentComment.replies.isNotEmpty()) {
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                parentComment.replies.forEachIndexed { index, reply ->
+                                    CommentItem(
+                                        state = reply,
+                                        onLikeClick = onLikeClick,
+                                        onReplyClick = onReplyClick,
+                                        isReply = true,
+                                        isLastReply = index == parentComment.replies.size - 1
+                                    )
+                                }
+                            }
+                        }
+
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
@@ -122,6 +157,7 @@ private fun CommentsContentPreview() {
     val mockComments = listOf(
         CommentUIState(
             id = "1",
+            authorId = "1",
             authorName = "Nguyễn Minh Quang",
             authorAvatar = "https://i.pravatar.cc/300?img=11",
             content = "Bàn phím này gõ êm không bác? Đang tính xúc một em về code đêm.",
@@ -130,6 +166,7 @@ private fun CommentsContentPreview() {
         ),
         CommentUIState(
             id = "2",
+            authorId = "2",
             authorName = "Lê Hải An",
             authorAvatar = "https://i.pravatar.cc/300?img=12",
             content = "Gõ cực êm nha bác, build nhôm đầm tay lắm 🔥",
@@ -146,7 +183,77 @@ private fun CommentsContentPreview() {
             isSending = false,
             onSendComment = {},
             onLikeClick = {},
-            onReplyClick = {}
+            onReplyClick = {},
+            replyingTo = null,
+            onCancelReply = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun CommentsContentPreview2() {
+
+    val replies = listOf(
+        CommentUIState(
+            id = "reply_1",
+            authorId = "1",
+            authorName = "Trần Quốc Bảo",
+            authorAvatar = "https://i.pravatar.cc/300?img=15",
+            content = "Mình đang dùng nè bác, stab khá ngon luôn 😆",
+            timeAgo = "35 phút trước",
+            likesCount = 3,
+            parentId = "1"
+        ),
+        CommentUIState(
+            id = "reply_2",
+            authorId = "2",
+            authorName = "Phạm Nhật Nam",
+            authorAvatar = "https://i.pravatar.cc/300?img=16",
+            content = "Có foam sẵn nên gõ rất thock nhé 🔥",
+            timeAgo = "20 phút trước",
+            likesCount = 1,
+            parentId = "1",
+            isAuthor = true
+        )
+    )
+
+    val mockComments = listOf(
+
+        // Comment cha có reply
+        CommentUIState(
+            id = "1",
+            authorName = "Nguyễn Minh Quang",
+            authorId = "3",
+            authorAvatar = "https://i.pravatar.cc/300?img=11",
+            content = "Bàn phím này gõ êm không bác? Đang tính xúc về code đêm.",
+            timeAgo = "1 giờ trước",
+            likesCount = 12,
+            replies = replies
+        ),
+
+        // Comment thường
+        CommentUIState(
+            id = "2",
+            authorId = "4",
+            authorName = "Lê Hải An",
+            authorAvatar = "https://i.pravatar.cc/300?img=12",
+            content = "Mình thấy build khá ngon trong tầm giá.",
+            timeAgo = "45 phút trước",
+            likesCount = 5
+        )
+    )
+
+    MaterialTheme {
+        CommentsContent(
+            comments = mockComments,
+            isLoading = false,
+            isSending = false,
+            onSendComment = {},
+            onLikeClick = {},
+            onReplyClick = {},
+            replyingTo = null,
+            onCancelReply = {}
         )
     }
 }

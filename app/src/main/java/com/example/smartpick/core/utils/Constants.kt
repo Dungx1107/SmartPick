@@ -9,6 +9,8 @@ object Constants {
     const val TABLE_USERS = "users"
     const val TABLE_POSTS = "posts"
     const val TABLE_PRODUCTS = "products"
+    const val TABLE_COMMENTS = "comments"
+    const val TABLE_COMMENT_LIKES = "comment_likes"
 
     // Database Tables
     object UserMetadata {

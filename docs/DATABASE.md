@@ -1,63 +1,69 @@
-# Cấu trúc Cơ sở dữ liệu (Database Schema)
+# Thiết kế Cơ sở dữ liệu (Database Design)
 
-Ứng dụng sử dụng **Supabase (PostgreSQL)** làm hệ quản trị cơ sở dữ liệu chính. Dữ liệu được tổ chức
-thành các bảng có mối quan hệ chặt chẽ để phục vụ các tính năng mạng xã hội và thương mại điện tử.
+SmartPick sử dụng **PostgreSQL** được cung cấp bởi Supabase. Hệ thống được thiết kế theo mô hình quan hệ (Relational Database) để đảm bảo tính toàn vẹn dữ liệu.
 
-## 1. Các bảng chính (Tables)
+## 1. Sơ đồ Thực thể Quan hệ (ERD - Conceptual)
 
-### Bảng `users` (Quản lý người dùng)
+Hệ thống bao gồm các bảng chính: `users`, `products`, `posts`, `comments`, `comment_likes`, và `notifications`.
 
-Lưu trữ thông tin hồ sơ người dùng, liên kết với hệ thống Auth của Supabase qua `id` (UUID).
+## 2. Chi tiết các Bảng
 
-- `id` (UUID, Primary Key): ID định danh từ `auth.users`.
-- `full_name` (Text): Họ và tên hiển thị.
-- `username` (Text, Unique): Tên người dùng duy nhất.
-- `avatar_url` (Text): Đường dẫn đến ảnh đại diện trong Storage.
-- `email` (Text): Địa chỉ email.
-- `phone_number` (Text): Số điện thoại liên lạc.
+### Bảng: `users`
+Lưu trữ thông tin định danh và hồ sơ người dùng.
+- `id` (UUID, Primary Key): Liên kết trực tiếp với `auth.users` của Supabase.
+- `email` (String, Unique): Địa chỉ email của người dùng.
+- `username` (String, Unique): Tên định danh duy nhất.
+- `full_name` (String): Họ và tên đầy đủ.
+- `avatar_url` (String, Nullable): Đường dẫn ảnh đại diện trong Storage.
+- `phone_number` (String, Nullable): Số điện thoại liên lạc.
+- `created_at` (Timestamp): Thời điểm đăng ký.
 
-### Bảng `posts` (Bài đăng)
+### Bảng: `products`
+Lưu trữ thông tin sản phẩm mà người dùng muốn chia sẻ hoặc bán.
+- `id` (UUID, Primary Key): Mã sản phẩm.
+- `owner_id` (UUID, Foreign Key -> `users.id`): Người sở hữu sản phẩm.
+- `name` (String): Tên sản phẩm.
+- `brand` (String): Thương hiệu.
+- `category` (String): Danh mục (Thiết bị, Phụ kiện, ...).
+- `price` (Numeric): Giá sản phẩm.
+- `image_urls` (Array[String]): Danh sách URL ảnh sản phẩm.
+- `video_url` (String, Nullable): URL video giới thiệu.
+- `status` (String): Trạng thái (available, sold, ...).
 
-Lưu trữ nội dung bài viết và các liên kết đa phương tiện.
+### Bảng: `posts`
+Lưu trữ các bài viết trên bảng tin.
+- `id` (UUID, Primary Key): Mã bài viết.
+- `user_id` (UUID, Foreign Key -> `users.id`): Người đăng bài.
+- `product_id` (UUID, Foreign Key -> `products.id`, Nullable): Sản phẩm được gắn kèm bài viết.
+- `content` (Text): Nội dung mô tả/chia sẻ.
+- `media_urls` (Array[String]): Danh sách ảnh/video của bài viết.
+- `created_at` (Timestamp): Thời điểm đăng bài.
 
-- `id` (UUID, Primary Key): ID bài viết.
-- `user_id` (UUID, Foreign Key): Liên kết với `users.id`.
-- `product_id` (UUID, Foreign Key, Nullable): Liên kết với `products.id` nếu bài viết có gắn thẻ sản
-  phẩm.
-- `content` (Text): Nội dung văn bản của bài viết.
-- `media_urls` (JSONB/Array): Danh sách các đường dẫn ảnh/video.
-- `created_at` (Timestamp): Thời gian tạo bài viết.
-
-### Bảng `products` (Sản phẩm)
-
-Thông tin về sản phẩm được đánh giá hoặc giới thiệu.
-
-- `id` (UUID, Primary Key): ID sản phẩm.
-- `owner_id` (UUID, Foreign Key): Người tạo sản phẩm.
-- `name` (Text): Tên sản phẩm.
-- `brand` (Text): Thương hiệu.
-- `price` (Numeric): Giá tham khảo.
-- `image_urls` (JSONB/Array): Ảnh sản phẩm.
-
-### Bảng `comments` (Bình luận)
-
-- `id` (UUID, Primary Key): ID bình luận.
-- `post_id` (UUID, Foreign Key): Thuộc về bài viết nào.
-- `user_id` (UUID, Foreign Key): Người bình luận.
+### Bảng: `comments`
+Hỗ trợ bình luận đa tầng.
+- `id` (UUID, Primary Key): Mã bình luận.
+- `post_id` (UUID, Foreign Key -> `posts.id`): Bài viết được bình luận.
+- `user_id` (UUID, Foreign Key -> `users.id`): Người bình luận.
+- `parent_id` (UUID, Foreign Key -> `comments.id`, Nullable): ID của bình luận cha (dùng cho tính năng reply).
 - `content` (Text): Nội dung bình luận.
+- `created_at` (Timestamp): Thời điểm bình luận.
 
-## 2. Quan hệ (Relationships)
+### Bảng: `notifications`
+Quản lý thông báo thời gian thực.
+- `id` (UUID, Primary Key): Mã thông báo.
+- `receiver_id` (UUID, Foreign Key -> `users.id`): Người nhận thông báo.
+- `sender_id` (UUID, Foreign Key -> `users.id`): Người gây ra hành động (người like, comment).
+- `post_id` (UUID, Foreign Key -> `posts.id`): Bài viết liên quan.
+- `type` (String): Loại thông báo (`like`, `comment`, `system`, `order`).
+- `content` (Text, Nullable): Nội dung thông báo bổ sung.
+- `is_read` (Boolean): Trạng thái đã đọc hay chưa.
+- `created_at` (Timestamp): Thời điểm thông báo.
 
-- **1-N (Users - Posts):** Một người dùng có thể có nhiều bài đăng.
-- **1-N (Posts - Comments):** Một bài đăng có nhiều bình luận.
-- **0/1-N (Products - Posts):** Một sản phẩm có thể được nhắc đến trong nhiều bài viết.
+## 3. Các Ràng buộc & Logic (Constraints)
+- **Cascade Delete:** Khi xóa một `post`, toàn bộ `comments` và `notifications` liên quan sẽ bị xóa tự động (tùy cấu hình Postgres).
+- **Row Level Security (RLS):** Supabase áp dụng RLS để đảm bảo người dùng chỉ có thể sửa/xóa dữ liệu của chính mình.
+- **RPC (Remote Procedure Call):** Sử dụng hàm `check_user_availability` trong Postgres để tối ưu việc kiểm tra trùng lặp email/username khi đăng ký.
 
-## 3. Repository Pattern
-
-Dữ liệu được truy cập thông qua các Repository chuyên biệt, sử dụng `SupabaseClient` để thực hiện
-các câu lệnh JOIN phức tạp:
-
-- `FeedRepository.kt`: Thực hiện JOIN giữa `posts`, `users` và `products` bằng lệnh
-  `.select(columns = Columns.raw("*, users(*), products(*)"))`.
-- `PostDetailRepository.kt`: Lấy chi tiết bài viết và danh sách bình luận liên quan.
-- `UserRepository.kt`: Quản lý thông tin cá nhân.
+## 4. Storage Buckets
+- `avatars`: Chứa ảnh đại diện của người dùng.
+- `media`: Chứa toàn bộ ảnh và video của bài viết và sản phẩm. Cơ chế đặt tên file: `post_media_{UUID}.extension`.

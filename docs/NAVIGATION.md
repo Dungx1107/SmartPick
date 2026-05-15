@@ -1,54 +1,55 @@
-# Quản lý Điều hướng (Navigation)
+# Sơ đồ Điều hướng (Navigation)
 
-Dự án sử dụng thư viện **Jetpack Navigation Compose** để quản lý luồng di chuyển giữa các màn hình.
-Toàn bộ cấu hình điều hướng được tập trung tại package `com.example.smartpick.navigation`.
+SmartPick sử dụng **Jetpack Compose Navigation** để quản lý luồng di chuyển giữa các màn hình. Ứng dụng tuân thủ mô hình **Single Activity**, trong đó `MainActivity` là entry point duy nhất và `AppNavigation` điều phối nội dung.
 
-## 1. Định nghĩa Tuyến đường (Routes)
+## 1. Các Tuyến đường (Routes)
 
-Các tuyến đường được định nghĩa dưới dạng một `sealed class` trong file `Routes.kt`. Điều này giúp
-đảm bảo an toàn kiểu dữ liệu và dễ dàng quản lý các tham số.
+Các route được định nghĩa tập trung trong class `Routes.kt` dưới dạng `sealed class` để đảm bảo type-safety:
 
-- **Login (`login`):** Màn hình đăng nhập (Start destination).
-- **SignUp (`sign_up`):** Màn hình đăng ký tài khoản.
-- **Home (`home`):** Màn hình chính (Trang chủ).
-- **Feed (`feed`):** Danh sách bài viết từ cộng đồng.
-- **ChatBot (`chatbot`):** Giao diện trò chuyện với AI Gemini.
-- **PostDetail (`post_detail/{postId}`):** Xem chi tiết một bài viết cụ thể.
-- **CreatePost (`create_post`):** Giao diện tạo bài viết mới.
-- **Profile (`profile`):** Trang cá nhân của người dùng.
-- **EditProfile (`edit_profile`):** Chỉnh sửa thông tin cá nhân.
+- `login`: Màn hình Đăng nhập.
+- `sign_up`: Màn hình Đăng ký tài khoản mới.
+- `home`: Trang chủ (Hiển thị sản phẩm gợi ý).
+- `feed`: Bảng tin cộng đồng (Posts).
+- `chatbot`: Trợ lý AI (Gemini Chat).
+- `saved`: Bộ sưu tập bài viết đã lưu.
+- `profile`: Trang cá nhân người dùng.
+- `edit_profile`: Chỉnh sửa thông tin cá nhân.
+- `create_post`: Màn hình tạo bài viết và gắn thẻ sản phẩm.
+- `notifications`: Danh sách thông báo.
+- `post_detail/{postId}`: Chi tiết một bài viết cụ thể.
+- `comments/{postId}/{postOwnerId}`: Danh sách bình luận của một bài viết.
 
-## 2. Truyền tham số (Navigation Arguments)
+## 2. Luồng Điều hướng chính (User Flow)
 
-Dự án sử dụng các tham số trực tiếp trên đường dẫn (Path parameters).
+### 2.1. Luồng Xác thực (Auth Flow)
+- Khi mở app, `AuthViewModel` kiểm tra trạng thái session từ Supabase.
+- Nếu chưa login: Điều hướng đến `login`.
+- Nếu đã login: Điều hướng trực tiếp đến `home`.
+- Sau khi Đăng xuất: Xóa session và quay lại màn hình `login`, đồng thời dọn sạch BackStack.
 
-**Ví dụ: Chuyển sang màn hình chi tiết bài viết**
+### 2.2. Luồng Chính (Main Flow - Bottom Navigation)
+Ứng dụng sử dụng một Bottom Bar để chuyển đổi nhanh giữa các màn hình cốt lõi:
+- **Home:** Khám phá sản phẩm.
+- **Feed:** Xem bài viết từ cộng đồng.
+- **AI Curator:** Chat với trợ lý ảo.
+- **Saved:** Xem lại các bài đã lưu.
+- **Profile:** Quản lý cá nhân.
 
-- **Định nghĩa:** `object PostDetail : Routes("post_detail/{postId}")`
-- **Truyền dữ liệu:** `navController.navigate(Routes.PostDetail.createRoute(postId))`
-- **Nhận dữ liệu:** Sử dụng `navArgument` trong `NavHost` để trích xuất `postId`.
+### 2.3. Luồng Tạo nội dung (Content Flow)
+- Từ màn hình `Feed`, người dùng nhấn nút "+" -> Chuyển đến `create_post`.
+- Sau khi đăng bài thành công hoặc nhấn "Hủy" -> Quay lại màn hình `Feed`.
 
-```kotlin
-composable(
-    route = Routes.PostDetail.route,
-    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
-        type = NavType.StringType
-    })
-) { entry ->
-    val postId = entry.arguments?.getString(Routes.PostDetail.ARG_POST_ID)
-    // ...
-}
-```
+### 2.4. Luồng Tương tác (Engagement Flow)
+- Click vào bài viết ở `Feed` -> Chuyển đến `post_detail`.
+- Click vào icon bình luận -> Chuyển đến `comments`.
+- Từ `comments`, có thể click vào Avatar user để chuyển đến `profile` của người đó.
 
-## 3. Thành phần Giao diện Điều hướng
+## 3. Quản lý Trạng thái Bottom Bar
+- Bottom Bar chỉ hiển thị ở các màn hình chính (`home`, `feed`, `chatbot`, `saved`, `profile`).
+- Các màn hình như `login`, `sign_up`, `create_post`, `post_detail` sẽ ẩn Bottom Bar để tối ưu không gian hiển thị.
+- Logic ẩn/hiện được xử lý tập trung trong `NavigationUtils.shouldShowBottomBar`.
 
-- **AppNavigation.kt:** Chứa `NavHost`, định nghĩa toàn bộ Graph của ứng dụng và logic Scaffold (
-  TopBar/BottomBar).
-- **MainBottomBar.kt:** Thanh điều hướng dưới cùng, hiển thị cho các màn hình chính (Home, Feed,
-  ChatBot, Profile).
-- **MainTopBar.kt:** Thanh tiêu đề phía trên, thay đổi tiêu đề động dựa trên route hiện tại.
-
-## 4. Logic Ẩn/Hiện Navigation Bar
-
-Sử dụng hàm tiện ích `shouldShowBottomBar(route)` trong `NavigationUtils.kt` để quyết định xem một
-màn hình có nên hiển thị thanh BottomBar hay không (Ví dụ: Ẩn ở màn hình Login, SignUp, CreatePost).
+## 4. Đặc điểm Kỹ thuật
+- **Deep Linking:** Cấu trúc route cho phép mở rộng tính năng Deep Link (ví dụ: mở trực tiếp một sản phẩm từ link bên ngoài).
+- **PopUpTo:** Khi điều hướng giữa các tab Bottom Bar, ứng dụng sử dụng `popUpTo(startDestination)` với `saveState = true` và `restoreState = true` để tránh tích tụ stack và giữ trạng thái cuộn của người dùng.
+- **LaunchSingleTop:** Tránh việc mở chồng nhiều instance của cùng một màn hình khi người dùng nhấn liên tục vào icon điều hướng.

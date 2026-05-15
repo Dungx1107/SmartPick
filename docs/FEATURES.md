@@ -1,57 +1,46 @@
-# Danh sách Tính năng (Features)
+# Danh sách Tính năng SmartPick
 
-Dưới đây là chi tiết các tính năng đã và đang được triển khai trong dự án SmartPick, kèm theo các
-lớp xử lý chính và trạng thái hiện tại.
+Hệ thống SmartPick cung cấp một bộ tính năng đầy đủ cho một mạng xã hội chia sẻ sản phẩm thông minh.
 
-## 1. Xác thực người dùng (Authentication)
+## 1. Hệ thống Xác thực (Authentication)
+- **Đăng ký/Đăng nhập thủ công:** Qua Email và mật khẩu.
+- **Google Sign-In:** Tích hợp SDK Credentials mới nhất để đăng nhập một chạm.
+- **Xác thực Email:** Gửi email chào mừng và yêu cầu xác thực qua SendGrid (EmailHelper).
+- **Kiểm tra trùng lặp:** Tự động kiểm tra tính khả dụng của username và email khi đăng ký qua Database RPC.
 
-- **Mô tả:** Đăng ký, đăng nhập bằng Email/Mật khẩu và Google Sign-In. Quản lý phiên làm việc.
-- **Thành phần chính:** `AuthViewModel.kt`, `AuthRepository.kt`, `LoginScreen.kt`,
-  `SignUpScreen.kt`.
-- **Trạng thái:** Hoàn thành (Done).
+## 2. Bảng tin Sản phẩm (Product Feed)
+- **Trang chủ (Home):** Hiển thị các sản phẩm nổi bật và bộ lọc danh mục.
+- **Bảng tin (Feed):** Luồng bài viết từ cộng đồng.
+- **Hỗ trợ đa phương tiện:** Hiển thị danh sách ảnh (Carousel) và video (ExoPlayer).
+- **Tương tác nhanh:** Like, Comment và Share trực tiếp từ feed.
 
-## 2. Bảng tin cộng đồng (Social Feed)
+## 3. Tạo Bài viết & Quản lý Sản phẩm
+- **Đăng bài đa phương tiện:** Cho phép chọn nhiều ảnh/video từ thư viện.
+- **Gắn thẻ sản phẩm:** Tạo sản phẩm mới đi kèm bài viết (Tên, thương hiệu, giá, danh mục).
+- **Tự động Upload:** Upload media lên Supabase Storage với cơ chế coroutine song song.
+- **Kiểm duyệt AI:** Tự động quét nội dung nhạy cảm (ảnh) và ngôn ngữ thô tục (văn bản) trước khi đăng.
 
-- **Mô tả:** Hiển thị danh sách bài viết từ cộng đồng, hỗ trợ tải dữ liệu từ nhiều bảng (Posts,
-  Users, Products).
-- **Thành phần chính:** `FeedViewModel.kt`, `FeedRepository.kt`, `FeedScreen.kt`, `PostItem.kt`.
-- **Trạng thái:** Hoàn thành (Done).
+## 4. Hệ thống Bình luận & Tương tác
+- **Bình luận đa tầng:** Hỗ trợ reply (trả lời) bình luận của người khác.
+- **Like bình luận:** Người dùng có thể thả tim cho các ý kiến hữu ích.
+- **Realtime UI:** Cập nhật số lượng like và bình luận ngay lập tức.
 
-## 3. Trợ lý ảo AI (AI Chatbot)
+## 5. Trợ lý ảo AI (AI Curator)
+- **Chatbot Gemini:** Tích hợp Gemini 1.5 Flash để tư vấn mua sắm.
+- **Context-aware:** Tư vấn dựa trên xu hướng sản phẩm hiện có trong hệ thống.
+- **Giao diện Chat:** Trải nghiệm nhắn tin mượt mà với AI.
 
-- **Mô tả:** Chatbot thông minh hỗ trợ giải đáp thắc mắc về sản phẩm và mua sắm sử dụng Gemini AI.
-- **Thành phần chính:** `ChatbotViewModel.kt`, `ChatbotScreen.kt`, `ChatService.kt`.
-- **Trạng thái:** Hoàn thành (Done).
+## 6. Thông báo (Notifications)
+- **Đa dạng loại hình:** Thông báo về đơn hàng, tương tác cộng đồng, khuyến mãi và hệ thống.
+- **Realtime Updates:** Nhận thông báo tức thì khi có người comment hoặc like bài viết qua Supabase Realtime.
+- **Bộ lọc thông báo:** Phân loại thông báo để dễ dàng quản lý.
 
-## 4. Tạo bài viết & Kiểm duyệt (Post Creation & Moderation)
+## 7. Cá nhân hóa & Quản lý Tài khoản
+- **Hồ sơ người dùng:** Cập nhật thông tin cá nhân, ảnh đại diện.
+- **Bộ sưu tập đã lưu:** Lưu lại các bài viết quan tâm để xem sau.
+- **Quản lý sản phẩm đã đăng:** Theo dõi danh sách sản phẩm cá nhân.
 
-- **Mô tả:** Người dùng đăng bài kèm ảnh/video. Hệ thống tự động kiểm duyệt hình ảnh nhạy cảm trước
-  khi đăng.
-- **Thành phần chính:** `CreatePostScreen.kt`, `PostCreationViewModel.kt`, `ModerationService.kt`.
-- **Trạng thái:** Đang phát triển (In-progress) - Đang hoàn thiện phần upload media.
-
-## 5. Chi tiết bài viết & Bình luận (Post Detail & Comments)
-
-- **Mô tả:** Xem chi tiết nội dung, sản phẩm gắn kèm và tương tác bình luận.
-- **Thành phần chính:** `PostDetailScreen.kt`, `PostDetailViewModel.kt`, `CommentItem.kt`,
-  `CommentInputField.kt`.
-- **Trạng thái:** Đang phát triển (In-progress) - Cần hoàn thiện logic lấy danh sách bình luận thực
-  tế.
-
-## 6. Hồ sơ cá nhân (User Profile)
-
-- **Mô tả:** Hiển thị thông tin cá nhân, các bài viết đã đăng và chỉnh sửa hồ sơ.
-- **Thành phần chính:** `ProfileScreen.kt`, `EditProfileScreen.kt`, `UserRepository.kt`.
-- **Trạng thái:** Hoàn thành (Done).
-
-## 7. Gắn thẻ Sản phẩm (Product Tagging)
-
-- **Mô tả:** Tìm kiếm và gắn thông tin sản phẩm trực tiếp vào bài đánh giá.
-- **Thành phần chính:** `ProductHorizontalTag.kt`, `Product.kt`.
-- **Trạng thái:** Cơ bản (Done).
-
-## 8. Thông báo (Notifications)
-
-- **Mô tả:** Nhận thông báo khi có tương tác mới (Like, Comment).
-- **Thành phần chính:** `NotificationScreen.kt`, `Notification.kt`.
-- **Trạng thái:** Kế hoạch (TODO).
+## 8. Quản trị & An toàn (Admin & Safety)
+- **Kiểm duyệt Văn bản:** Sử dụng Gemini AI để nhận diện teencode, chửi thề, xúc phạm.
+- **Kiểm duyệt Hình ảnh:** Sử dụng Sightengine để chặn ảnh bạo lực, nhạy cảm, vũ khí.
+- **Hệ thống Log:** Ghi nhận lỗi và hoạt động hệ thống qua Logger tùy chỉnh.

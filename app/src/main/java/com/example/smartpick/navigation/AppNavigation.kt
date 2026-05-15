@@ -33,6 +33,8 @@ import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
 import com.example.smartpick.features.post_creation.ui.CreatePostScreen
 import com.example.smartpick.features.home.ui.HomeScreen
+import com.example.smartpick.features.notification.ui.NotificationsScreen
+import com.example.smartpick.features.notification.viewmodel.NotificationViewModel
 import com.example.smartpick.features.profile.ui.main.ProfileScreen
 import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
@@ -41,7 +43,8 @@ import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 
 @Composable
 fun AppNavigation(
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
 
@@ -52,6 +55,15 @@ fun AppNavigation(
     val isInitializing by authViewModel.isInitializing.collectAsState()
 
     val isMainScreen = shouldShowBottomBar(currentRoute)
+
+    val unreadCount by notificationViewModel.unreadCount.collectAsState()
+
+    // Lắng nghe thông báo ngay khi có userId
+    LaunchedEffect(currentUser) {
+        currentUser?.id?.let { userId ->
+            notificationViewModel.subscribeToNotifications(userId)
+        }
+    }
 
     // Tự động điều hướng khi trạng thái đăng nhập thay đổi
     LaunchedEffect(currentUser, isInitializing) {
@@ -95,6 +107,9 @@ fun AppNavigation(
                         onMenuClick = {
                             // TODO: Mở navigation drawer
                         },
+                        onNotificationClick = {
+                            navController.navigate(Routes.Notifications.route)
+                        },
                         tagText = when (currentRoute) {
                             Routes.Home.route -> stringResource(R.string.app_name)
                             Routes.Feed.route -> stringResource(R.string.feeds)
@@ -102,9 +117,11 @@ fun AppNavigation(
                             Routes.Saved.route -> stringResource(R.string.saved)
                             Routes.Profile.route -> stringResource(R.string.profile)
                             Routes.CreatePost.route -> stringResource(R.string.create_post)
+                            Routes.Notifications.route -> stringResource(R.string.notifications)
                             else -> null
                         },
-                        showCartBadge = currentRoute == Routes.Home.route // Chỉ hiện tag AI ASSISTANT ở màn Home
+
+                        showNotificationBadge = unreadCount
                     )
                 }
             },
@@ -226,6 +243,16 @@ fun AppNavigation(
                         onClose = {
                             navController.popBackStack()
                         },
+                    )
+                }
+
+                composable(route = Routes.Notifications.route) {
+                    NotificationsScreen(
+                        paddingValues = PaddingValues(0.dp),
+                        onNotificationClick = { notification ->
+                            println("Clicked on notification: ${notification.title}")
+                        },
+                        currentUserId = currentUser?.id ?: ""
                     )
                 }
             }

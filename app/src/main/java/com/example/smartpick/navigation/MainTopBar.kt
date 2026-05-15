@@ -1,14 +1,13 @@
 package com.example.smartpick.navigation
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,15 +29,15 @@ import com.example.smartpick.core.ui.theme.SmartPickColor
 @Composable
 fun MainTopBar(
     onMenuClick: () -> Unit = {},
-    onCartClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     tagText: String? = null,
-    showCartBadge: Boolean = false
+    showNotificationBadge: Int = 0
 ) {
     MainTopBarContent(
         onMenuClick = onMenuClick,
-        onCartClick = onCartClick,
+        onNotificationClick = onNotificationClick,
         tagText = tagText,
-        showCartBadge = showCartBadge
+        showNotificationBadge = showNotificationBadge
     )
 }
 
@@ -46,9 +45,9 @@ fun MainTopBar(
 @Composable
 fun MainTopBarContent(
     onMenuClick: () -> Unit,
-    onCartClick: () -> Unit,
+    onNotificationClick: () -> Unit,
     tagText: String? = null,
-    showCartBadge: Boolean
+    showNotificationBadge: Int
 ) {
     TopAppBar(
         title = {
@@ -62,7 +61,7 @@ fun MainTopBarContent(
             IconButton(onClick = onMenuClick) {
                 Icon(
                     Icons.Default.Menu,
-                    contentDescription = "Menu",
+                    contentDescription = stringResource(R.string.menu),
                     tint = SmartPickColor
                 )
             }
@@ -84,21 +83,31 @@ fun MainTopBarContent(
                 }
             }
 
-            Box {
-                IconButton(onClick = onCartClick) {
-                    Icon(
-                        Icons.Default.ShoppingBag,
-                        contentDescription = "Cart",
-                        tint = Color(0xFF1E3A8A)
-                    )
+            BadgedBox(
+                badge = {
+                    var text = showNotificationBadge.toString()
+                    if (showNotificationBadge > 0) {
+                        if (showNotificationBadge > 9) {
+                            text = stringResource(R.string._9cong)
+                        }
+                        Badge(
+                            modifier = Modifier.offset(x = (-6).dp, y = 2.dp),
+                            containerColor = Color.Red,
+                            contentColor = Color.White
+                        ) {
+                            Text(
+                                text = text,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
                 }
-
-                if (showCartBadge) {
-                    Box(
-                        modifier = Modifier
-                            .padding(end = 8.dp, top = 8.dp)
-                            .size(8.dp)
-                            .background(Color.Red, CircleShape)
+            ) {
+                IconButton(onClick = onNotificationClick) {
+                    Icon(
+                        Icons.Default.Notifications,
+                        contentDescription = stringResource(R.string.notifications),
+                        tint = Color(0xFF1E3A8A)
                     )
                 }
             }
@@ -114,9 +123,9 @@ fun MainTopBarContent(
 fun MainTopBarPreview() {
     MainTopBarContent(
         onMenuClick = {},
-        onCartClick = {},
+        onNotificationClick = {},
         tagText = "AI Assist",
-        showCartBadge = false
+        showNotificationBadge = 0
     )
 }
 
@@ -125,8 +134,8 @@ fun MainTopBarPreview() {
 fun MainTopBarWithBadgePreview() {
     MainTopBarContent(
         onMenuClick = {},
-        onCartClick = {},
-        showCartBadge = true
+        onNotificationClick = {},
+        showNotificationBadge = 1
     )
 }
 
@@ -135,7 +144,7 @@ fun MainTopBarWithBadgePreview() {
 fun MainTopBarCustomTitlePreview() {
     MainTopBarContent(
         onMenuClick = {},
-        onCartClick = {},
-        showCartBadge = false
+        onNotificationClick = {},
+        showNotificationBadge = 1000
     )
 }

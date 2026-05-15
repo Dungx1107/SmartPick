@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.features.post_detail.data.PostDetailRepository
 import com.example.smartpick.navigation.Routes
@@ -87,15 +88,16 @@ class PostDetailViewModel @Inject constructor(
                                 createdAt = response.createdAt
                             ),
 
-                            user = response.user,
-                            product = response.product,
-
+                            user = response.user.toDomain(),
+                            product = response.product?.toDomain(),
                             /**
                              * Có thể bổ sung:
                              * - likesCount
                              * - commentsCount
                              * nếu cần hiển thị tổng.
                              */
+//                            likesCount = response.likesCount,
+//                            commentsCount = response.commentsCount
                         )
                     }
 

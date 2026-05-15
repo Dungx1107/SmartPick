@@ -7,12 +7,8 @@ import com.example.smartpick.core.utils.Constants.UserMetadata.EMAIL
 import com.example.smartpick.core.utils.Constants.UserMetadata.FULL_NAME
 import com.example.smartpick.core.utils.Constants.UserMetadata.PHONE_NUMBER
 import com.example.smartpick.core.utils.Constants.UserMetadata.USERNAME
-import com.example.smartpick.features.post_detail.data.dto.PostDetailResponse
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.storage.storage
 import javax.inject.Inject
 

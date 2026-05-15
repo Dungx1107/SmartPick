@@ -2,10 +2,13 @@ package com.example.smartpick.features.auth.data
 
 import android.util.Log
 import com.example.smartpick.BuildConfig
+import com.example.smartpick.core.data.dto.UserDto
+import com.example.smartpick.core.data.mapper.toDomain
+import com.example.smartpick.core.data.mapper.toDto
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.network.SupabaseClient.supabaseClient
 import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.core.utils.EmailHelper
+import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.Google
@@ -25,9 +28,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AuthRepository @Inject constructor() {
-    private val supabase = supabaseClient
-
+class AuthRepository @Inject constructor(
+    private val supabase: SupabaseClient // Hilt tự động inject instance từ NetworkModule
+) {
     // Luồng trạng thái session từ SDK
     val sessionStatus: Flow<SessionStatus> = supabase.auth.sessionStatus
 
@@ -45,8 +48,10 @@ class AuthRepository @Inject constructor() {
                 result = try {
                     supabase.postgrest["users"]
                         .select { filter { eq("id", authUser.id) } }
-                        .decodeSingle<User>()
+                        .decodeSingle<UserDto>() // Đọc bằng Dto
+                        .toDomain()              // Chuyển sang Domain Model
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     null
                 }
 
@@ -83,7 +88,7 @@ class AuthRepository @Inject constructor() {
                  */
                 Log.d("AUTH", "Bắt đầu sign in với Google token")
 
-                supabaseClient.auth.signInWith(IDToken) {
+                supabase.auth.signInWith(IDToken) {
                     provider = Google
                     idToken = googleIdToken
                 }
@@ -94,7 +99,7 @@ class AuthRepository @Inject constructor() {
                  * Lấy thông tin user hiện tại sau khi đăng nhập
                  * (có thể null nếu thất bại)
                  */
-                val session = supabaseClient.auth.currentSessionOrNull()
+                val session = supabase.auth.currentSessionOrNull()
                 Log.d("AUTH", "Session: $session")
 
                 val currentUser = session?.user
@@ -126,11 +131,14 @@ class AuthRepository @Inject constructor() {
 
                     // Phân biệt user mới hay cũ bằng cách check DB
                     val existingUser = try {
-                        supabaseClient.postgrest["users"]
+                        supabase.postgrest["users"]
                             .select { filter { eq("id", currentUser.id) } }
-                            .decodeSingleOrNull<User>()
+                            .decodeSingleOrNull<UserDto>() // Đọc bằng Dto
+                            ?.toDomain()
                     } catch (e: Exception) {
-                        null
+                        e.printStackTrace()
+                        Log.e("AUTH", "Lỗi khi lưu user: ${e.message}")
+                        throw e
                     }
 
                     val isNewUser = existingUser == null  // ← Không có trong DB = user mới
@@ -141,7 +149,7 @@ class AuthRepository @Inject constructor() {
                      * ["users"]: chọn bảng users (Dũng nhớ check lại tên bảng trên Supabase nhé)
                      * upsert: update nếu đã tồn tại, insert nếu chưa có
                      */
-                    supabaseClient.postgrest["users"].upsert(myUser)
+                    supabase.postgrest["users"].upsert(myUser.toDto())
 
                     // Gửi email đúng loại
                     currentUser.email?.let { email ->
