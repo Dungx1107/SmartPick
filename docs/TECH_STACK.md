@@ -1,41 +1,62 @@
-# Danh sách Công nghệ (Tech Stack)
+# Phân tích Công nghệ & Thư viện (Tech Stack)
 
-Dự án SmartPick sử dụng các thư viện và công nghệ hiện đại nhất trong hệ sinh thái Android để đảm
-bảo hiệu suất và trải nghiệm người dùng.
+Dự án SmartPick được xây dựng trên nền tảng công nghệ Android hiện đại nhất (năm 2024), tập trung
+vào hiệu suất, khả năng mở rộng và trải nghiệm người dùng mượt mà.
 
-## 1. Ngôn ngữ & Framework chính
+## 1. Ngôn ngữ & Nền tảng
 
-- **Kotlin:** Ngôn ngữ lập trình chính cho toàn bộ dự án.
-- **Jetpack Compose:** Framework xây dựng giao diện người dùng hiện đại, khai báo (Declarative UI).
-- **Kotlin Coroutines & Flow:** Quản lý lập trình bất đồng bộ và luồng dữ liệu thời gian thực.
+- **Kotlin (1.9.x+):** Ngôn ngữ lập trình chính, sử dụng các tính năng cao cấp như Coroutines, Flow,
+  và Serialization.
+- **Android SDK:** Target API 36 (Android 15), Min API 24 (Android 7.0).
+- **Gradle Kotlin DSL:** Quản lý build script bằng Kotlin giúp đồng bộ và dễ quản lý dependency.
 
-## 2. Backend & Database (BaaS)
+## 2. UI Framework (Jetpack Compose)
 
-- **Supabase (v2.1.3):** Giải pháp thay thế Firebase, cung cấp:
-    - **Postgrest-kt:** Truy vấn cơ sở dữ liệu PostgreSQL.
-    - **GoTrue-kt:** Quản lý xác thực người dùng (Email/Password, Google).
-    - **Storage-kt:** Quản lý lưu trữ hình ảnh và video.
-- **Ktor Client (v2.3.8):** Engine HTTP cho Supabase client.
+- **Jetpack Compose:** Thay thế hoàn toàn XML để xây dựng UI dạng khai báo (Declarative UI).
+- **Material Design 3:** Sử dụng bộ linh kiện UI mới nhất từ Google, hỗ trợ Dynamic Color và giao
+  diện hiện đại.
+- **Compose Navigation:** Quản lý luồng di chuyển giữa các màn hình trong Single Activity
+  Architecture.
 
-## 3. Dependency Injection
+## 3. Backend & Data (Supabase)
 
-- **Dagger Hilt (v2.51.1):** Tự động hóa việc quản lý và cung cấp các phụ thuộc (Dependencies) trong
-  ứng dụng.
-- **Hilt Navigation Compose:** Hỗ trợ inject ViewModel trực tiếp vào các Composable.
+SmartPick sử dụng **Supabase** như một giải pháp thay thế mã nguồn mở cho Firebase:
 
-## 4. Hình ảnh & Media
+- **Postgrest-kt:** Thao tác với PostgreSQL database qua Kotlin DSL.
+- **GoTrue-kt:** Quản lý định danh, đăng nhập Email/Password và Social Login (Google).
+- **Storage-kt:** Lưu trữ file media.
+- **Realtime-kt:** Đồng bộ dữ liệu tức thì (Thông báo, Like, Comment).
 
-- **Coil (v2.6.0):** Thư viện tải và hiển thị hình ảnh tối ưu.
-- **Coil-video:** Hỗ trợ trích xuất và hiển thị khung hình từ video (Thumbnail).
+## 4. Quản lý Trạng thái & Logic
 
-## 5. AI & Kiểm duyệt nội dung
+- **ViewModel (Architecture Components):** Lưu trữ và quản lý dữ liệu liên quan đến UI, sống sót qua
+  các thay đổi cấu hình.
+- **Coroutines & Flow:** Xử lý bất đồng bộ. Luồng dữ liệu từ DB được đẩy lên UI dưới dạng
+  `StateFlow` hoặc `SharedFlow`.
+- **Dagger Hilt:** Framework Dependency Injection (DI) chính thức được Google khuyến khích, giúp
+  giảm boilerplate code và dễ dàng testing.
 
-- **Gemini AI:** Sử dụng Google Generative AI để xây dựng tính năng Chatbot tư vấn.
-- **Sightengine:** Dịch vụ bên thứ ba dùng để kiểm duyệt hình ảnh nhạy cảm (Moderation).
-- **OkHttp (v4.12.0):** Sử dụng cho các yêu cầu HTTP tùy chỉnh tới Sightengine.
+## 5. Xử lý Media & Mạng
 
-## 6. Tiện ích khác
+- **Ktor Client:** Engine mạng mà Supabase SDK sử dụng, nhẹ và hiệu quả.
+- **OkHttp 4:** Sử dụng cho các custom API service (như ModerationService).
+- **Coil (Compose):** Thư viện load ảnh tối ưu cho Compose, hỗ trợ caching và video frames.
+- **Media3 ExoPlayer:** Engine phát video mạnh mẽ từ Google, dùng để phát video trong bài đăng.
 
-- **Kotlinx Serialization (v1.6.2):** Chuyển đổi dữ liệu JSON từ API thành các đối tượng Kotlin.
-- **Jetpack Navigation Compose:** Quản lý điều hướng và truyền tham số giữa các màn hình.
-- **Credentials Manager:** Hỗ trợ đăng nhập Google một cách an toàn và hiện đại.
+## 6. Trí tuệ nhân tạo (AI)
+
+- **Google Gemini API (Gemini 1.5 Flash):** Sử dụng làm trợ lý ảo tư vấn sản phẩm và kiểm duyệt văn
+  bản tự động.
+- **Sightengine API:** Service chuyên dụng để nhận diện nội dung hình ảnh (nhạy cảm, bạo lực, vũ
+  khí).
+
+## 7. Các thư viện bổ trợ khác
+
+- **Kotlinx Serialization:** Chuyển đổi dữ liệu JSON sang Object Kotlin cực nhanh và an toàn kiểu dữ
+  liệu.
+- **Kotlinx Datetime:** Xử lý thời gian đồng bộ với múi giờ của Supabase.
+- **Android Credentials:** Hỗ trợ Google Sign-In theo cơ chế mới bảo mật hơn.
+
+---
+Việc lựa chọn Tech Stack này giúp SmartPick đạt được sự cân bằng giữa tốc độ phát triển (
+productivity) và chất lượng sản phẩm cuối cùng.

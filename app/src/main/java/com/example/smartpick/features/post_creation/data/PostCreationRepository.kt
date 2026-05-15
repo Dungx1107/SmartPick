@@ -141,7 +141,7 @@ class PostCreationRepository @Inject constructor(
         context: Context
     ) = withContext(Dispatchers.IO) {
         try {
-            // Upload media song song
+            /* Upload media song song */
             val uploadedUrls = coroutineScope {
                 mediaUris.map { uri ->
                     async {
@@ -191,10 +191,9 @@ class PostCreationRepository @Inject constructor(
             )
 
             // Lưu bài viết vào database
-            supabase.postgrest[TABLE_POSTS]
-                .insert(newPost)
+            supabase.postgrest[TABLE_POSTS].insert(newPost)
+
         } catch (e: Exception) {
-            // In ra toàn bộ nội dung lỗi để đọc
             Log.e("POST_CREATION", "Lỗi chi tiết: ${e.localizedMessage}")
             e.printStackTrace()
             throw e // Ném lỗi để UI nhận biết
@@ -242,7 +241,8 @@ class PostCreationRepository @Inject constructor(
                 .decodeSingleOrNull<Post>()
 
         } catch (e: Exception) {
-            null
+            e.printStackTrace()
+            throw e
         }
     }
 }

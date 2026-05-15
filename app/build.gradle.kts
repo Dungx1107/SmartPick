@@ -145,6 +145,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.github.jan-tennert.supabase:gotrue-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
+    implementation("io.github.jan-tennert.supabase:realtime-kt")
 
 
     // Ktor client (Supabase dùng cái này để gọi mạng)
@@ -211,6 +212,7 @@ dependencies {
     implementation("androidx.media3:media3-common:1.3.1")
 
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
+// Bắt buộc thêm thư viện này để xử lý thời gian (created_at) từ Database
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
 
 }
