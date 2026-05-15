@@ -109,4 +109,16 @@
     <string name="_9cong">9+</string>
     <string name="KhuyenMai">Khuyến mại</string>
     <string name="HeThong">Hệ thống</string>
+    <string name="TimKiemBangGiongNoi">Tìm kiếm bằng giọng nói</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="GioHangCuaBan">Giỏ hàng của bạn (%1$d)</string>
+    <string name="GioHangTrong">Giỏ hàng trống</string>
+    <string name="TongCong">Tổng cộng:</string>
+    <string name="ThanhToanNgay">Thanh toán ngay</string>
+    <string name="ThemGioHang">Thêm Giỏ Hàng</string>
+    <string name="XemBaiDangTrongFeed">Xem bài đăng trong Feed</string>
+    <string name="mua_ngay">Mua Ngay</string>
+    <string name="GioHang">Giỏ hàng</string>
+    <string name="TatCaMuc">Tất cả mục</string>
+    <string name="add">Add</string>
 </resources>

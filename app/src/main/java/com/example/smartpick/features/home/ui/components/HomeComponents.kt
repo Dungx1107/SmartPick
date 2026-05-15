@@ -63,6 +63,7 @@ import com.example.smartpick.core.model.CartItem
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.Surface
 
 @Composable
 fun SearchBar(
@@ -104,7 +105,7 @@ fun SearchBar(
             onClick = onMicClick,
             modifier = Modifier.size(24.dp)
         ) {
-            Icon(Icons.Default.Mic, contentDescription = "Tìm kiếm bằng giọng nói", tint = TextSecondary)
+            Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.TimKiemBangGiongNoi), tint = TextSecondary)
         }
     }
 }
@@ -164,7 +165,7 @@ fun ProductGridCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.AddShoppingCart,
-                            contentDescription = "Add to Cart",
+                            contentDescription = stringResource(R.string.add_to_cart),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
@@ -192,7 +193,7 @@ fun CartBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Giỏ hàng của bạn (${cartItems.sumOf { it.quantity }})",
+                text = stringResource(R.string.GioHangCuaBan, cartItems.sumOf { it.quantity }),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -200,10 +201,10 @@ fun CartBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (cartItems.isEmpty()) {
-                Text("Giỏ hàng trống", modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text(stringResource(R.string.GioHangTrong), modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
                 cartItems.forEach { item ->
-                    val product = item.products
+                    val product = item.product
                     if (product != null) {
                         ListItem(
                             headlineContent = { Text(product.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -212,7 +213,9 @@ fun CartBottomSheet(
                                 AsyncImage(
                                     model = product.imageUrls.firstOrNull(),
                                     contentDescription = null,
-                                    modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)),
+                                    modifier = Modifier
+                                        .size(50.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop
                                 )
                             },
@@ -253,22 +256,24 @@ fun CartBottomSheet(
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                val total = cartItems.sumOf { (it.products?.price ?: 0.0) * it.quantity }
+                val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Tổng cộng:", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.TongCong), fontWeight = FontWeight.Bold)
                     Text("${total}đ", fontWeight = FontWeight.Bold, color = Color.Red)
                 }
             }
 
             Button(
                 onClick = onCheckout,
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
                 enabled = cartItems.isNotEmpty()
             ) {
-                Text("Thanh toán ngay")
+                Text(stringResource(R.string.ThanhToanNgay))
             }
         }
     }
@@ -308,7 +313,7 @@ fun ProductDetailContent(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text("Xem bài đăng & Đánh giá trong Feed")
+            Text(stringResource(R.string.XemBaiDangTrongFeed))
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -316,19 +321,23 @@ fun ProductDetailContent(
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(
                 onClick = onAddToCart,
-                modifier = Modifier.weight(1f).height(50.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A)),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Thêm Giỏ Hàng")
+                Text(stringResource(R.string.ThemGioHang))
             }
             Button(
                 onClick = onBuyNow,
-                modifier = Modifier.weight(1f).height(50.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Mua Ngay")
+                Text(stringResource(R.string.mua_ngay))
             }
         }
 

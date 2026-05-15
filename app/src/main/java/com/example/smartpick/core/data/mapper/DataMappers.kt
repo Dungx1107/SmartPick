@@ -125,6 +125,25 @@ fun Comment.toDto(): CommentDto = CommentDto(
     parentId = parentId,
     createdAt = createdAt
 )
+fun CartDto.toDomain(): CartItem = CartItem(
+    id = id,
+    userId = userId,
+    productId = productId,
+    quantity = quantity,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    product = products?.toDomain() // Sử dụng mapper của Product đã có
+)
+
+fun CartItem.toDto(): CartDto = CartDto(
+    id = id,
+    userId = userId,
+    productId = productId,
+    quantity = quantity,
+    createdAt = createdAt,
+    updatedAt = updatedAt,
+    products = product?.toDto()
+)
 
 // --- Complex Mapping (Feature specific) ---
 fun FullPostResponse.toPostDomain(): Post {
