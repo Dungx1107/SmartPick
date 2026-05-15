@@ -57,6 +57,7 @@ import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.TextSecondary
 import com.example.smartpick.core.ui.theme.White
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 
 
 @Composable
@@ -71,12 +72,17 @@ fun SearchBar(
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(White)
-            .border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(28.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(28.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Default.Search, null, tint = TextMuted, modifier = Modifier.size(18.dp))
+        Icon(
+            Icons.Default.Search, 
+            null, 
+            tint = TextMuted, 
+            modifier = Modifier.size(18.dp)
+        )
         Spacer(Modifier.width(8.dp))
 
         Box(modifier = Modifier.weight(1f)) {
@@ -91,7 +97,8 @@ fun SearchBar(
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface)
             )
         }
 
@@ -102,7 +109,7 @@ fun SearchBar(
             Icon(
                 Icons.Default.Mic,
                 contentDescription = stringResource(R.string.TimKiemBangGiongNoi),
-                tint = TextSecondary
+                tint = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -120,7 +127,7 @@ fun ProductGridCard(
             .padding(4.dp)
             .clickable { onProductClick(product) },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
@@ -139,6 +146,7 @@ fun ProductGridCard(
                     text = product.name,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -183,7 +191,10 @@ fun CartBottomSheet(
     onDismiss: () -> Unit,
     onCheckout: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -193,7 +204,8 @@ fun CartBottomSheet(
             Text(
                 text = stringResource(R.string.GioHangCuaBan, cartItems.sumOf { it.quantity }),
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -201,7 +213,8 @@ fun CartBottomSheet(
             if (cartItems.isEmpty()) {
                 Text(
                     stringResource(R.string.GioHangTrong),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    color = TextMuted
                 )
             } else {
                 cartItems.forEach { item ->
@@ -212,10 +225,16 @@ fun CartBottomSheet(
                                 Text(
                                     product.name,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             },
-                            supportingContent = { Text("${product.price}đ") },
+                            supportingContent = { 
+                                Text(
+                                    "${product.price}đ",
+                                    color = TextMuted
+                                ) 
+                            },
                             leadingContent = {
                                 AsyncImage(
                                     model = product.imageUrls.firstOrNull(),
@@ -230,8 +249,8 @@ fun CartBottomSheet(
                                 // Cụm nút Tăng/Giảm số lượng
                                 Surface(
                                     shape = RoundedCornerShape(20.dp),
-                                    color = Color(0xFFF3F4F6),
-                                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.12f))
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
@@ -247,7 +266,7 @@ fun CartBottomSheet(
                                             Icon(
                                                 imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
                                                 contentDescription = null,
-                                                tint = if (item.quantity > 1) Color.Black else Color.Red,
+                                                tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -255,7 +274,8 @@ fun CartBottomSheet(
                                             text = item.quantity.toString(),
                                             modifier = Modifier.padding(horizontal = 8.dp),
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
+                                            fontSize = 14.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
                                         )
                                         IconButton(
                                             onClick = { onIncrease(item) },
@@ -264,6 +284,7 @@ fun CartBottomSheet(
                                             Icon(
                                                 Icons.Default.Add,
                                                 contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.onSurface,
                                                 modifier = Modifier.size(16.dp)
                                             )
                                         }
@@ -281,8 +302,16 @@ fun CartBottomSheet(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(stringResource(R.string.TongCong), fontWeight = FontWeight.Bold)
-                    Text("${total}đ", fontWeight = FontWeight.Bold, color = Color.Red)
+                    Text(
+                        stringResource(R.string.TongCong), 
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "${total}đ", 
+                        fontWeight = FontWeight.Bold, 
+                        color = MaterialTheme.colorScheme.error
+                    )
                 }
             }
 
@@ -291,7 +320,11 @@ fun CartBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                enabled = cartItems.isNotEmpty()
+                enabled = cartItems.isNotEmpty(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
                 Text(stringResource(R.string.ThanhToanNgay))
             }
@@ -323,11 +356,16 @@ fun ProductDetailContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = product.name, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+        Text(
+            text = product.name, 
+            fontSize = 22.sp, 
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
         Text(
             text = "${product.price}đ",
             fontSize = 20.sp,
-            color = Color.Red,
+            color = MaterialTheme.colorScheme.error,
             fontWeight = FontWeight.Bold
         )
 
@@ -336,7 +374,9 @@ fun ProductDetailContent(
         OutlinedButton(
             onClick = onViewFeed,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(12.dp),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary)
         ) {
             Text(stringResource(R.string.XemBaiDangTrongFeed))
         }
@@ -352,7 +392,10 @@ fun ProductDetailContent(
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(stringResource(R.string.ThemGioHang))
@@ -362,7 +405,10 @@ fun ProductDetailContent(
                 modifier = Modifier
                     .weight(1f)
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(stringResource(R.string.mua_ngay))
@@ -376,94 +422,99 @@ fun ProductDetailContent(
 @Preview(showBackground = true)
 @Composable
 fun PreviewSearchBar() {
-    SearchBar(
-        query = "",
-        onQueryChange = {},
-        onMicClick = {}
-    )
+    SmartPickTheme {
+        SearchBar(
+            query = "",
+            onQueryChange = {},
+            onMicClick = {}
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewProductGridCard() {
+    SmartPickTheme {
+        val sampleProduct = Product(
+            id = "1",
+            ownerId = "user_1",
+            name = "iPhone 15 Pro Max",
+            brand = "Apple",
+            category = "Smartphone",
+            price = 32990000.0,
+            imageUrls = listOf("https://picsum.photos/300"),
+            videoUrl = null,
+            status = "available",
+            createdAt = null
+        )
 
-    val sampleProduct = Product(
-        id = "1",
-        ownerId = "user_1",
-        name = "iPhone 15 Pro Max",
-        brand = "Apple",
-        category = "Smartphone",
-        price = 32990000.0,
-        imageUrls = listOf("https://picsum.photos/300"),
-        videoUrl = null,
-        status = "available",
-        createdAt = null
-    )
-
-    ProductGridCard(
-        product = sampleProduct,
-        onProductClick = {},
-        onAddToCart = {}
-    )
+        ProductGridCard(
+            product = sampleProduct,
+            onProductClick = {},
+            onAddToCart = {}
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewProductDetailContent() {
+    SmartPickTheme {
+        val sampleProduct = Product(
+            id = "1",
+            ownerId = "user_1",
+            name = "MacBook Pro M3",
+            brand = "Apple",
+            category = "Laptop",
+            price = 45990000.0,
+            imageUrls = listOf("https://picsum.photos/500"),
+            videoUrl = null,
+            status = "available",
+            createdAt = null
+        )
 
-    val sampleProduct = Product(
-        id = "1",
-        ownerId = "user_1",
-        name = "MacBook Pro M3",
-        brand = "Apple",
-        category = "Laptop",
-        price = 45990000.0,
-        imageUrls = listOf("https://picsum.photos/500"),
-        videoUrl = null,
-        status = "available",
-        createdAt = null
-    )
-
-    ProductDetailContent(
-        product = sampleProduct,
-        onViewFeed = {},
-        onAddToCart = {},
-        onBuyNow = {}
-    )
+        ProductDetailContent(
+            product = sampleProduct,
+            onViewFeed = {},
+            onAddToCart = {},
+            onBuyNow = {}
+        )
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewCartBottomSheet() {
-
-    val sampleProduct = Product(
-        id = "1",
-        ownerId = "user_1",
-        name = "Samsung Galaxy S24",
-        brand = "Samsung",
-        category = "Smartphone",
-        price = 21990000.0,
-        imageUrls = listOf("https://picsum.photos/400"),
-        videoUrl = null,
-        status = "available",
-        createdAt = null
-    )
-
-    val sampleCart = listOf(
-        CartItem(
+    SmartPickTheme {
+        val sampleProduct = Product(
             id = "1",
-            userId = "user_1",
-            productId = "1",
-            quantity = 2,
-            product = sampleProduct
+            ownerId = "user_1",
+            name = "Samsung Galaxy S24",
+            brand = "Samsung",
+            category = "Smartphone",
+            price = 21990000.0,
+            imageUrls = listOf("https://picsum.photos/400"),
+            videoUrl = null,
+            status = "available",
+            createdAt = null
         )
-    )
 
-    CartBottomSheet(
-        cartItems = sampleCart,
-        onIncrease = {},
-        onDecrease = {},
-        onDismiss = {},
-        onCheckout = {}
-    )
+        val sampleCart = listOf(
+            CartItem(
+                id = "1",
+                userId = "user_1",
+                productId = "1",
+                quantity = 2,
+                product = sampleProduct
+            )
+        )
+
+        CartBottomSheet(
+            cartItems = sampleCart,
+            onIncrease = {},
+            onDecrease = {},
+            onDismiss = {},
+            onCheckout = {}
+        )
+    }
 }

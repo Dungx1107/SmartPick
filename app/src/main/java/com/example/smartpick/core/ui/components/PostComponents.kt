@@ -18,10 +18,11 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 
 /**
  * THÀNH PHẦN 1: PostHeader
- * Hiển thị thông tin người đăng và thời gian.
  */
 @Composable
 fun PostHeader(
@@ -43,19 +44,26 @@ fun PostHeader(
                 text = user.fullName ?: stringResource(R.string.smartpick_user),
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = Color(0xFF1C1E21)
+                color = MaterialTheme.colorScheme.onSurface
             )
-            Text(text = createdAt, fontSize = 12.sp, color = Color(0xFF65676B))
+            Text(
+                text = createdAt, 
+                fontSize = 12.sp, 
+                color = TextMuted
+            )
         }
         IconButton(onClick = onMoreClick) {
-            Icon(Icons.Outlined.MoreHoriz, null, tint = Color(0xFF65676B))
+            Icon(
+                Icons.Outlined.MoreHoriz, 
+                null, 
+                tint = TextMuted
+            )
         }
     }
 }
 
 /**
  * THÀNH PHẦN 2: PostMainContent
- * Bao gồm Text, Media (Grid) và Product Tag (nếu có).
  */
 @Composable
 fun PostMainContent(
@@ -73,7 +81,7 @@ fun PostMainContent(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                 fontSize = 15.sp,
                 lineHeight = 20.sp,
-                color = Color(0xFF050505)
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
@@ -95,7 +103,6 @@ fun PostMainContent(
 
 /**
  * THÀNH PHẦN 3: PostFooterActions
- * Các nút Like, Comment, Share.
  */
 @Composable
 fun PostFooterActions(
@@ -107,7 +114,7 @@ fun PostFooterActions(
         HorizontalDivider(
             modifier = Modifier.padding(horizontal = 12.dp),
             thickness = 0.5.dp,
-            color = Color(0xFFE4E6EB)
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
         )
         Row(modifier = Modifier.fillMaxWidth()) {
             PostActionButton(
@@ -145,12 +152,17 @@ private fun PostActionButton(
         contentPadding = PaddingValues(vertical = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(icon, null, modifier = Modifier.size(20.dp), tint = Color(0xFF65676B))
+            Icon(
+                icon, 
+                null, 
+                modifier = Modifier.size(20.dp), 
+                tint = TextMuted
+            )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = text,
                 fontSize = 13.sp,
-                color = Color(0xFF65676B),
+                color = TextMuted,
                 fontWeight = FontWeight.SemiBold
             )
         }
@@ -159,7 +171,6 @@ private fun PostActionButton(
 
 /**
  * CONTAINER TỔNG HỢP: PostItem
- * Dùng để hiển thị một bài viết trọn gói.
  */
 @Composable
 fun PostItem(
@@ -177,9 +188,9 @@ fun PostItem(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable { onPostClick() },
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp) // Flat style like Facebook
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
             PostHeader(user = user, createdAt = post.createdAt ?: "Vừa xong")
@@ -187,9 +198,7 @@ fun PostItem(
                 content = post.content,
                 mediaUrls = post.mediaUrls,
                 product = product,
-                // Ánh xạ sự kiện click ảnh trong grid sang yêu cầu xem gallery
                 onMediaClick = { clickedIndex ->
-                    // Truyền toàn bộ danh sách ảnh của bài viết và vị trí được nhấp
                     onViewImagesGalleryRequest(post.mediaUrls, clickedIndex)
                 }, onProductClick = onProductClick
             )

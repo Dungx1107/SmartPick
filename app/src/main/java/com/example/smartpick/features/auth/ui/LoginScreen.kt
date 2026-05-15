@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,9 +46,8 @@ import com.example.smartpick.core.ui.components.FullScreenLoadingOverlay
 import com.example.smartpick.core.ui.components.PasswordTextFieldLight
 import com.example.smartpick.core.ui.components.SocialAuthButton
 import com.example.smartpick.core.ui.components.StandardTextFieldLight
-import com.example.smartpick.core.ui.theme.BrightBackground
-import com.example.smartpick.core.ui.theme.TextPrimary
-import com.example.smartpick.core.ui.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
 import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
 import com.example.smartpick.features.auth.data.performGoogleSignIn
@@ -161,7 +161,7 @@ fun LoginContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BrightBackground)
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -174,7 +174,7 @@ fun LoginContent(
             text = stringResource(R.string.app_name),
             fontSize = 20.sp,
             fontWeight = FontWeight.W600,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 16.dp)
         )
 
@@ -182,14 +182,14 @@ fun LoginContent(
             text = stringResource(R.string.welcome_back),
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 16.dp)
         )
 
         Text(
             text = stringResource(R.string.continue_your_journey_of_curated_discovery),
             fontSize = 14.sp,
-            color = TextSecondary,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 16.dp)
         )
@@ -218,11 +218,11 @@ fun LoginContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(stringResource(R.string.password), fontSize = 14.sp, color = TextSecondary)
+            Text(stringResource(R.string.password), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
             Text(
                 stringResource(R.string.forgot_password),
                 fontSize = 12.sp,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.clickable { }
             )
         }
@@ -271,14 +271,14 @@ fun LoginContent(
             Text(
                 stringResource(R.string.don_t_have_an_account),
                 fontSize = 14.sp,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = stringResource(R.string.sign_up_now),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable(onClick = onNavigateToSignUp)
             )
         }
@@ -296,10 +296,12 @@ fun LoginContent(
 )
 @Composable
 fun LoginScreenWhiteBluePreview() {
-    LoginContent(
-        onNavigateToSignUp = {},
-        onGoogleSignInClick = {},
-        onSignIn = { _, _ -> },
-        isLoading = false
-    )
+    SmartPickTheme {
+        LoginContent(
+            onNavigateToSignUp = {},
+            onGoogleSignInClick = {},
+            onSignIn = { _, _ -> },
+            isLoading = false
+        )
+    }
 }

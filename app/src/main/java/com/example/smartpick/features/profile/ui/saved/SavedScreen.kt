@@ -31,7 +31,8 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.smartpick.R
 import com.example.smartpick.core.model.CartItem
-import com.example.smartpick.core.ui.theme.PageBg
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 
 @Composable
@@ -40,19 +41,16 @@ fun SavedCollectionScreen(
     homeViewModel: HomeViewModel = hiltViewModel()
 ) {
     val cartItems by homeViewModel.cartItems.collectAsState()
-
-    // Quản lý trạng thái Thư mục đang chọn
     var selectedCategory by rememberSaveable { mutableStateOf("Giỏ hàng") }
 
     Scaffold(
-        containerColor = PageBg,
-        // Cấu trúc Bottom Bar Thanh toán cố định (Chỉ hiện khi ở tab Giỏ hàng và có đồ)
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (selectedCategory == "Giỏ hàng" && cartItems.isNotEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 16.dp,
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(
                         modifier = Modifier
@@ -63,18 +61,21 @@ fun SavedCollectionScreen(
                     ) {
                         val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
                         Column {
-                            Text("Tổng cộng", fontSize = 12.sp, color = Color.Gray)
+                            Text("Tổng cộng", fontSize = 12.sp, color = TextMuted)
                             Text(
                                 "${total}đ",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Red
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                         Button(
-                            onClick = { /* TODO: Điều hướng sang màn thanh toán */ },
+                            onClick = { /* TODO */ },
                             shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A))
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
                         ) {
                             Text("Thanh toán (${cartItems.sumOf { it.quantity }})")
                         }
@@ -92,7 +93,6 @@ fun SavedCollectionScreen(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Section: Categories
             item(span = { GridItemSpan(2) }) {
                 CategorySection(
                     selectedCategory = selectedCategory,
@@ -100,13 +100,13 @@ fun SavedCollectionScreen(
                 )
             }
 
-            // Section: Nội dung thay đổi dựa trên Thư mục
             if (selectedCategory == "Giỏ hàng") {
                 item(span = { GridItemSpan(2) }) {
                     Text(
                         "Giỏ hàng của bạn",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
@@ -118,7 +118,7 @@ fun SavedCollectionScreen(
                                 .fillMaxWidth()
                                 .height(200.dp), contentAlignment = Alignment.Center
                         ) {
-                            Text("Giỏ hàng trống", color = Color.Gray)
+                            Text("Giỏ hàng trống", color = TextMuted)
                         }
                     }
                 } else {
@@ -131,7 +131,6 @@ fun SavedCollectionScreen(
                     }
                 }
             } else {
-                // Hiển thị danh sách Đã lưu bình thường
                 item(span = { GridItemSpan(2) }) {
                     Row(
                         modifier = Modifier
@@ -143,19 +142,20 @@ fun SavedCollectionScreen(
                         Text(
                             if (selectedCategory == "Tất cả mục") "Sản phẩm đã lưu (12)" else selectedCategory,
                             fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             IconButton(
                                 onClick = {},
                                 modifier = Modifier
-                                    .background(Color(0xFFE2E8F0), RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                                     .size(36.dp)
                             ) {
                                 Icon(
                                     Icons.Default.GridView,
                                     contentDescription = "Grid",
-                                    tint = Color(0xFF1E3A8A),
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -163,7 +163,7 @@ fun SavedCollectionScreen(
                                 Icon(
                                     Icons.Default.List,
                                     contentDescription = "List",
-                                    tint = Color.Gray,
+                                    tint = TextMuted,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -171,7 +171,6 @@ fun SavedCollectionScreen(
                     }
                 }
 
-                // Dữ liệu Mockup cũ
                 val products = listOf(
                     ProductItem("Minimalist Silver Watch", "Thiết bị âm thanh", "$120.00", true),
                     ProductItem("Pro Sound Headphones", "Thiết bị âm thanh", "$299.00", false),
@@ -185,15 +184,10 @@ fun SavedCollectionScreen(
                 item(span = { GridItemSpan(2) }) { AIBanner() }
             }
 
-            // Khoảng trống dưới cùng để cuộn không bị vướng Nav Bar
             item(span = { GridItemSpan(2) }) { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
-
-// ==========================================
-// CÁC COMPONENT PHỤ TRỢ (COMPONENTS)
-// ==========================================
 
 @Composable
 fun CartGridCard(
@@ -204,7 +198,7 @@ fun CartGridCard(
     val product = item.product ?: return
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -224,12 +218,13 @@ fun CartGridCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     "${product.price}đ",
                     fontSize = 12.sp,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -237,7 +232,7 @@ fun CartGridCard(
 
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFFF3F4F6),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -253,13 +248,14 @@ fun CartGridCard(
                                 if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
-                                tint = if (item.quantity > 1) Color.Black else Color.Red
+                                tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
                             )
                         }
                         Text(
                             item.quantity.toString(),
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         IconButton(
                             onClick = { onIncrease(item) },
@@ -268,7 +264,8 @@ fun CartGridCard(
                             Icon(
                                 Icons.Default.Add,
                                 contentDescription = null,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
@@ -291,12 +288,18 @@ fun CategorySection(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Thư mục", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Thư mục", 
+                fontSize = 18.sp, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
             TextButton(onClick = { /* TODO */ }, contentPadding = PaddingValues(0.dp)) {
                 Icon(
                     Icons.Default.Add,
                     contentDescription = stringResource(R.string.add),
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.width(4.dp))
             }
@@ -327,14 +330,14 @@ fun CategoryItem(title: String, icon: ImageVector, isSelected: Boolean, onClick:
             modifier = Modifier
                 .size(width = 100.dp, height = 70.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(if (isSelected) Color(0xFF476282) else Color(0xFFE2E8F0))
+                .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 icon,
                 contentDescription = title,
-                tint = if (isSelected) Color.White else Color(0xFF476282),
+                tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -344,7 +347,8 @@ fun CategoryItem(title: String, icon: ImageVector, isSelected: Boolean, onClick:
             fontSize = 12.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else TextMuted
         )
     }
 }
@@ -353,7 +357,7 @@ fun CategoryItem(title: String, icon: ImageVector, isSelected: Boolean, onClick:
 fun ProductCard(product: ProductItem) {
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -362,12 +366,13 @@ fun ProductCard(product: ProductItem) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.8f)
-                    .background(Color(0xFFF1F5F9))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
+                // Mock image placeholder
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.LightGray)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
                 )
 
                 if (product.isSmartChoice) {
@@ -376,14 +381,14 @@ fun ProductCard(product: ProductItem) {
                             .align(Alignment.BottomStart)
                             .padding(8.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFFD6E4FF))
+                            .background(MaterialTheme.colorScheme.primaryContainer)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             "SMART CHOICE",
                             fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E3A8A)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
@@ -394,9 +399,14 @@ fun ProductCard(product: ProductItem) {
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                Text(product.category, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    product.category, 
+                    fontSize = 12.sp, 
+                    color = TextMuted
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -407,12 +417,12 @@ fun ProductCard(product: ProductItem) {
                         product.price,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
-                        color = Color(0xFF1E3A8A)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Icon(
                         Icons.Outlined.ShoppingCart,
                         contentDescription = "Add to cart",
-                        tint = Color(0xFF476282),
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -427,7 +437,7 @@ fun AIBanner() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFF476282))
+            .background(MaterialTheme.colorScheme.primary)
             .padding(24.dp)
     ) {
         Column {
@@ -435,7 +445,7 @@ fun AIBanner() {
                 "AI GỢI Ý",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFD6E4FF),
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                 letterSpacing = 1.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -443,22 +453,25 @@ fun AIBanner() {
                 "Hoàn thiện bộ sưu\ntập của bạn",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 lineHeight = 28.sp
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Dựa trên phong cách của bạn, chúng tôi tìm thấy 3 món đồ hoàn hảo để kết hợp cùng những gì bạn đã lưu.",
                 fontSize = 12.sp,
-                color = Color(0xFFD6E4FF)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD6E4FF)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onPrimary,
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Khám phá ngay", color = Color(0xFF1E3A8A), fontWeight = FontWeight.Bold)
+                Text("Khám phá ngay", fontWeight = FontWeight.Bold)
             }
         }
     }

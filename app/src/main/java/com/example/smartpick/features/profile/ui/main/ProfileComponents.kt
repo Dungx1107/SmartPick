@@ -27,6 +27,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -47,12 +48,9 @@ import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.ProfileAvatar
-import com.example.smartpick.core.ui.theme.BadgeOrange
-import com.example.smartpick.core.ui.theme.CardLight
 import com.example.smartpick.core.ui.theme.PrimaryGradient
-import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.TextSecondary
-import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 
 @Composable
 fun CameraBadgeButton(
@@ -63,15 +61,15 @@ fun CameraBadgeButton(
         modifier = modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(SmartPickColor)
-            .border(2.dp, White, CircleShape)
+            .background(MaterialTheme.colorScheme.primary)
+            .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Default.CameraAlt,
             contentDescription = null,
-            tint = White,
+            tint = MaterialTheme.colorScheme.onPrimary,
             modifier = Modifier.size(18.dp)
         )
     }
@@ -96,38 +94,34 @@ fun ProfileHeaderCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Sử dụng ProfileAvatar từ core
             ProfileAvatar(avatarUrl = user?.avatarUrl, size = 100.dp)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Name
             Text(
                 text = user?.fullName
                     ?: user?.username
                     ?: stringResource(R.string.user),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = White,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
 
-            // Email
             if (!user?.email.isNullOrEmpty()) {
                 Text(
-                    text = user.email,
+                    text = user!!.email,
                     fontSize = 14.sp,
-                    color = White.copy(alpha = 0.85f)
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
                 )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Button
             Button(
                 onClick = onEditProfile,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = White.copy(alpha = 0.2f),
-                    contentColor = White
+                    containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f),
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 ),
                 shape = RoundedCornerShape(12.dp),
                 elevation = ButtonDefaults.buttonElevation(0.dp)
@@ -150,16 +144,16 @@ fun SettingsBentoGrid() {
             SettingItemCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.History,
-                iconBgColor = CardLight,
-                iconColor = SmartPickColor,
+                iconBgColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                iconColor = MaterialTheme.colorScheme.primary,
                 title = stringResource(R.string.LichSuMuaHang),
                 description = stringResource(R.string.XemDonHang)
             )
             SettingItemCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Payments,
-                iconBgColor = Color(0xFFF3E5F5),
-                iconColor = Color(0xFF7B1FA2),
+                iconBgColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+                iconColor = MaterialTheme.colorScheme.secondary,
                 title = stringResource(R.string.ThanhToan),
                 description = stringResource(R.string.QuanLiTaiChinh)
             )
@@ -168,16 +162,16 @@ fun SettingsBentoGrid() {
             SettingItemCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.NotificationsActive,
-                iconBgColor = Color(0xFFFFF3E0),
-                iconColor = BadgeOrange,
+                iconBgColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
+                iconColor = MaterialTheme.colorScheme.tertiary,
                 title = stringResource(R.string.ThongBao),
                 description = stringResource(R.string.TuyChinhCachNhanTinTuc)
             )
             SettingItemCard(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.HelpCenter,
-                iconBgColor = Color(0xFFE0F2F1),
-                iconColor = Color(0xFF00796B),
+                iconBgColor = MaterialTheme.colorScheme.surfaceVariant,
+                iconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 title = stringResource(R.string.HoTro),
                 description = stringResource(R.string.GiaiDapThacMac)
             )
@@ -197,7 +191,7 @@ fun SettingItemCard(
     Card(
         modifier = modifier.clickable { },
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -220,12 +214,12 @@ fun SettingItemCard(
                 text = title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = SmartPickColor
+                color = MaterialTheme.colorScheme.primary
             )
             Text(
                 text = description,
                 fontSize = 11.sp,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurface,
                 lineHeight = 16.sp
             )
         }
@@ -244,36 +238,36 @@ fun ProfileTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = Color(0xFF64748B)) },
+        label = { Text(label, color = TextMuted) },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFF1E3A8A),
-            unfocusedBorderColor = Color(0xFFCBD5E1),
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
         ),
         singleLine = true
     )
 }
 
 
-// ----------------------------------- PREVIEW --------------------------------------------------
-
 @Preview(showBackground = true)
 @Composable
 fun PreviewProfileHeaderCard() {
-    val mockUser = User(
-        id = "1",
-        email = "user@gmail.com",
-        fullName = "Nguyễn Văn A",
-        username = "nguyenvana",
-        avatarUrl = null
-    )
+    SmartPickTheme {
+        val mockUser = User(
+            id = "1",
+            email = "user@gmail.com",
+            fullName = "Nguyễn Văn A",
+            username = "nguyenvana",
+            avatarUrl = null
+        )
 
-    ProfileHeaderCard(
-        user = mockUser,
-        onEditProfile = {}
-    )
+        ProfileHeaderCard(
+            user = mockUser,
+            onEditProfile = {}
+        )
+    }
 }

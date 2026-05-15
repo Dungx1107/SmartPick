@@ -11,13 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.comment.ui.components.CommentInputField
 import com.example.smartpick.features.comment.ui.components.CommentItem
 import com.example.smartpick.features.comment.viewmodel.CommentUIState
@@ -27,7 +26,7 @@ import com.example.smartpick.features.comment.viewmodel.CommentViewModel
 fun CommentsScreen(
     postId: String,
     postOwnerId: String?,
-    currentUserId: String, // Lấy từ AuthViewModel
+    currentUserId: String,
     viewModel: CommentViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
@@ -37,7 +36,6 @@ fun CommentsScreen(
     val isSending by viewModel.isSending.collectAsState()
     val replyingTo by viewModel.replyingTo.collectAsState()
 
-    // Tự động load dữ liệu khi vào màn hình
     LaunchedEffect(postId) {
         viewModel.loadComments(postId, postOwnerId)
     }
@@ -51,17 +49,8 @@ fun CommentsScreen(
         },
         onLikeClick = { /* Gọi viewModel toggleLike */ },
         onReplyClick = { comment ->
-
-            Log.d(
-                "CommentDebug",
-                "UI: Bấm trả lời comment ID=${comment.id} của ${comment.authorName}"
-            )
-            Toast.makeText(
-                context,
-                "Đang trả lời: ${comment.authorName}",
-                Toast.LENGTH_SHORT
-            ).show()
-            // Gán trạng thái đang trả lời vào ViewModel
+            Log.d("CommentDebug", "UI: Bấm trả lời comment ID=${comment.id} của ${comment.authorName}")
+            Toast.makeText(context, "Đang trả lời: ${comment.authorName}", Toast.LENGTH_SHORT).show()
             viewModel.setReplyingTo(comment)
         },
         onCancelReply = { viewModel.setReplyingTo(null) },
@@ -84,7 +73,7 @@ fun CommentsContent(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = Color(0xFFF8FAFC),
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             val bottomPadding = WindowInsets.navigationBars.union(WindowInsets.ime)
@@ -109,22 +98,22 @@ fun CommentsContent(
                 .statusBarsPadding()
         ) {
             if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
+                )
             } else {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(items = comments, key = { it.id }) { parentComment ->
-                        // Tầng 1: Bình luận cha
                         CommentItem(
                             state = parentComment,
                             onLikeClick = onLikeClick,
                             onReplyClick = onReplyClick
                         )
 
-                        // Tầng 2: Danh sách các reply
-                        // Loại bỏ padding(start = 40.dp) và drawBehind tại đây
                         if (parentComment.replies.isNotEmpty()) {
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 parentComment.replies.forEachIndexed { index, reply ->
@@ -142,7 +131,7 @@ fun CommentsContent(
                         HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             thickness = 0.5.dp,
-                            color = Color(0xFFE2E8F0)
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                         )
                     }
                 }
@@ -154,97 +143,29 @@ fun CommentsContent(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun CommentsContentPreview() {
-    val mockComments = listOf(
-        CommentUIState(
-            id = "1",
-            authorId = "1",
-            authorName = "Nguyễn Minh Quang",
-            authorAvatar = "https://i.pravatar.cc/300?img=11",
-            content = "Bàn phím này gõ êm không bác? Đang tính xúc một em về code đêm.",
-            timeAgo = "1 giờ trước",
-            likesCount = 12
-        ),
-        CommentUIState(
-            id = "2",
-            authorId = "2",
-            authorName = "Lê Hải An",
-            authorAvatar = "https://i.pravatar.cc/300?img=12",
-            content = "Gõ cực êm nha bác, build nhôm đầm tay lắm 🔥",
-            timeAgo = "45 phút trước",
-            likesCount = 5,
-            isAuthor = true
+    SmartPickTheme {
+        val mockComments = listOf(
+            CommentUIState(
+                id = "1",
+                authorId = "1",
+                authorName = "Nguyễn Minh Quang",
+                authorAvatar = "https://i.pravatar.cc/300?img=11",
+                content = "Bàn phím này gõ êm không bác? Đang tính xúc một em về code đêm.",
+                timeAgo = "1 giờ trước",
+                likesCount = 12
+            ),
+            CommentUIState(
+                id = "2",
+                authorId = "2",
+                authorName = "Lê Hải An",
+                authorAvatar = "https://i.pravatar.cc/300?img=12",
+                content = "Gõ cực êm nha bác, build nhôm đầm tay lắm 🔥",
+                timeAgo = "45 phút trước",
+                likesCount = 5,
+                isAuthor = true
+            )
         )
-    )
 
-    MaterialTheme {
-        CommentsContent(
-            comments = mockComments,
-            isLoading = false,
-            isSending = false,
-            onSendComment = {},
-            onLikeClick = {},
-            onReplyClick = {},
-            replyingTo = null,
-            onCancelReply = {}
-        )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-private fun CommentsContentPreview2() {
-
-    val replies = listOf(
-        CommentUIState(
-            id = "reply_1",
-            authorId = "1",
-            authorName = "Trần Quốc Bảo",
-            authorAvatar = "https://i.pravatar.cc/300?img=15",
-            content = "Mình đang dùng nè bác, stab khá ngon luôn 😆",
-            timeAgo = "35 phút trước",
-            likesCount = 3,
-            parentId = "1"
-        ),
-        CommentUIState(
-            id = "reply_2",
-            authorId = "2",
-            authorName = "Phạm Nhật Nam",
-            authorAvatar = "https://i.pravatar.cc/300?img=16",
-            content = "Có foam sẵn nên gõ rất thock nhé 🔥",
-            timeAgo = "20 phút trước",
-            likesCount = 1,
-            parentId = "1",
-            isAuthor = true
-        )
-    )
-
-    val mockComments = listOf(
-
-        // Comment cha có reply
-        CommentUIState(
-            id = "1",
-            authorName = "Nguyễn Minh Quang",
-            authorId = "3",
-            authorAvatar = "https://i.pravatar.cc/300?img=11",
-            content = "Bàn phím này gõ êm không bác? Đang tính xúc về code đêm.",
-            timeAgo = "1 giờ trước",
-            likesCount = 12,
-            replies = replies
-        ),
-
-        // Comment thường
-        CommentUIState(
-            id = "2",
-            authorId = "4",
-            authorName = "Lê Hải An",
-            authorAvatar = "https://i.pravatar.cc/300?img=12",
-            content = "Mình thấy build khá ngon trong tầm giá.",
-            timeAgo = "45 phút trước",
-            likesCount = 5
-        )
-    )
-
-    MaterialTheme {
         CommentsContent(
             comments = mockComments,
             isLoading = false,

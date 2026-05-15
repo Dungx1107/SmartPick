@@ -1,7 +1,6 @@
 package com.example.smartpick.features.profile.ui.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,8 +25,8 @@ import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.core.ui.components.PostItem
-import com.example.smartpick.core.ui.components.ProfileAvatar
-import com.example.smartpick.core.ui.theme.*
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.post_detail.data.dto.PostDetailResponse
 import com.example.smartpick.features.profile.viewmodel.ProfileViewModel
@@ -82,7 +81,7 @@ fun ProfileContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(PageBg),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 32.dp)
     ) {
         // Phần 1: Thông tin cá nhân & Bento Grid
@@ -112,7 +111,7 @@ fun ProfileContent(
                     text = stringResource(R.string.BaiVietCuaBan),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = SmartPickColor,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
@@ -127,7 +126,7 @@ fun ProfileContent(
                         .padding(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = SmartPickColor)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
         } else if (posts.isEmpty()) {
@@ -186,8 +185,8 @@ fun ProfileContent(
                 Button(
                     onClick = onLogout,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ErrorRedBg,
-                        contentColor = ErrorRed
+                        containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f),
+                        contentColor = MaterialTheme.colorScheme.error
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
@@ -222,14 +221,16 @@ fun ProfileContent(
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
-    val mockUser = User(id = "1", fullName = "Nguyễn Xuân Dũng", username = "dungnx")
-    ProfileContent(
-        user = mockUser,
-        posts = emptyList(),
-        isLoading = false,
-        onLogout = {},
-        onEditProfile = {},
-        onCreatePostClick = {},
-        onPostClick = {}
-    )
+    SmartPickTheme {
+        val mockUser = User(id = "1", fullName = "Nguyễn Xuân Dũng", username = "dungnx")
+        ProfileContent(
+            user = mockUser,
+            posts = emptyList(),
+            isLoading = false,
+            onLogout = {},
+            onEditProfile = {},
+            onCreatePostClick = {},
+            onPostClick = {}
+        )
+    }
 }

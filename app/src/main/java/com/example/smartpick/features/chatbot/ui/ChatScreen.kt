@@ -37,6 +37,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -61,6 +62,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -89,14 +92,14 @@ fun ChatbotScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7FAFC))
+            .background(MaterialTheme.colorScheme.background)
             .padding(WindowInsets.systemBars.asPaddingValues())
     ) {
         // ===== MESSAGE LIST =====
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .weight(1f) // 🔥 QUAN TRỌNG: chiếm phần còn lại
+                .weight(1f)
                 .fillMaxWidth(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -128,7 +131,7 @@ fun ChatbotScreen() {
                             "Bạn muốn tầm giá bao nhiêu?"
 
                         userText.contains("chào", true) ->
-                            "Xin chào! Tôi là Lumina."
+                            "Xin chào! Tôi là SmartPick Assistant."
 
                         else ->
                             "Tôi đã nhận: \"$userText\""
@@ -151,13 +154,13 @@ fun AiMessageBubble(text: String) {
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF455F88)),
+                    .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Star,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(14.dp)
                 )
             }
@@ -166,18 +169,18 @@ fun AiMessageBubble(text: String) {
                 "TRỢ LÝ SmartPick",
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.Gray
+                color = TextMuted
             )
         }
         Surface(
             shape = RoundedCornerShape(topEnd = 16.dp, bottomEnd = 16.dp, bottomStart = 16.dp),
-            color = Color(0xFFDFEAEF).copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
         ) {
             Text(
                 text = text,
                 modifier = Modifier.padding(16.dp),
                 fontSize = 14.sp,
-                color = Color(0xFF283439)
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -191,20 +194,20 @@ fun UserMessageBubble(text: String) {
     ) {
         Surface(
             shape = RoundedCornerShape(topStart = 16.dp, bottomEnd = 16.dp, bottomStart = 16.dp),
-            color = Color(0xFF455F88),
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.fillMaxWidth(0.85f)
         ) {
             Text(
                 text = text,
                 modifier = Modifier.padding(16.dp),
                 fontSize = 14.sp,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
             )
         }
         Text(
             "Vừa xong • Đã xem",
             fontSize = 10.sp,
-            color = Color.Gray,
+            color = TextMuted,
             modifier = Modifier.padding(top = 4.dp)
         )
     }
@@ -227,14 +230,15 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
     Card(
         modifier = Modifier.width(220.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(4f / 5f)
-                    .background(Color(0xFFD7E5EB))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Icon(
                     Icons.Outlined.Headphones,
@@ -242,18 +246,18 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
                     modifier = Modifier
                         .align(Alignment.Center)
                         .size(64.dp),
-                    tint = Color.Gray
+                    tint = TextMuted
                 )
 
                 if (tag != null) {
                     Surface(
-                        color = if (tag == "Best Seller") Color(0xFF455F88) else Color(0xFF5D5D78),
+                        color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(6.dp),
                         modifier = Modifier.padding(8.dp)
                     ) {
                         Text(
                             tag,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp)
@@ -262,11 +266,11 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
                 }
             }
             Column(modifier = Modifier.padding(12.dp)) {
-                Text(name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(name, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                 Text(
                     desc,
                     fontSize = 12.sp,
-                    color = Color.Gray,
+                    color = TextMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -280,20 +284,20 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
                     Text(
                         price,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF455F88),
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 14.sp
                     )
                     IconButton(
                         onClick = { /* TODO */ },
                         modifier = Modifier
                             .size(32.dp)
-                            .background(Color(0xFFD4E4FC), CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
                     ) {
                         Icon(
                             Icons.Default.AddShoppingCart,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
-                            tint = Color(0xFF445367)
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
                         )
                     }
                 }
@@ -306,7 +310,7 @@ fun ProductCard(name: String, desc: String, price: String, tag: String?) {
 fun ChatInputBar(onSendMessage: (String) -> Unit) {
     val quickActions =
         listOf("So sánh giá", "Gợi ý quà tặng", "Đánh giá người dùng", "Ưu đãi hôm nay")
-    Column(modifier = Modifier.background(Color.White.copy(alpha = 0.9f))) {
+    Column(modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))) {
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -314,13 +318,14 @@ fun ChatInputBar(onSendMessage: (String) -> Unit) {
             items(quickActions) { action ->
                 Surface(
                     shape = CircleShape,
-                    border = BorderStroke(1.dp, Color(0xFFA7B4BA).copy(alpha = 0.5f)),
-                    color = Color.White
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Text(
                         action,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                 }
@@ -330,26 +335,27 @@ fun ChatInputBar(onSendMessage: (String) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .background(Color(0xFFDFEAEF), CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { /* TODO */ }) {
-                Icon(Icons.Default.AddCircleOutline, contentDescription = "Add", tint = Color.Gray)
+                Icon(Icons.Default.AddCircleOutline, contentDescription = "Add", tint = TextMuted)
             }
 
-            // SỬA ĐỔI: Sử dụng TextFieldValue thay vì String để hỗ trợ tiếng Việt có dấu
             var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
 
             TextField(
                 value = textFieldValue,
                 onValueChange = { textFieldValue = it },
-                placeholder = { Text("Hỏi Lumina về sản phẩm...", fontSize = 14.sp) },
+                placeholder = { Text("Hỏi SmartPick về sản phẩm...", fontSize = 14.sp, color = TextMuted) },
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
                 modifier = Modifier.weight(1f),
                 keyboardOptions = KeyboardOptions(
@@ -373,9 +379,9 @@ fun ChatInputBar(onSendMessage: (String) -> Unit) {
                         textFieldValue = TextFieldValue("")
                     }
                 },
-                modifier = Modifier.background(Color(0xFF455F88), CircleShape)
+                modifier = Modifier.background(MaterialTheme.colorScheme.primary, CircleShape)
             ) {
-                Icon(Icons.Default.Send, contentDescription = "Send", tint = Color.White)
+                Icon(Icons.Default.Send, contentDescription = "Send", tint = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }
@@ -383,8 +389,10 @@ fun ChatInputBar(onSendMessage: (String) -> Unit) {
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun LuminaChatScreenPreview() {
-    ChatbotScreen()
+fun ChatbotScreenPreview() {
+    SmartPickTheme {
+        ChatbotScreen()
+    }
 }
 
 data class ChatMessage(

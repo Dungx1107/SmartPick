@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -26,6 +27,8 @@ import androidx.navigation.NavController
 import com.example.smartpick.R
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.home.ui.components.CartBottomSheet
 import com.example.smartpick.features.home.ui.components.ProductDetailContent
 import com.example.smartpick.features.home.ui.components.ProductGridCard
@@ -87,7 +90,6 @@ fun HomeContent(
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Speech to Text logic
     val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -109,18 +111,30 @@ fun HomeContent(
         }
         try {
             speechLauncher.launch(intent)
-        } catch (e: Exception) { /* Handle error */
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     Scaffold(
         modifier = Modifier.padding(paddingValues),
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = { showCart = true }) {
+            FloatingActionButton(
+                onClick = { showCart = true },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
                 val total = cartItems.sumOf { it.quantity }
                 if (total > 0) {
-                    BadgedBox(badge = { Badge { Text(total.toString()) } }) {
+                    BadgedBox(
+                        badge = { 
+                            Badge(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ) { Text(total.toString()) } 
+                        }
+                    ) {
                         Icon(Icons.Default.ShoppingCart, stringResource(R.string.GioHang))
                     }
                 } else {
@@ -146,19 +160,23 @@ fun HomeContent(
                 .fillMaxWidth()) {
                 when (uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(
-                        modifier = Modifier.align(
-                            Alignment.Center
-                        )
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
                     )
 
                     is HomeUiState.Error -> Text(
                         "Lỗi: ${uiState.message}",
+                        color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.align(Alignment.Center)
                     )
 
                     is HomeUiState.Success -> {
                         if (uiState.products.isEmpty()) {
-                            Text(stringResource(R.string.KoCoSanPham), modifier = Modifier.align(Alignment.Center))
+                            Text(
+                                stringResource(R.string.KoCoSanPham), 
+                                color = TextMuted,
+                                modifier = Modifier.align(Alignment.Center)
+                            )
                         } else {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
@@ -198,11 +216,11 @@ fun HomeContent(
         }
     }
 
-    // Modal & Sheet logic
     if (selectedProduct != null) {
         ModalBottomSheet(
             onDismissRequest = { selectedProduct = null },
             sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
             modifier = Modifier.fillMaxHeight(0.9f)
         ) {
             ProductDetailContent(
@@ -242,16 +260,16 @@ fun HomeContent(
 @Preview(showBackground = true)
 @Composable
 fun HomeContentPreview() {
-    val mockProducts = listOf(
-        Product(id = "1", name = "Sản phẩm mẫu 1", price = 150000.0, ownerId = "u1"),
-        Product(id = "2", name = "Sản phẩm mẫu 2", price = 250000.0, ownerId = "u1")
-    )
+    SmartPickTheme {
+        val mockProducts = listOf(
+            Product(id = "1", name = "Sản phẩm mẫu 1", price = 150000.0, ownerId = "u1"),
+            Product(id = "2", name = "Sản phẩm mẫu 2", price = 250000.0, ownerId = "u1")
+        )
 
-    val mockCart = listOf(
-        CartItem(id = "c1", userId = "u1", productId = "1", quantity = 2)
-    )
+        val mockCart = listOf(
+            CartItem(id = "c1", userId = "u1", productId = "1", quantity = 2)
+        )
 
-    MaterialTheme {
         HomeContent(
             uiState = HomeUiState.Success(mockProducts),
             cartItems = mockCart,

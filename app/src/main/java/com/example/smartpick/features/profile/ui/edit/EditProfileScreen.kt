@@ -29,10 +29,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,9 +58,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.ProfileAvatar
-import com.example.smartpick.core.ui.theme.PageBg
-import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.profile.ui.main.CameraBadgeButton
 import com.example.smartpick.features.profile.ui.main.ProfileTextField
@@ -78,20 +79,13 @@ fun EditProfileScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
-    // Lắng nghe ảnh tạm
     val selectedImage by editProfileViewModel.selectedImage.collectAsState()
 
-    // Hàm callback khi upload thành công
-    val onUploadSuccess = { newUrl: String ->
-        authViewModel.updateLocalAvatar(newUrl) // Cập nhật Global State
-    }
-
-    // Launcher xin quyền
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            showBottomSheet = true // Nếu đồng ý thì mở menu chọn ảnh
+            showBottomSheet = true
         } else {
             Toast.makeText(
                 context,
@@ -100,7 +94,6 @@ fun EditProfileScreen(
         }
     }
 
-    // Launcher chọn từ thư viện
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
@@ -108,89 +101,80 @@ fun EditProfileScreen(
             }
         }
 
-// Launcher chụp ảnh
     val cameraLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
             try {
                 if (bitmap != null) {
-                    // In log kiểm tra xem đã nhận được ảnh chưa
-                    Log.d(
-                        "SmartPick_Debug",
-                        "Chụp ảnh thành công: Bitmap size = ${bitmap.byteCount} bytes"
-                    )
                     editProfileViewModel.updateSelectedImage(bitmap)
-                } else {
-                    // Trường hợp người dùng hủy chụp hoặc camera không trả về dữ liệu
-                    Log.e(
-                        "SmartPick_Debug",
-                        "Lỗi: Camera trả về dữ liệu null (Người dùng có thể đã hủy hoặc lỗi phần cứng)"
-                    )
                 }
             } catch (e: Exception) {
-                // In chi tiết lỗi nếu quá trình xử lý bitmap bị crash
-                Log.e("SmartPick_Debug", "Lỗi nội bộ khi xử lý ảnh chụp: ${e.message}")
                 e.printStackTrace()
             }
         }
 
-    // Modal Bottom Sheet chọn nguồn ảnh
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = { showBottomSheet = false },
             sheetState = sheetState,
-            containerColor = White
+            containerColor = MaterialTheme.colorScheme.surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(32.dp)
             ) {
-                // Tùy chọn Chụp ảnh
                 ListItem(
                     headlineContent = {
-                        Text(stringResource(R.string.ChupAnhMoi), fontWeight = FontWeight.Medium)
+                        Text(
+                            stringResource(R.string.ChupAnhMoi), 
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     },
                     leadingContent = {
                         Icon(
                             Icons.Default.PhotoCamera,
                             contentDescription = null,
-                            tint = SmartPickColor
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     },
                     modifier = Modifier.clickable {
                         cameraLauncher.launch(null)
                         showBottomSheet = false
-                    }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
                 )
 
-                // Tùy chọn Chọn từ thư viện
                 ListItem(
                     headlineContent = {
-                        Text(stringResource(R.string.ChonTuThuVien), fontWeight = FontWeight.Medium)
+                        Text(
+                            stringResource(R.string.ChonTuThuVien), 
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     },
                     leadingContent = {
                         Icon(
                             Icons.Default.PhotoLibrary,
                             contentDescription = null,
-                            tint = SmartPickColor
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     },
                     modifier = Modifier.clickable {
                         galleryLauncher.launch("image/*")
                         showBottomSheet = false
-                    }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
                 )
             }
         }
     }
 
-    // 2. Khởi tạo các state cục bộ cho Form
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
 
-    // 3. Tự động điền dữ liệu vào Form khi user được nạp xong
     LaunchedEffect(user) {
         user?.let {
             name = it.fullName ?: ""
@@ -219,10 +203,9 @@ fun EditProfileScreen(
             if (permissionCheckResult == PackageManager.PERMISSION_GRANTED) {
                 showBottomSheet = true
             } else {
-                // Nếu chưa có thì yêu cầu hệ thống hiển thị bảng xin quyền
                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
             }
-        }, // Truyền sự kiện mở bottom sheet
+        },
         onSaveProfile = {
             user?.id?.let { userId ->
                 editProfileViewModel.saveProfile(
@@ -234,12 +217,11 @@ fun EditProfileScreen(
                     context = context,
                     currentAvatarUrl = user?.avatarUrl,
                     onSuccess = { newAvatarUrl ->
-                        // Cập nhật State cục bộ
                         val updatedUser = user?.copy(
                             fullName = name,
                             username = username,
                             phoneNumber = phone,
-                            email = email, // Cập nhật email cho state
+                            email = email,
                             avatarUrl = newAvatarUrl
                         )
                         updatedUser?.let { authViewModel.updateCurrentUser(it) }
@@ -255,7 +237,6 @@ fun EditProfileScreen(
                             context,
                             context.getString(R.string.LoiCapNhat, errorMsg), Toast.LENGTH_LONG
                         ).show()
-                        Log.e("SmartPick_EditProfile", "Lỗi chi tiết khi lưu hồ sơ: $errorMsg")
                     }
                 )
             }
@@ -288,7 +269,7 @@ fun EditProfileContent(
                     Text(
                         text = stringResource(R.string.ChinhSuaHoSo),
                         fontWeight = FontWeight.Bold,
-                        color = SmartPickColor, // Sử dụng màu từ Color.kt
+                        color = MaterialTheme.colorScheme.primary,
                         fontSize = 20.sp
                     )
                 },
@@ -297,14 +278,14 @@ fun EditProfileContent(
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = null,
-                            tint = SmartPickColor
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
-                actions = {}
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
-        containerColor = PageBg
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -328,15 +309,14 @@ fun EditProfileContent(
 
                 if (isUploading) {
                     CircularProgressIndicator(
-                        color = SmartPickColor,
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
 
-                // Nút đổi ảnh
                 CameraBadgeButton(
-                    onClick = onCameraClick, // Truyền callback từ EditProfileContent
-                    modifier = Modifier.align(Alignment.BottomEnd) // Đặt vị trí ở góc dưới
+                    onClick = onCameraClick,
+                    modifier = Modifier.align(Alignment.BottomEnd)
                 )
             }
 
@@ -373,8 +353,11 @@ fun EditProfileContent(
 
             Button(
                 onClick = onSaveProfile,
-                enabled = !isUploading, // Khóa nút khi đang tải lên
-                colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                enabled = !isUploading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -383,8 +366,7 @@ fun EditProfileContent(
                 Text(
                     stringResource(R.string.CapNhatThongTin),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = White
+                    fontSize = 16.sp
                 )
             }
         }
@@ -395,34 +377,36 @@ fun EditProfileContent(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun EditProfilePreview() {
-    val mockUser = User(
-        id = "123",
-        email = "dung.nx@smartpick.com",
-        fullName = "Nguyễn Xuân Dũng",
-        username = "dungnx_2005",
-        avatarUrl = null,
-        phoneNumber = "0868364133"
-    )
+    SmartPickTheme {
+        val mockUser = User(
+            id = "123",
+            email = "dung.nx@smartpick.com",
+            fullName = "Nguyễn Xuân Dũng",
+            username = "dungnx_2005",
+            avatarUrl = null,
+            phoneNumber = "0868364133"
+        )
 
-    var name by remember { mutableStateOf(mockUser.fullName ?: "") }
-    var email by remember { mutableStateOf(mockUser.email ?: "") }
-    var username by remember { mutableStateOf(mockUser.username ?: "") }
-    var phone by remember { mutableStateOf(mockUser.phoneNumber ?: "") }
+        var name by remember { mutableStateOf(mockUser.fullName ?: "") }
+        var email by remember { mutableStateOf(mockUser.email ?: "") }
+        var username by remember { mutableStateOf(mockUser.username ?: "") }
+        var phone by remember { mutableStateOf(mockUser.phoneNumber ?: "") }
 
-    EditProfileContent(
-        name = name,
-        email = email,
-        phone = phone,
-        username = username,
-        avatarUrl = mockUser.avatarUrl,
-        isUploading = false, // Cung cấp giá trị giả lập cho preview
-        onNameChange = { name = it },
-        onEmailChange = { email = it },
-        onUsernameChange = { username = it },
-        onPhoneChange = { phone = it },
-        onNavigateBack = {},
-        selectedImage = false,
-        onCameraClick = {}, // Cung cấp hàm rỗng cho preview
-        onSaveProfile = {}
-    )
+        EditProfileContent(
+            name = name,
+            email = email,
+            phone = phone,
+            username = username,
+            avatarUrl = mockUser.avatarUrl,
+            isUploading = false,
+            onNameChange = { name = it },
+            onEmailChange = { email = it },
+            onUsernameChange = { username = it },
+            onPhoneChange = { phone = it },
+            onNavigateBack = {},
+            selectedImage = null,
+            onCameraClick = {},
+            onSaveProfile = {}
+        )
+    }
 }

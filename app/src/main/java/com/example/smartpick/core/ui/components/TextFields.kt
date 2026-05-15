@@ -31,9 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.SocialButtonLightColor
-import com.example.smartpick.core.ui.theme.TextPrimary
-import com.example.smartpick.core.ui.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 
 /**
  * Nhãn tiêu đề phía trên các ô nhập liệu.
@@ -43,7 +42,7 @@ fun FieldLabel(text: String) {
     Text(
         text = text,
         fontSize = 14.sp,
-        color = TextSecondary,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 8.dp),
@@ -66,17 +65,18 @@ fun StandardTextFieldLight(
     OutlinedTextField(
         modifier = Modifier
             .fillMaxWidth()
-            .background(SocialButtonLightColor, RoundedCornerShape(12.dp)),
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent,
-            cursorColor = TextPrimary
+            cursorColor = MaterialTheme.colorScheme.primary,
+            errorBorderColor = MaterialTheme.colorScheme.error
         ),
         value = value,
         onValueChange = onValueChange,
-        textStyle = LocalTextStyle.current.copy(color = TextPrimary),
-        leadingIcon = { Icon(leadingIcon, null, tint = TextSecondary) },
-        placeholder = { Text(placeholder, color = TextSecondary.copy(alpha = 0.5f)) },
+        textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
+        leadingIcon = { Icon(leadingIcon, null, tint = MaterialTheme.colorScheme.onSurface) },
+        placeholder = { Text(placeholder, color = TextMuted) },
         shape = RoundedCornerShape(12.dp),
         singleLine = true,
         isError = isError,
@@ -85,7 +85,7 @@ fun StandardTextFieldLight(
     if (isError && errorMessage != null) {
         Text(
             text = errorMessage,
-            color = MaterialTheme.colorScheme.error, // Màu đỏ mặc định của hệ thống
+            color = MaterialTheme.colorScheme.error,
             fontSize = 12.sp,
             modifier = Modifier.padding(start = 16.dp, top = 4.dp)
         )
@@ -109,9 +109,9 @@ fun PasswordTextFieldLight(
         onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
-            .background(SocialButtonLightColor, RoundedCornerShape(12.dp)),
-        textStyle = LocalTextStyle.current.copy(color = TextPrimary),
-        leadingIcon = { Icon(Icons.Filled.Lock, null, tint = TextSecondary) },
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
+        textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onBackground),
+        leadingIcon = { Icon(Icons.Filled.Lock, null, tint = MaterialTheme.colorScheme.onSurface) },
         trailingIcon = {
             val icon =
                 if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff
@@ -119,14 +119,14 @@ fun PasswordTextFieldLight(
                 Icon(
                     icon,
                     null,
-                    tint = TextSecondary
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         },
         placeholder = {
             Text(
                 stringResource(R.string.pass_hidden),
-                color = TextSecondary.copy(alpha = 0.5f)
+                color = TextMuted
             )
         },
         visualTransformation = if (passwordVisible) {
@@ -138,7 +138,8 @@ fun PasswordTextFieldLight(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent,
-            cursorColor = TextPrimary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            errorBorderColor = MaterialTheme.colorScheme.error
         ),
         singleLine = true,
         isError = isError,
@@ -147,7 +148,7 @@ fun PasswordTextFieldLight(
     if (isError && errorMessage != null) {
         Text(
             text = errorMessage,
-            color = MaterialTheme.colorScheme.error, // Màu đỏ mặc định của hệ thống
+            color = MaterialTheme.colorScheme.error,
             fontSize = 12.sp,
             modifier = Modifier.padding(start = 16.dp, top = 4.dp)
         )
@@ -162,33 +163,36 @@ fun PasswordTextFieldLight(
 @Preview(showBackground = true)
 @Composable
 fun PreviewFieldLabel() {
-    FieldLabel(text = "Email")
+    SmartPickTheme {
+        FieldLabel(text = "Email")
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PreviewStandardTextFieldLight() {
-    Column(modifier = Modifier.padding(16.dp)) {
+    SmartPickTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
 
-        // Normal
-        StandardTextFieldLight(
-            value = "nguyenvana@gmail.com",
-            onValueChange = {},
-            placeholder = "Nhập email",
-            leadingIcon = Icons.Default.Person
-        )
+            // Normal
+            StandardTextFieldLight(
+                value = "nguyenvana@gmail.com",
+                onValueChange = {},
+                placeholder = "Nhập email",
+                leadingIcon = Icons.Default.Person
+            )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-        // Error state
-        StandardTextFieldLight(
-            value = "abc",
-            onValueChange = {},
-            placeholder = "Nhập email",
-            leadingIcon = Icons.Default.Person,
-            isError = true,
-            errorMessage = "Email không hợp lệ"
-        )
+            // Error state
+            StandardTextFieldLight(
+                value = "abc",
+                onValueChange = {},
+                placeholder = "Nhập email",
+                leadingIcon = Icons.Default.Person,
+                isError = true,
+                errorMessage = "Email không hợp lệ"
+            )
+        }
     }
 }
-

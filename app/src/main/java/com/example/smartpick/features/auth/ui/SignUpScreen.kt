@@ -33,10 +33,8 @@ import com.example.smartpick.core.ui.components.FieldLabel
 import com.example.smartpick.core.ui.components.PasswordTextFieldLight
 import com.example.smartpick.core.ui.components.SocialAuthButton
 import com.example.smartpick.core.ui.components.StandardTextFieldLight
-import com.example.smartpick.core.ui.theme.BrightBackground
-import com.example.smartpick.core.ui.theme.LoginBlue
-import com.example.smartpick.core.ui.theme.TextPrimary
-import com.example.smartpick.core.ui.theme.TextSecondary
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.core.utils.Constants.WEB_CLIENT_ID
 import com.example.smartpick.core.utils.Validator
@@ -46,7 +44,6 @@ import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 
 /**
  * STATEFUL COMPOSABLE
- * Kết nối với ViewModel, xử lý Side Effects (Toast, Navigation)
  */
 @Composable
 fun SignUpScreen(
@@ -60,7 +57,6 @@ fun SignUpScreen(
 
     var isGoogleLogin by rememberSaveable { mutableStateOf(false) }
 
-    // Xử lý các thông báo đẩy ra từ Server (Supabase) dựa trên trạng thái authState
     LaunchedEffect(authState) {
         if (authState is AuthState.Error) {
             val message = (authState as AuthState.Error).message
@@ -76,16 +72,13 @@ fun SignUpScreen(
             } else {
                 onLoginClick()
             }
-
-
         }
     }
 
-    // Gọi phần nội dung UI (Stateless)
     SignUpContent(
         isLoading = authState is AuthState.Loading,
         onSignUp = { email, pass, name, user, phone ->
-            isGoogleLogin = false // Reset về false khi đăng ký bằng email
+            isGoogleLogin = false
             authViewModel.onSignUp(email, pass, name, user, phone)
         },
         onLoginClick = onLoginClick,
@@ -104,7 +97,6 @@ fun SignUpScreen(
 
 /**
  * STATELESS COMPOSABLE (UI CONTENT)
- * Hiển thị giao diện, quản lý trạng thái nhập liệu tạm thời và Validation
  */
 @Composable
 fun SignUpContent(
@@ -113,7 +105,6 @@ fun SignUpContent(
     onLoginClick: () -> Unit,
     onGoogleClick: () -> Unit,
 ) {
-    // Các biến lưu trữ dữ liệu người dùng nhập
     var fullName by rememberSaveable { mutableStateOf("") }
     var username by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
@@ -124,7 +115,6 @@ fun SignUpContent(
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     var confirmPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
-    /* phần biến kiểm tra lỗi nhập của người dùng để hiển thị Inline Error */
     var fullNameError by rememberSaveable { mutableStateOf<String?>(null) }
     var emailError by rememberSaveable { mutableStateOf<String?>(null) }
     var usernameError by rememberSaveable { mutableStateOf<String?>(null) }
@@ -132,9 +122,7 @@ fun SignUpContent(
     var confirmPasswordError by rememberSaveable { mutableStateOf<String?>(null) }
     var phoneNumberError by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Hàm xử lý kiểm tra tính hợp lệ trước khi gửi dữ liệu đi
     fun validateAndSubmit() {
-        /* Reset toàn bộ lỗi cũ về null */
         fullNameError = null
         emailError = null
         usernameError = null
@@ -144,13 +132,11 @@ fun SignUpContent(
 
         var isValid = true
 
-        // Kiểm tra Họ tên
         if (fullName.isBlank()) {
             fullNameError = Constants.ValidationError.FULL_NAME_EMPTY
             isValid = false
         }
 
-        // Kiểm tra Email
         if (email.isBlank()) {
             emailError = Constants.ValidationError.EMAIL_EMPTY
             isValid = false
@@ -159,13 +145,11 @@ fun SignUpContent(
             isValid = false
         }
 
-        // Kiểm tra Số điện thoại
         if (!Validator.isValidPhone(phoneNumber)) {
             phoneNumberError = Constants.ValidationError.PHONE_INVALID
             isValid = false
         }
 
-        // Kiểm tra Username
         if (username.isBlank()) {
             usernameError = Constants.ValidationError.USERNAME_EMPTY
             isValid = false
@@ -174,7 +158,6 @@ fun SignUpContent(
             isValid = false
         }
 
-        // Kiểm tra Mật khẩu
         if (password.isBlank()) {
             passwordError = Constants.ValidationError.PASSWORD_EMPTY
             isValid = false
@@ -195,7 +178,7 @@ fun SignUpContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BrightBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -208,13 +191,12 @@ fun SignUpContent(
                 text = stringResource(R.string.app_name),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Ô nhập Họ tên
             FieldLabel(stringResource(R.string.full_name))
             StandardTextFieldLight(
                 value = fullName,
@@ -227,7 +209,6 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ô nhập Username
             FieldLabel(stringResource(R.string.username))
             StandardTextFieldLight(
                 value = username,
@@ -240,7 +221,6 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ô nhập Email
             FieldLabel(stringResource(R.string.email))
             StandardTextFieldLight(
                 value = email,
@@ -253,7 +233,6 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ô nhập Số điện thoại
             FieldLabel(stringResource(R.string.phone_number))
             StandardTextFieldLight(
                 value = phoneNumber,
@@ -266,7 +245,6 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ô nhập Mật khẩu
             FieldLabel(stringResource(R.string.password))
             PasswordTextFieldLight(
                 value = password,
@@ -279,7 +257,6 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Ô Xác nhận mật khẩu
             FieldLabel(stringResource(R.string.confirm_password))
             PasswordTextFieldLight(
                 value = confirmPassword,
@@ -292,18 +269,16 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Nút tạo tài khoản
             AuthPrimaryButton(
                 text = stringResource(R.string.create_account),
                 onClick = { validateAndSubmit() },
-                enabled = !isLoading // Vô hiệu hóa nút khi đang gửi dữ liệu
+                enabled = !isLoading
             )
 
             Spacer(modifier = Modifier.height(24.dp))
             AuthDivider()
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Nút đăng nhập Google
             SocialAuthButton(
                 text = stringResource(R.string.continue_with_google),
                 brand = stringResource(R.string.google),
@@ -312,13 +287,15 @@ fun SignUpContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Chuyển sang màn hình Đăng nhập
             Row {
-                Text(text = stringResource(R.string.already_have_an_account), color = TextSecondary)
+                Text(
+                    text = stringResource(R.string.already_have_an_account), 
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = stringResource(R.string.login),
-                    color = LoginBlue,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.clickable { onLoginClick() }
                 )
@@ -326,27 +303,22 @@ fun SignUpContent(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // Hiển thị lớp phủ Loading khi isLoading = true
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = LoginBlue)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
     }
 }
 
-/**
- * PHẦN 3: PREVIEW
- * Chỉ gọi vào SignUpContent để không phụ thuộc vào Hilt/ViewModel
- */
 @Preview(showBackground = true, name = "SignUp - Bình thường")
 @Composable
 fun PreviewSignUpNormal() {
-    MaterialTheme {
+    SmartPickTheme {
         SignUpContent(
             isLoading = false,
             onSignUp = { _, _, _, _, _ -> },
@@ -359,7 +331,7 @@ fun PreviewSignUpNormal() {
 @Preview(showBackground = true, name = "SignUp - Đang xử lý")
 @Composable
 fun PreviewSignUpLoading() {
-    MaterialTheme {
+    SmartPickTheme {
         SignUpContent(
             isLoading = true,
             onSignUp = { _, _, _, _, _ -> },

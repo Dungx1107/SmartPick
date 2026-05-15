@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -17,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.notification.data.AppNotification
 import com.example.smartpick.features.notification.data.NotificationType
 
@@ -25,36 +28,42 @@ fun NotificationItem(
     notification: AppNotification,
     onClick: () -> Unit
 ) {
+    // Mapping colors from hex to meaningful system colors or theme-aware colors
     val (icon, iconBgColor, iconTintColor) = when (notification.type) {
         NotificationType.ORDER -> Triple(
             Icons.Outlined.LocalShipping,
-            Color(0xFFE0F2FE),
-            Color(0xFF0284C7)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+            MaterialTheme.colorScheme.primary
         )
 
         NotificationType.COMMUNITY -> Triple(
             Icons.Outlined.ChatBubbleOutline,
-            Color(0xFFF3E8FF),
-            Color(0xFF9333EA)
+            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+            MaterialTheme.colorScheme.secondary
         )
 
         NotificationType.PROMO -> Triple(
             Icons.Outlined.Loyalty,
-            Color(0xFFFFEDD5),
-            Color(0xFFEA580C)
+            MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
+            MaterialTheme.colorScheme.tertiary
         )
 
         NotificationType.SYSTEM -> Triple(
             Icons.Outlined.SettingsSuggest,
-            Color(0xFFF1F5F9),
-            Color(0xFF475569)
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (notification.isUnread) Color(0xFFF1F5F9).copy(alpha = 0.5f) else Color.White)
+            .background(
+                if (notification.isUnread) 
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.05f) 
+                else 
+                    MaterialTheme.colorScheme.surface
+            )
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.Top
@@ -81,13 +90,13 @@ fun NotificationItem(
                 text = notification.title,
                 fontSize = 15.sp,
                 fontWeight = if (notification.isUnread) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (notification.isUnread) Color(0xFF1E3A8A) else Color(0xFF334155)
+                color = if (notification.isUnread) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = notification.content,
                 fontSize = 14.sp,
-                color = if (notification.isUnread) Color(0xFF475569) else Color(0xFF64748B),
+                color = if (notification.isUnread) MaterialTheme.colorScheme.onSurface else TextMuted,
                 lineHeight = 20.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -96,7 +105,7 @@ fun NotificationItem(
             Text(
                 text = notification.timeAgo,
                 fontSize = 12.sp,
-                color = Color(0xFF94A3B8),
+                color = TextMuted,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -107,7 +116,7 @@ fun NotificationItem(
                 modifier = Modifier
                     .size(10.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFEF4444))
+                    .background(MaterialTheme.colorScheme.error)
                     .align(Alignment.CenterVertically)
             )
         }
@@ -117,42 +126,42 @@ fun NotificationItem(
 
 @androidx.compose.ui.tooling.preview.Preview(
     name = "Unread Notification",
-    showBackground = true,
-    backgroundColor = 0xFFFFFFFF
+    showBackground = true
 )
 @Composable
 fun NotificationItemUnreadPreview() {
-
-    NotificationItem(
-        notification = AppNotification(
-            id = "1",
-            title = "Đơn hàng đang giao",
-            content = "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến.",
-            timeAgo = "10 phút trước",
-            type = NotificationType.ORDER,
-            isUnread = true
-        ),
-        onClick = {}
-    )
+    SmartPickTheme {
+        NotificationItem(
+            notification = AppNotification(
+                id = "1",
+                title = "Đơn hàng đang giao",
+                content = "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến.",
+                timeAgo = "10 phút trước",
+                type = NotificationType.ORDER,
+                isUnread = true
+            ),
+            onClick = {}
+        )
+    }
 }
 
 @androidx.compose.ui.tooling.preview.Preview(
     name = "Read Notification",
-    showBackground = true,
-    backgroundColor = 0xFFFFFFFF
+    showBackground = true
 )
 @Composable
 fun NotificationItemReadPreview() {
-
-    NotificationItem(
-        notification = AppNotification(
-            id = "2",
-            title = "Khuyến mãi cuối tuần!",
-            content = "Giảm ngay 20% cho tất cả thiết bị âm thanh trong hôm nay.",
-            timeAgo = "2 giờ trước",
-            type = NotificationType.PROMO,
-            isUnread = false
-        ),
-        onClick = {}
-    )
+    SmartPickTheme {
+        NotificationItem(
+            notification = AppNotification(
+                id = "2",
+                title = "Khuyến mãi cuối tuần!",
+                content = "Giảm ngay 20% cho tất cả thiết bị âm thanh trong hôm nay.",
+                timeAgo = "2 giờ trước",
+                type = NotificationType.PROMO,
+                isUnread = false
+            ),
+            onClick = {}
+        )
+    }
 }

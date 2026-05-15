@@ -10,13 +10,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.post_creation.viewmodel.CreatePostUiState
 import com.example.smartpick.features.post_creation.viewmodel.CreatePostViewModel
 import java.util.UUID
@@ -97,7 +97,7 @@ fun CreatePostContent(
         Box(
             modifier = Modifier.fillMaxSize()
                 .padding(paddingValues)
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
         ) {
 
             Column {
@@ -149,10 +149,10 @@ fun CreatePostContentPreview_Discussion() {
         phoneNumber = "0123456789"
     )
 
-    MaterialTheme {
+    SmartPickTheme {
         CreatePostContent(
             currentUser = mockUser,
-            uiState = CreatePostUiState.Idle, // Giả lập trạng thái chờ
+            uiState = CreatePostUiState.Idle,
             onClose = {},
             onSubmit = { _, _, _ -> }
         )

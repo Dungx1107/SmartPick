@@ -40,8 +40,7 @@ import com.example.smartpick.core.ui.components.PostFooterActions
 import com.example.smartpick.core.ui.components.PostHeader
 import com.example.smartpick.core.ui.components.ProductAttachmentCard
 import com.example.smartpick.core.ui.components.VideoPlayer
-import com.example.smartpick.core.ui.theme.PageBg
-import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.utils.FileUtils
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailUiState
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
@@ -57,8 +56,7 @@ fun PostDetailScreen(
         uiState = uiState,
         onBackClick = onBackClick,
         onRetry = {
-            uiState.post?.id?.let { viewModel.loadPostDetail(it) }  // Nếu có lỗi, cho phép tải lại
-
+            uiState.post?.id?.let { viewModel.loadPostDetail(it) }
         }
     )
 }
@@ -72,26 +70,41 @@ fun PostDetailContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.BaiViet), fontWeight = FontWeight.Bold) },
+                title = { 
+                    Text(
+                        stringResource(R.string.BaiViet), 
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    ) 
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Icon(
+                            Icons.Default.ArrowBack, 
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
-        containerColor = PageBg
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(White)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             when {
                 uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center),
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 uiState.error != null -> {
@@ -109,17 +122,18 @@ fun PostDetailContent(
                     val user = uiState.user!!
 
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        // Header: Thông tin người đăng
                         item { PostHeader(user = user, createdAt = post.createdAt ?: "") }
 
-                        // Nội dung bài viết
                         item {
                             if (!post.content.isNullOrBlank()) {
-                                Text(text = post.content, modifier = Modifier.padding(16.dp))
+                                Text(
+                                    text = post.content, 
+                                    modifier = Modifier.padding(16.dp),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
                             }
                         }
 
-                        // Sản phẩm đính kèm (nếu có)
                         uiState.product?.let { product ->
                             item {
                                 ProductAttachmentCard(
@@ -130,7 +144,7 @@ fun PostDetailContent(
                         }
 
                         items(post.mediaUrls) { url ->
-                            if (FileUtils.isVideoUrl(url)) {// Nếu là video, gọi trình phát chuyên dụng
+                            if (FileUtils.isVideoUrl(url)) {
                                 VideoPlayer(
                                     videoUrl = url,
                                     modifier = Modifier.padding(vertical = 4.dp)
@@ -158,55 +172,54 @@ fun PostDetailContent(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun PostDetailContentPreview() {
+    SmartPickTheme {
+        val fakeUser = User(
+            id = "user_1",
+            email = "user1@gmail.com",
+            username = "nguyenvana",
+            fullName = "Nguyễn Văn A",
+            avatarUrl = "https://i.pravatar.cc/300?img=12",
+            phoneNumber = "0123456789",
+            createdAt = "2026-05-11T10:00:00",
+            updatedAt = "2026-05-11T10:00:00"
+        )
 
-    val fakeUser = User(
-        id = "user_1",
-        email = "user1@gmail.com",
-        username = "nguyenvana",
-        fullName = "Nguyễn Văn A",
-        avatarUrl = "https://i.pravatar.cc/300?img=12",
-        phoneNumber = "0123456789",
-        createdAt = "2026-05-11T10:00:00",
-        updatedAt = "2026-05-11T10:00:00"
-    )
+        val fakeProduct = Product(
+            id = "product_1",
+            ownerId = "user_1",
+            name = "Sony WH-1000XM5",
+            brand = "Sony",
+            category = "Tai nghe",
+            price = 8990000.0,
+            imageUrls = listOf(
+                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
+            ),
+            status = "available",
+            createdAt = "2026-05-11T10:00:00"
+        )
 
-    val fakeProduct = Product(
-        id = "product_1",
-        ownerId = "user_1",
-        name = "Sony WH-1000XM5",
-        brand = "Sony",
-        category = "Tai nghe",
-        price = 8990000.0,
-        imageUrls = listOf(
-            "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
-        ),
-        status = "available",
-        createdAt = "2026-05-11T10:00:00"
-    )
+        val fakePost = Post(
+            id = "post_1",
+            userId = "user_1",
+            productId = "product_1",
+            content = "Tai nghe Sony WH-1000XM5 chống ồn cực kỳ tốt. Pin rất trâu và đeo lâu không đau tai 🔥",
+            mediaUrls = listOf(
+                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
+                "https://images.unsplash.com/photo-1519677100203-a0e668c92439",
+                "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
+            ),
+            status = "available",
+            createdAt = "2 giờ trước"
+        )
 
-    val fakePost = Post(
-        id = "post_1",
-        userId = "user_1",
-        productId = "product_1",
-        content = "Tai nghe Sony WH-1000XM5 chống ồn cực kỳ tốt. Pin rất trâu và đeo lâu không đau tai 🔥",
-        mediaUrls = listOf(
-            "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
-            "https://images.unsplash.com/photo-1519677100203-a0e668c92439",
-            "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
-        ),
-        status = "available",
-        createdAt = "2 giờ trước"
-    )
+        val fakeUiState = PostDetailUiState(
+            isLoading = false,
+            post = fakePost,
+            user = fakeUser,
+            product = fakeProduct,
+            error = null
+        )
 
-    val fakeUiState = PostDetailUiState(
-        isLoading = false,
-        post = fakePost,
-        user = fakeUser,
-        product = fakeProduct,
-        error = null
-    )
-
-    MaterialTheme {
         PostDetailContent(
             uiState = fakeUiState,
             onBackClick = {},
@@ -218,8 +231,7 @@ private fun PostDetailContentPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun PostDetailLoadingPreview() {
-
-    MaterialTheme {
+    SmartPickTheme {
         PostDetailContent(
             uiState = PostDetailUiState(
                 isLoading = true
@@ -233,8 +245,7 @@ private fun PostDetailLoadingPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun PostDetailErrorPreview() {
-
-    MaterialTheme {
+    SmartPickTheme {
         PostDetailContent(
             uiState = PostDetailUiState(
                 isLoading = false,

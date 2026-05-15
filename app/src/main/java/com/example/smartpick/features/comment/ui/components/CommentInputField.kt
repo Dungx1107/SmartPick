@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.ui.components.ProfileAvatar
+import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 
 @Composable
 fun CommentInputField(
@@ -28,7 +30,7 @@ fun CommentInputField(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 12.dp,
         modifier = modifier.fillMaxWidth()
     ) {
@@ -47,15 +49,23 @@ fun CommentInputField(
             TextField(
                 value = commentText,
                 onValueChange = onCommentChange,
-                placeholder = { Text(stringResource(R.string.VietBinhLuan), fontSize = 14.sp) },
+                placeholder = { 
+                    Text(
+                        stringResource(R.string.VietBinhLuan), 
+                        fontSize = 14.sp,
+                        color = TextMuted
+                    ) 
+                },
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(max = 120.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFF1F5F9),
-                    unfocusedContainerColor = Color(0xFFF1F5F9),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 ),
                 shape = RoundedCornerShape(24.dp),
                 maxLines = 5
@@ -63,19 +73,26 @@ fun CommentInputField(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Nút gửi với hiệu ứng màu sắc
             val sendEnabled = commentText.isNotBlank()
             IconButton(
                 onClick = onSend,
                 enabled = sendEnabled,
                 modifier = Modifier
                     .clip(CircleShape)
-                    .background(if (sendEnabled) Color(0xFF1E3A8A) else Color(0xFFE2E8F0))
+                    .background(
+                        if (sendEnabled) 
+                            MaterialTheme.colorScheme.primary 
+                        else 
+                            MaterialTheme.colorScheme.surfaceVariant
+                    )
             ) {
                 Icon(
                     Icons.Default.Send,
                     contentDescription = null,
-                    tint = if (sendEnabled) Color.White else Color(0xFF94A3B8),
+                    tint = if (sendEnabled) 
+                        MaterialTheme.colorScheme.onPrimary 
+                    else 
+                        TextMuted,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -86,11 +103,11 @@ fun CommentInputField(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun CommentInputFieldPreview() {
-    var comment by remember {
-        mutableStateOf("Sản phẩm này nhìn ổn đấy!")
-    }
+    SmartPickTheme {
+        var comment by remember {
+            mutableStateOf("Sản phẩm này nhìn ổn đấy!")
+        }
 
-    MaterialTheme {
         CommentInputField(
             commentText = comment,
             onCommentChange = { comment = it },
@@ -103,7 +120,7 @@ fun CommentInputFieldPreview() {
 @Preview(showBackground = true, name = "Empty Comment")
 @Composable
 fun CommentInputFieldEmptyPreview() {
-    MaterialTheme {
+    SmartPickTheme {
         CommentInputField(
             commentText = "",
             onCommentChange = {},

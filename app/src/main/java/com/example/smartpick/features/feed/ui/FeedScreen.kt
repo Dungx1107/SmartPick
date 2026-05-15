@@ -29,9 +29,7 @@ import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.PostItem
-import com.example.smartpick.core.ui.theme.PageBg
 import com.example.smartpick.core.ui.theme.SmartPickTheme
-import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.feed.viewmodel.FeedUiState
@@ -71,13 +69,14 @@ fun FeedContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(PageBg)
+            .background(MaterialTheme.colorScheme.background)
             .padding(paddingValues)
     ) {
         when (uiState) {
             is FeedUiState.Loading -> {
                 CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 
@@ -95,7 +94,7 @@ fun FeedContent(
                     item {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            color = White,
+                            color = MaterialTheme.colorScheme.surface,
                             shadowElevation = 2.dp
                         ) {
                             CreatePostPrompt(
@@ -116,7 +115,7 @@ fun FeedContent(
                                 horizontal = 16.dp,
                                 vertical = 8.dp
                             ),
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -252,4 +251,3 @@ private fun FeedContentPreview() {
         )
     }
 }
-

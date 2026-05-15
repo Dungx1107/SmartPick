@@ -29,17 +29,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.ErrorRed
-import com.example.smartpick.core.ui.theme.PageBg
-import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.settings.ui.components.SettingsClickItem
 import com.example.smartpick.features.settings.ui.components.SettingsSectionTitle
 import com.example.smartpick.features.settings.ui.components.SettingsSwitchItem
@@ -64,7 +60,7 @@ fun SettingsScreen(
                     showLogoutDialog = false
                     viewModel.logout(onLogoutSuccess)
                 }) {
-                    Text(stringResource(R.string.DangXuat), color = Color.Red)
+                    Text(stringResource(R.string.DangXuat), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
@@ -86,23 +82,22 @@ fun SettingsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsContent(
-    isDarkMode: Boolean, // Nhận trạng thái từ Screen Container
-    onThemeToggle: (Boolean) -> Unit, // Nhận callback
+    isDarkMode: Boolean,
+    onThemeToggle: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     var isNotiEnabled by rememberSaveable { mutableStateOf(true) }
 
     Scaffold(
-        containerColor = PageBg,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
                         stringResource(R.string.CaiDat),
-                        fontWeight = FontWeight.Bold,
-//                        fontWeight = FontWeight.Black,
-                        color = SmartPickColor
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
@@ -110,12 +105,12 @@ fun SettingsContent(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
-                            tint = SmartPickColor
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = White.copy(alpha = 0.9f)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
             )
         }
@@ -150,7 +145,7 @@ fun SettingsContent(
             SettingsClickItem(
                 title = stringResource(R.string.DangXuat),
                 icon = Icons.AutoMirrored.Filled.ExitToApp,
-                titleColor = ErrorRed,
+                titleColor = MaterialTheme.colorScheme.error,
                 onClick = onLogoutClick
             )
 
@@ -159,7 +154,7 @@ fun SettingsContent(
                 text = stringResource(R.string.smartpick_version_1_0_0_2026),
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = SmartPickColor.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -170,7 +165,7 @@ fun SettingsContent(
 @Preview(showBackground = true)
 @Composable
 fun SettingsPreview() {
-    MaterialTheme {
+    SmartPickTheme {
         SettingsContent(
             isDarkMode = false,
             onThemeToggle = {},

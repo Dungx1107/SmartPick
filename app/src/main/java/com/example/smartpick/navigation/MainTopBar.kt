@@ -11,6 +11,7 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -24,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 
 @Composable
 fun MainTopBar(
@@ -54,7 +55,7 @@ fun MainTopBarContent(
             Text(
                 text = stringResource(R.string.app_name),
                 fontWeight = FontWeight.Black,
-                color = SmartPickColor
+                color = MaterialTheme.colorScheme.primary
             )
         },
         navigationIcon = {
@@ -62,14 +63,14 @@ fun MainTopBarContent(
                 Icon(
                     Icons.Default.Menu,
                     contentDescription = stringResource(R.string.menu),
-                    tint = SmartPickColor
+                    tint = MaterialTheme.colorScheme.primary
                 )
             }
         },
         actions = {
             if (tagText != null) {
                 Surface(
-                    color = Color(0xFFD6E3FF),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.padding(end = 8.dp)
                 ) {
@@ -77,7 +78,7 @@ fun MainTopBarContent(
                         text = tagText,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF38527B),
+                        color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -92,8 +93,8 @@ fun MainTopBarContent(
                         }
                         Badge(
                             modifier = Modifier.offset(x = (-6).dp, y = 2.dp),
-                            containerColor = Color.Red,
-                            contentColor = Color.White
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
                             Text(
                                 text = text,
@@ -107,13 +108,13 @@ fun MainTopBarContent(
                     Icon(
                         Icons.Default.Notifications,
                         contentDescription = stringResource(R.string.notifications),
-                        tint = Color(0xFF1E3A8A)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.White.copy(alpha = 0.9f)
+            containerColor = MaterialTheme.colorScheme.surface
         )
     )
 }
@@ -121,30 +122,36 @@ fun MainTopBarContent(
 @Preview(showBackground = true, name = "Default TopBar")
 @Composable
 fun MainTopBarPreview() {
-    MainTopBarContent(
-        onMenuClick = {},
-        onNotificationClick = {},
-        tagText = "AI Assist",
-        showNotificationBadge = 0
-    )
+    SmartPickTheme {
+        MainTopBarContent(
+            onMenuClick = {},
+            onNotificationClick = {},
+            tagText = "AI Assist",
+            showNotificationBadge = 0
+        )
+    }
 }
 
 @Preview(showBackground = true, name = "TopBar with Cart Badge")
 @Composable
 fun MainTopBarWithBadgePreview() {
-    MainTopBarContent(
-        onMenuClick = {},
-        onNotificationClick = {},
-        showNotificationBadge = 1
-    )
+    SmartPickTheme {
+        MainTopBarContent(
+            onMenuClick = {},
+            onNotificationClick = {},
+            showNotificationBadge = 1
+        )
+    }
 }
 
 @Preview(showBackground = true, name = "Custom Title")
 @Composable
 fun MainTopBarCustomTitlePreview() {
-    MainTopBarContent(
-        onMenuClick = {},
-        onNotificationClick = {},
-        showNotificationBadge = 1000
-    )
+    SmartPickTheme {
+        MainTopBarContent(
+            onMenuClick = {},
+            onNotificationClick = {},
+            showNotificationBadge = 1000
+        )
+    }
 }

@@ -39,16 +39,12 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.ProfileAvatar
 import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.post_creation.viewmodel.CreatePostUiState
 import kotlinx.parcelize.Parcelize
 
 /**
  * Trạng thái form nhập thông tin sản phẩm.
- *
- * @property name Tên sản phẩm.
- * @property price Giá bán sản phẩm.
- * @property category Danh mục sản phẩm.
- * @property brand Thương hiệu sản phẩm.
  */
 @Parcelize
 data class ProductFormState(
@@ -57,16 +53,6 @@ data class ProductFormState(
     val category: String = "",
     val brand: String = ""
 ): Parcelable {
-    /**
-     * Kiểm tra dữ liệu form hợp lệ.
-     *
-     * Điều kiện:
-     * - Tên sản phẩm không được rỗng.
-     * - Giá bán không được rỗng.
-     * - Danh mục không được rỗng.
-     *
-     * @return true nếu hợp lệ, ngược lại false.
-     */
     fun isValid() = name.isNotBlank()
             && price.isNotBlank()
             && category.isNotBlank()
@@ -74,16 +60,6 @@ data class ProductFormState(
 
 /**
  * TopBar cho màn hình tạo bài viết.
- *
- * Bao gồm:
- * - Nút đóng màn hình.
- * - Tiêu đề tạo bài viết.
- * - Nút đăng bài hoặc loading khi submit.
- *
- * @param isSubmitEnabled Cho phép bấm nút đăng.
- * @param isLoading Hiển thị loading khi đang submit.
- * @param onClose Callback khi bấm nút đóng.
- * @param onSubmit Callback khi bấm nút đăng bài.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,56 +70,80 @@ fun CreatePostTopBar(
     onSubmit: () -> Unit
 ) {
     CenterAlignedTopAppBar(
-        title = { Text(stringResource(R.string.TaoBaiViet), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
+        title = { 
+            Text(
+                stringResource(R.string.TaoBaiViet), 
+                fontSize = 18.sp, 
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            ) 
+        },
         navigationIcon = {
-            IconButton(onClick = onClose) { Icon(Icons.Default.Close, contentDescription = null) }
+            IconButton(onClick = onClose) { 
+                Icon(
+                    Icons.Default.Close, 
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurface
+                ) 
+            }
         },
         actions = {
             Button(
                 onClick = onSubmit,
                 enabled = isSubmitEnabled && !isLoading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1877F2),
-                    disabledContainerColor = Color(0xFFE4E6EB)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    disabledContentColor = TextMuted
                 ),
                 modifier = Modifier.padding(end = 8.dp),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp), 
+                        color = MaterialTheme.colorScheme.onPrimary, 
+                        strokeWidth = 2.dp
+                    )
                 } else {
                     Text(stringResource(R.string.Dang), fontWeight = FontWeight.Bold)
                 }
             }
         },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     )
 }
 
 /**
  * Thanh chuyển đổi loại bài viết.
- *
- * Hỗ trợ:
- * - Thảo luận.
- * - Đăng bán sản phẩm.
- *
- * @param selectedIndex Index tab đang được chọn.
- * @param onTabSelected Callback khi chọn tab.
  */
 @Composable
 fun PostTypeTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
     val tabs = listOf(stringResource(R.string.ThaoLuan), stringResource(R.string.DangBan))
     TabRow(
         selectedTabIndex = selectedIndex,
-        containerColor = Color.White,
-        contentColor = Color(0xFF1877F2),
-        divider = { HorizontalDivider(thickness = 0.5.dp, color = Color(0xFFE4E6EB)) }
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.primary,
+        divider = { 
+            HorizontalDivider(
+                thickness = 0.5.dp, 
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            ) 
+        }
     ) {
         tabs.forEachIndexed { index, title ->
             Tab(
                 selected = selectedIndex == index,
                 onClick = { onTabSelected(index) },
-                text = { Text(title, fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal) }
+                text = { 
+                    Text(
+                        title, 
+                        fontWeight = if (selectedIndex == index) FontWeight.Bold else FontWeight.Normal
+                    ) 
+                }
             )
         }
     }
@@ -151,14 +151,6 @@ fun PostTypeTabs(selectedIndex: Int, onTabSelected: (Int) -> Unit) {
 
 /**
  * Header hiển thị thông tin người dùng.
- *
- * Bao gồm:
- * - Avatar.
- * - Tên người dùng.
- * - Trạng thái bài viết.
- *
- * @param user Thông tin người dùng hiện tại.
- * @param isSelling Xác định bài viết bán hàng hay bài viết thường.
  */
 @Composable
 fun UserProfileHeader(user: User?, isSelling: Boolean) {
@@ -169,14 +161,19 @@ fun UserProfileHeader(user: User?, isSelling: Boolean) {
             Text(
                 text = user?.fullName ?: stringResource(R.string.NguoiDungSmartPick),
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface
             )
-            Surface(color = Color(0xFFF0F2F5), shape = RoundedCornerShape(4.dp)) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant, 
+                shape = RoundedCornerShape(4.dp)
+            ) {
                 Text(
                     text = if (isSelling) stringResource(R.string.DangBanHang) else stringResource(R.string.CongKhai),
                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -185,25 +182,27 @@ fun UserProfileHeader(user: User?, isSelling: Boolean) {
 
 /**
  * Ô nhập nội dung bài viết.
- *
- * Placeholder sẽ thay đổi theo loại bài viết:
- * - Đăng bán -> mô tả sản phẩm.
- * - Thảo luận -> trạng thái người dùng.
- *
- * @param content Nội dung bài viết.
- * @param isSelling Xác định bài viết bán hàng hay không.
- * @param onContentChange Callback khi nội dung thay đổi.
  */
 @Composable
 fun PostContentInput(content: String, isSelling: Boolean, onContentChange: (String) -> Unit) {
     TextField(
         value = content,
         onValueChange = onContentChange,
-        placeholder = { Text(text = if (isSelling) "Mô tả sản phẩm của bạn..." else "Bạn đang nghĩ gì?", fontSize = 18.sp) },
+        placeholder = { 
+            Text(
+                text = if (isSelling) "Mô tả sản phẩm của bạn..." else "Bạn đang nghĩ gì?", 
+                fontSize = 18.sp,
+                color = TextMuted
+            ) 
+        },
         modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 120.dp),
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
-            focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent
+            focusedContainerColor = Color.Transparent, 
+            unfocusedContainerColor = Color.Transparent,
+            focusedIndicatorColor = Color.Transparent, 
+            unfocusedIndicatorColor = Color.Transparent,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface
         ),
         textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
     )
@@ -211,16 +210,6 @@ fun PostContentInput(content: String, isSelling: Boolean, onContentChange: (Stri
 
 /**
  * Khu vực chọn ảnh/video cho bài viết.
- *
- * Chức năng:
- * - Chọn nhiều ảnh.
- * - Chọn 1 video.
- * - Hiển thị preview media đã chọn.
- * - Xóa media khỏi danh sách.
- *
- * @param selectedUris Danh sách Uri media đã chọn.
- * @param onMediaSelected Callback khi chọn media.
- * @param onMediaRemoved Callback khi xóa media.
  */
 @Composable
 fun MediaSelectionSection(
@@ -239,42 +228,83 @@ fun MediaSelectionSection(
     val context = LocalContext.current
 
     Column {
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), 
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             OutlinedButton(
-                onClick = { photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                onClick = { 
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    ) 
+                },
                 modifier = Modifier.weight(1f).height(50.dp),
-                shape = RoundedCornerShape(8.dp), border = BorderStroke(1.dp, Color(0xFFE4E6EB))
+                shape = RoundedCornerShape(8.dp), 
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF45BD62))
+                Icon(
+                    Icons.Default.Image, 
+                    contentDescription = null, 
+                    tint = Color(0xFF45BD62) // Keeping semantic green
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.Anhr), color = Color.Black)
+                Text(stringResource(R.string.Anhr), color = MaterialTheme.colorScheme.onSurface)
             }
             OutlinedButton(
-                onClick = { videoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)) },
+                onClick = { 
+                    videoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly)
+                    ) 
+                },
                 modifier = Modifier.weight(1f).height(50.dp),
-                shape = RoundedCornerShape(8.dp), border = BorderStroke(1.dp, Color(0xFFE4E6EB))
+                shape = RoundedCornerShape(8.dp), 
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                Icon(Icons.Default.Videocam, contentDescription = null, tint = Color(0xFFE53935))
+                Icon(
+                    Icons.Default.Videocam, 
+                    contentDescription = null, 
+                    tint = MaterialTheme.colorScheme.error
+                )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Video", color = Color.Black)
+                Text("Video", color = MaterialTheme.colorScheme.onSurface)
             }
         }
 
         if (selectedUris.isNotEmpty()) {
-            LazyRow(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp), 
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 items(selectedUris) { uri ->
                     Box(modifier = Modifier.size(100.dp)) {
                         AsyncImage(
-                            model = ImageRequest.Builder(context).data(uri).decoderFactory(VideoFrameDecoder.Factory()).crossfade(true).build(),
+                            model = ImageRequest.Builder(context)
+                                .data(uri)
+                                .decoderFactory(VideoFrameDecoder.Factory())
+                                .crossfade(true)
+                                .build(),
                             contentDescription = null,
                             modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
                         if (context.contentResolver.getType(uri)?.contains("video") == true) {
-                            Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.align(Alignment.Center).size(32.dp))
+                            Icon(
+                                Icons.Default.PlayCircle, 
+                                contentDescription = null, 
+                                tint = Color.White.copy(alpha = 0.8f), 
+                                modifier = Modifier.align(Alignment.Center).size(32.dp)
+                            )
                         }
-                        IconButton(onClick = { onMediaRemoved(uri) }, modifier = Modifier.align(Alignment.TopEnd).size(24.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = null, tint = Color.White, modifier = Modifier.background(Color.Black.copy(0.5f), CircleShape))
+                        IconButton(
+                            onClick = { onMediaRemoved(uri) }, 
+                            modifier = Modifier.align(Alignment.TopEnd).size(24.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Close, 
+                                contentDescription = null, 
+                                tint = Color.White, 
+                                modifier = Modifier.background(Color.Black.copy(0.5f), CircleShape)
+                            )
                         }
                     }
                 }
@@ -285,66 +315,99 @@ fun MediaSelectionSection(
 
 /**
  * Form nhập thông tin chi tiết sản phẩm.
- *
- * Bao gồm:
- * - Tên sản phẩm.
- * - Giá bán.
- * - Danh mục.
- * - Thương hiệu.
- *
- * @param state Trạng thái hiện tại của form.
- * @param onStateChange Callback khi dữ liệu thay đổi.
  */
 @Composable
 fun ProductDetailsForm(state: ProductFormState, onStateChange: (ProductFormState) -> Unit) {
     Column {
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp)
-        Text("Thông tin chi tiết sản phẩm", fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 12.dp))
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp), 
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
+        Text(
+            "Thông tin chi tiết sản phẩm", 
+            fontWeight = FontWeight.Bold, 
+            modifier = Modifier.padding(bottom = 12.dp),
+            color = MaterialTheme.colorScheme.onSurface
+        )
         OutlinedTextField(
-            value = state.name, onValueChange = { onStateChange(state.copy(name = it)) },
-            label = { Text("Tên sản phẩm *") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)
+            value = state.name, 
+            onValueChange = { onStateChange(state.copy(name = it)) },
+            label = { Text("Tên sản phẩm *") }, 
+            modifier = Modifier.fillMaxWidth(), 
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
         )
         Spacer(modifier = Modifier.height(12.dp))
         Row {
             OutlinedTextField(
-                value = state.price, onValueChange = { onStateChange(state.copy(price = it)) },
-                label = { Text("Giá bán (VNĐ) *") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1.1f), shape = RoundedCornerShape(8.dp)
+                value = state.price, 
+                onValueChange = { onStateChange(state.copy(price = it)) },
+                label = { Text("Giá bán (VNĐ) *") }, 
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1.1f), 
+                shape = RoundedCornerShape(8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
             )
             Spacer(modifier = Modifier.width(12.dp))
             OutlinedTextField(
-                value = state.category, onValueChange = { onStateChange(state.copy(category = it)) },
-                label = { Text("Danh mục *") }, modifier = Modifier.weight(0.9f), shape = RoundedCornerShape(8.dp)
+                value = state.category, 
+                onValueChange = { onStateChange(state.copy(category = it)) },
+                label = { Text("Danh mục *") }, 
+                modifier = Modifier.weight(0.9f), 
+                shape = RoundedCornerShape(8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
-            value = state.brand, onValueChange = { onStateChange(state.copy(brand = it)) },
-            label = { Text("Thương hiệu") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp)
+            value = state.brand, 
+            onValueChange = { onStateChange(state.copy(brand = it)) },
+            label = { Text("Thương hiệu") }, 
+            modifier = Modifier.fillMaxWidth(), 
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+            )
         )
     }
 }
 
 /**
  * Overlay hiển thị trạng thái màn hình.
- *
- * Hỗ trợ:
- * - Loading overlay.
- * - Error message overlay.
- *
- * @param uiState Trạng thái tạo bài viết hiện tại.
  */
 @Composable
 fun StateOverlay(uiState: CreatePostUiState) {
     if (uiState is CreatePostUiState.Error) {
-        val displayMsg = if (uiState.message.contains("Authorization")) "Lỗi quyền truy cập RLS Policy trên Supabase!" else "Đã xảy ra lỗi khi đăng bài. Vui lòng thử lại."
+        val displayMsg = if (uiState.message.contains("Authorization")) 
+            "Lỗi quyền truy cập RLS Policy trên Supabase!" 
+        else 
+            "Đã xảy ra lỗi khi đăng bài. Vui lòng thử lại."
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-            Text(text = displayMsg, color = Color.Red, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 80.dp))
+            Text(
+                text = displayMsg, 
+                color = MaterialTheme.colorScheme.error, 
+                fontWeight = FontWeight.Bold, 
+                modifier = Modifier.padding(bottom = 80.dp)
+            )
         }
     }
     if (uiState is CreatePostUiState.Loading) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color(0xFF1877F2))
+        Box(
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)), 
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -353,9 +416,6 @@ fun StateOverlay(uiState: CreatePostUiState) {
 // PREVIEW
 // ======================================================
 
-/**
- * Preview TopBar.
- */
 @Preview(showBackground = true)
 @Composable
 private fun CreatePostTopBarPreview() {
@@ -369,9 +429,6 @@ private fun CreatePostTopBarPreview() {
     }
 }
 
-/**
- * Preview Tabs.
- */
 @Preview(showBackground = true)
 @Composable
 private fun PostTypeTabsPreview() {
@@ -383,9 +440,6 @@ private fun PostTypeTabsPreview() {
     }
 }
 
-/**
- * Preview Header người dùng.
- */
 @Preview(showBackground = true)
 @Composable
 private fun UserProfileHeaderPreview() {
@@ -401,9 +455,6 @@ private fun UserProfileHeaderPreview() {
     }
 }
 
-/**
- * Preview ô nhập nội dung.
- */
 @Preview(showBackground = true)
 @Composable
 private fun PostContentInputPreview() {
@@ -416,9 +467,6 @@ private fun PostContentInputPreview() {
     }
 }
 
-/**
- * Preview form sản phẩm.
- */
 @Preview(showBackground = true)
 @Composable
 private fun ProductDetailsFormPreview() {
@@ -435,9 +483,6 @@ private fun ProductDetailsFormPreview() {
     }
 }
 
-/**
- * Preview loading overlay.
- */
 @Preview(showBackground = true)
 @Composable
 private fun StateOverlayLoadingPreview() {
@@ -448,9 +493,6 @@ private fun StateOverlayLoadingPreview() {
     }
 }
 
-/**
- * Preview error overlay.
- */
 @Preview(showBackground = true)
 @Composable
 private fun StateOverlayErrorPreview() {

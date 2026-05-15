@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ import com.example.smartpick.core.ui.theme.DividerColor
 import com.example.smartpick.core.ui.theme.LoginBlue
 import com.example.smartpick.core.ui.theme.LoginBlueGradientEnd
 import com.example.smartpick.core.ui.theme.SocialButtonLightColor
+import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
 
 
@@ -52,18 +54,18 @@ fun AuthPrimaryButton(
     enabled: Boolean = true
 ) {
     val gradientBrush = if (enabled) {
+        // Giữ Gradient branding nhưng có thể cân nhắc dùng theme nếu cần chuyển hoàn toàn
         Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
     } else {
-        SolidColor(Color.LightGray)
+        SolidColor(MaterialTheme.colorScheme.surfaceVariant)
     }
 
-    val contentColor = if (enabled) Color.White else Color.Gray
+    val contentColor = if (enabled) MaterialTheme.colorScheme.onPrimary else TextMuted
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
-            /* Truyền enabled vào clickable để chặn click khi đang load */
             .clickable(enabled = enabled, onClick = onClick)
             .border(
                 width = 1.dp,
@@ -82,14 +84,14 @@ fun AuthPrimaryButton(
                 text = text,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                color = contentColor // Đổi màu chữ khi disable
+                color = contentColor
             )
             if (showArrow) {
                 Spacer(modifier = Modifier.width(12.dp))
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,
                     contentDescription = null,
-                    tint = contentColor // Đổi màu icon khi disable
+                    tint = contentColor
                 )
             }
         }
@@ -106,23 +108,21 @@ fun SocialAuthButton(
     text: String,
     brand: String,
     onClick: () -> Unit,
-    enabled: Boolean = true, // tham số kiểm soát trạng thái
-    loading: Boolean = false  // tham số hiển thị loading
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
-    // Xác định màu sắc dựa trên trạng thái
-    val backgroundColor = if (enabled && !loading) SocialButtonLightColor else Color.LightGray
+    val backgroundColor = if (enabled && !loading) SocialButtonLightColor else MaterialTheme.colorScheme.surfaceVariant
     val contentAlpha = if (enabled && !loading) 1f else 0.5f
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
-            // Chặn click khi disabled hoặc đang loading
             .clickable(enabled = enabled && !loading, onClick = onClick)
             .background(backgroundColor, RoundedCornerShape(12.dp))
             .border(1.dp, DividerColor, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
-        color = Color.Transparent // Tránh đè màu background của modifier
+        color = Color.Transparent
     ) {
         Row(
             modifier = Modifier
@@ -132,10 +132,9 @@ fun SocialAuthButton(
             horizontalArrangement = Arrangement.Center
         ) {
             if (loading) {
-                // Hiển thị vòng xoay khi đang xử lý token Google
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.primary,
                     strokeWidth = 2.dp
                 )
             } else {
@@ -149,7 +148,7 @@ fun SocialAuthButton(
                         painter = painterResource(id = it),
                         contentDescription = stringResource(R.string.logo, brand),
                         modifier = Modifier.size(24.dp),
-                        tint = Color.Unspecified // Giữ nguyên màu gốc của logo Google
+                        tint = Color.Unspecified
                     )
                 }
 
@@ -157,7 +156,7 @@ fun SocialAuthButton(
                 Text(
                     text = text,
                     fontSize = 16.sp,
-                    color = Color.Black.copy(alpha = contentAlpha),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
                     fontWeight = FontWeight.Medium
                 )
             }
