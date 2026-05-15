@@ -51,6 +51,18 @@ import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.TextSecondary
 import com.example.smartpick.core.ui.theme.White
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.Delete
+import com.example.smartpick.core.model.CartItem
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 
 @Composable
 fun SearchBar(
@@ -166,8 +178,9 @@ fun ProductGridCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartBottomSheet(
-    cartItems: List<Product>,
-    onRemoveItem: (Product) -> Unit, // Đã thêm
+    cartItems: List<CartItem>,
+    onIncrease: (CartItem) -> Unit,
+    onDecrease: (CartItem) -> Unit,
     onDismiss: () -> Unit,
     onCheckout: () -> Unit
 ) {
@@ -179,7 +192,7 @@ fun CartBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Giỏ hàng của bạn (${cartItems.size})",
+                text = "Giỏ hàng của bạn (${cartItems.sumOf { it.quantity }})",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -190,28 +203,57 @@ fun CartBottomSheet(
                 Text("Giỏ hàng trống", modifier = Modifier.align(Alignment.CenterHorizontally))
             } else {
                 cartItems.forEach { item ->
-                    ListItem(
-                        headlineContent = { Text(item.name) },
-                        supportingContent = { Text("${item.price}đ") },
-                        leadingContent = {
-                            AsyncImage(
-                                model = item.imageUrls.firstOrNull(),
-                                contentDescription = null,
-                                modifier = Modifier.size(40.dp).clip(RoundedCornerShape(4.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        },
-                        trailingContent = {
-                            IconButton(onClick = { onRemoveItem(item) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Xóa", tint = Color.Red)
+                    val product = item.products
+                    if (product != null) {
+                        ListItem(
+                            headlineContent = { Text(product.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            supportingContent = { Text("${product.price}đ") },
+                            leadingContent = {
+                                AsyncImage(
+                                    model = product.imageUrls.firstOrNull(),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            },
+                            trailingContent = {
+                                // Cụm nút Tăng/Giảm số lượng
+                                Surface(
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = Color(0xFFF3F4F6),
+                                    border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                    ) {
+                                        IconButton(onClick = { onDecrease(item) }, modifier = Modifier.size(30.dp)) {
+                                            Icon(
+                                                imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
+                                                contentDescription = null,
+                                                tint = if (item.quantity > 1) Color.Black else Color.Red,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = item.quantity.toString(),
+                                            modifier = Modifier.padding(horizontal = 8.dp),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp
+                                        )
+                                        IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(30.dp)) {
+                                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        }
+                                    }
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                val total = cartItems.sumOf { it.price }
+                val total = cartItems.sumOf { (it.products?.price ?: 0.0) * it.quantity }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween

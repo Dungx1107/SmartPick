@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.app.Activity
@@ -51,7 +52,6 @@ fun HomeScreen(
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Khởi tạo Launcher Lắng nghe giọng nói (Speech-to-Text)
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -59,26 +59,19 @@ fun HomeScreen(
             val data = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             val recognizedText = data?.get(0) ?: ""
             searchQuery = recognizedText
-            viewModel.searchProducts(recognizedText) // Lọc list tự động
+            viewModel.searchProducts(recognizedText)
         }
     }
 
-    // Hàm gọi Mic Android
     fun startSpeechToText() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
-            putExtra(RecognizerIntent.EXTRA_PROMPT,
-                context.getString(R.string.NoiTenSanPhamBanMuonTim))
+            putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.NoiTenSanPhamBanMuonTim))
         }
         try {
             speechRecognizerLauncher.launch(intent)
         } catch (e: Exception) {
-            Log.e(
-                "VOICE_SEARCH",
-                "Lỗi nhận diện giọng nói: ${e.message}",
-                e
-            )
             Toast.makeText(context, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show()
         }
     }
@@ -86,20 +79,21 @@ fun HomeScreen(
     Scaffold(
         modifier = Modifier.padding(paddingValues),
         floatingActionButton = {
-            if (cartItems.isNotEmpty()) {
-                FloatingActionButton(onClick = { showCart = true }) {
-                    BadgedBox(badge = { Badge { Text(cartItems.size.toString()) } }) {
+            // FIX: Bỏ điều kiện if, LUÔN LUÔN hiện nút Giỏ Hàng
+            FloatingActionButton(onClick = { showCart = true }) {
+                val totalQuantity = cartItems.sumOf { it.quantity }
+                if (totalQuantity > 0) {
+                    BadgedBox(badge = { Badge { Text(totalQuantity.toString()) } }) {
                         Icon(Icons.Default.ShoppingCart, stringResource(R.string.cart))
                     }
+                } else {
+                    Icon(Icons.Default.ShoppingCart, stringResource(R.string.cart))
                 }
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()) {
+        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
 
-            // Thanh Tìm kiếm (Chữ + Giọng nói)
             SearchBar(
                 query = searchQuery,
                 onQueryChange = {
@@ -109,10 +103,7 @@ fun HomeScreen(
                 onMicClick = { startSpeechToText() }
             )
 
-            // Danh sách sản phẩm
-            Box(modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     is HomeUiState.Error -> Text("Lỗi: ${state.message}", modifier = Modifier.align(Alignment.Center))
@@ -130,8 +121,12 @@ fun HomeScreen(
                                         product = product,
                                         onProductClick = { selectedProduct = product },
                                         onAddToCart = {
-                                            viewModel.addToCart(it)
-                                            Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show()
+                                            // FIX: Chỉ gọi Toast khi API trả về kết quả
+                                            viewModel.addToCart(
+                                                product = it,
+                                                onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show() },
+                                                onError = { errorMsg -> Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show() }
+                                            )
                                         }
                                     )
                                 }
@@ -164,8 +159,12 @@ fun HomeScreen(
                     }
                 },
                 onAddToCart = {
-                    viewModel.addToCart(selectedProduct!!)
-                    Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show()
+                    // FIX: Chỉ gọi Toast khi API trả về kết quả
+                    viewModel.addToCart(
+                        product = selectedProduct!!,
+                        onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show() },
+                        onError = { errorMsg -> Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show() }
+                    )
                 },
                 onBuyNow = {
                     selectedProduct = null
@@ -178,8 +177,9 @@ fun HomeScreen(
     if (showCart) {
         CartBottomSheet(
             cartItems = cartItems,
+            onIncrease = { viewModel.increaseQuantity(it) }, // Đã mở khóa nút Tăng
+            onDecrease = { viewModel.decreaseQuantity(it) }, // Đã mở khóa nút Giảm (Tự xóa khi số lượng = 1)
             onDismiss = { showCart = false },
-            onRemoveItem = { viewModel.removeFromCart(it) },
             onCheckout = { /* TODO: Xử lý thanh toán */ }
         )
     }
