@@ -87,6 +87,7 @@ fun CommentItemPreview() {
         CommentItem(
             state = CommentUIState(
                 id = "1",
+                authorId = "3",
                 authorName = "Nguyễn Văn A",
                 authorAvatar = null,
                 content = "Sản phẩm này dùng rất ổn, pin khá trâu và thiết kế đẹp.",

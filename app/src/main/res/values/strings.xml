@@ -100,4 +100,8 @@
     <string name="NoiTenSanPhamBanMuonTim">Nói tên sản phẩm bạn muốn tìm...</string>
     <string name="cart">Cart</string>
     <string name="KoTimThaySanPhamNao">Không tìm thấy sản phẩm nào.</string>
+    <string name="TatCa">Tất cả</string>
+    <string name="ChuaDoc">Chưa đọc</string>
+    <string name="DonHang">Đơn hàng</string>
+    <string name="CongDong">Cộng đồng</string>
 </resources>

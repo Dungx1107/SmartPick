@@ -17,8 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartpick.features.notification.model.AppNotification
-import com.example.smartpick.features.notification.model.NotificationType
+import com.example.smartpick.features.notification.data.AppNotification
+import com.example.smartpick.features.notification.data.NotificationType
 
 @Composable
 fun NotificationItem(
@@ -85,7 +85,7 @@ fun NotificationItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = notification.message,
+                text = notification.content,
                 fontSize = 14.sp,
                 color = if (notification.isUnread) Color(0xFF475569) else Color(0xFF64748B),
                 lineHeight = 20.sp,
@@ -112,4 +112,47 @@ fun NotificationItem(
             )
         }
     }
+}
+
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Unread Notification",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF
+)
+@Composable
+fun NotificationItemUnreadPreview() {
+
+    NotificationItem(
+        notification = AppNotification(
+            id = "1",
+            title = "Đơn hàng đang giao",
+            content = "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến.",
+            timeAgo = "10 phút trước",
+            type = NotificationType.ORDER,
+            isUnread = true
+        ),
+        onClick = {}
+    )
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Read Notification",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF
+)
+@Composable
+fun NotificationItemReadPreview() {
+
+    NotificationItem(
+        notification = AppNotification(
+            id = "2",
+            title = "Khuyến mãi cuối tuần!",
+            content = "Giảm ngay 20% cho tất cả thiết bị âm thanh trong hôm nay.",
+            timeAgo = "2 giờ trước",
+            type = NotificationType.PROMO,
+            isUnread = false
+        ),
+        onClick = {}
+    )
 }

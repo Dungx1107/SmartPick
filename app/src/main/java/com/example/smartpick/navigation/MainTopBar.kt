@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,15 +31,15 @@ import com.example.smartpick.core.ui.theme.SmartPickColor
 @Composable
 fun MainTopBar(
     onMenuClick: () -> Unit = {},
-    onCartClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     tagText: String? = null,
-    showCartBadge: Boolean = false
+    showNotificationBadge: Boolean = false
 ) {
     MainTopBarContent(
         onMenuClick = onMenuClick,
-        onCartClick = onCartClick,
+        onNotificationClick = onNotificationClick,
         tagText = tagText,
-        showCartBadge = showCartBadge
+        showNotificationBadge = showNotificationBadge
     )
 }
 
@@ -46,9 +47,9 @@ fun MainTopBar(
 @Composable
 fun MainTopBarContent(
     onMenuClick: () -> Unit,
-    onCartClick: () -> Unit,
+    onNotificationClick: () -> Unit,
     tagText: String? = null,
-    showCartBadge: Boolean
+    showNotificationBadge: Boolean
 ) {
     TopAppBar(
         title = {
@@ -85,18 +86,18 @@ fun MainTopBarContent(
             }
 
             Box {
-                IconButton(onClick = onCartClick) {
+                IconButton(onClick = onNotificationClick) {
                     Icon(
-                        Icons.Default.ShoppingBag,
-                        contentDescription = "Cart",
+                        Icons.Default.Notifications,
+                        contentDescription = "Notifications",
                         tint = Color(0xFF1E3A8A)
                     )
                 }
 
-                if (showCartBadge) {
+                if (showNotificationBadge) {
                     Box(
                         modifier = Modifier
-                            .padding(end = 8.dp, top = 8.dp)
+                            .padding(end = 12.dp, top = 12.dp) // Căn chỉnh lại vị trí dấu chấm đỏ cho khớp với chuông
                             .size(8.dp)
                             .background(Color.Red, CircleShape)
                     )
@@ -114,9 +115,9 @@ fun MainTopBarContent(
 fun MainTopBarPreview() {
     MainTopBarContent(
         onMenuClick = {},
-        onCartClick = {},
+        onNotificationClick = {},
         tagText = "AI Assist",
-        showCartBadge = false
+        showNotificationBadge = false
     )
 }
 
@@ -125,8 +126,8 @@ fun MainTopBarPreview() {
 fun MainTopBarWithBadgePreview() {
     MainTopBarContent(
         onMenuClick = {},
-        onCartClick = {},
-        showCartBadge = true
+        onNotificationClick = {},
+        showNotificationBadge = true
     )
 }
 
@@ -135,7 +136,7 @@ fun MainTopBarWithBadgePreview() {
 fun MainTopBarCustomTitlePreview() {
     MainTopBarContent(
         onMenuClick = {},
-        onCartClick = {},
-        showCartBadge = false
+        onNotificationClick = {},
+        showNotificationBadge = false
     )
 }

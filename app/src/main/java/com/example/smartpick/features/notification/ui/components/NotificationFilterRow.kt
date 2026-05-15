@@ -12,16 +12,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartpick.R
 
 @Composable
 fun NotificationFilterRow(
     selectedFilter: String,
     onFilterSelected: (String) -> Unit
 ) {
-    val filters = listOf("Tất cả", "Chưa đọc", "Đơn hàng", "Cộng đồng")
+    val filters = listOf(
+        stringResource(R.string.TatCa),
+        stringResource(R.string.ChuaDoc),
+        stringResource(R.string.DonHang),
+        stringResource(R.string.CongDong)
+    )
 
     LazyRow(
         modifier = Modifier
@@ -49,4 +56,24 @@ fun NotificationFilterRow(
             }
         }
     }
+}
+
+@androidx.compose.ui.tooling.preview.Preview(
+    name = "Notification Filter Row",
+    showBackground = true,
+    backgroundColor = 0xFFF8FAFC
+)
+@Composable
+fun NotificationFilterRowPreview() {
+
+    var selectedFilter by remember {
+        mutableStateOf("Tất cả")
+    }
+
+    NotificationFilterRow(
+        selectedFilter = selectedFilter,
+        onFilterSelected = {
+            selectedFilter = it
+        }
+    )
 }

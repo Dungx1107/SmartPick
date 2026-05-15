@@ -157,6 +157,7 @@ private fun CommentsContentPreview() {
     val mockComments = listOf(
         CommentUIState(
             id = "1",
+            authorId = "1",
             authorName = "Nguyễn Minh Quang",
             authorAvatar = "https://i.pravatar.cc/300?img=11",
             content = "Bàn phím này gõ êm không bác? Đang tính xúc một em về code đêm.",
@@ -165,6 +166,7 @@ private fun CommentsContentPreview() {
         ),
         CommentUIState(
             id = "2",
+            authorId = "2",
             authorName = "Lê Hải An",
             authorAvatar = "https://i.pravatar.cc/300?img=12",
             content = "Gõ cực êm nha bác, build nhôm đầm tay lắm 🔥",
@@ -195,6 +197,7 @@ private fun CommentsContentPreview2() {
     val replies = listOf(
         CommentUIState(
             id = "reply_1",
+            authorId = "1",
             authorName = "Trần Quốc Bảo",
             authorAvatar = "https://i.pravatar.cc/300?img=15",
             content = "Mình đang dùng nè bác, stab khá ngon luôn 😆",
@@ -204,6 +207,7 @@ private fun CommentsContentPreview2() {
         ),
         CommentUIState(
             id = "reply_2",
+            authorId = "2",
             authorName = "Phạm Nhật Nam",
             authorAvatar = "https://i.pravatar.cc/300?img=16",
             content = "Có foam sẵn nên gõ rất thock nhé 🔥",
@@ -220,6 +224,7 @@ private fun CommentsContentPreview2() {
         CommentUIState(
             id = "1",
             authorName = "Nguyễn Minh Quang",
+            authorId = "3",
             authorAvatar = "https://i.pravatar.cc/300?img=11",
             content = "Bàn phím này gõ êm không bác? Đang tính xúc về code đêm.",
             timeAgo = "1 giờ trước",
@@ -230,6 +235,7 @@ private fun CommentsContentPreview2() {
         // Comment thường
         CommentUIState(
             id = "2",
+            authorId = "4",
             authorName = "Lê Hải An",
             authorAvatar = "https://i.pravatar.cc/300?img=12",
             content = "Mình thấy build khá ngon trong tầm giá.",

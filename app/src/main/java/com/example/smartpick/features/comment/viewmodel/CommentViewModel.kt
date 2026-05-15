@@ -45,6 +45,7 @@ class CommentViewModel @Inject constructor(
     fun clearError() {
         _error.value = null
     }
+
     fun loadComments(postId: String, postOwnerId: String?) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -66,6 +67,8 @@ class CommentViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _error.value = "Lỗi tải bình luận"
+                e.printStackTrace()
+                Log.e("CommentDebug", "LỖI KHI TẢI: ${e.message}", e)
             } finally {
                 _isLoading.value = false
             }
@@ -80,6 +83,7 @@ class CommentViewModel @Inject constructor(
     ): CommentUIState {
         return CommentUIState(
             id = comment.id,
+            authorId = comment.userId,
             authorName = comment.user.fullName ?: "Người dùng",
             authorAvatar = comment.user.avatarUrl,
             content = comment.content,
@@ -126,10 +130,21 @@ class CommentViewModel @Inject constructor(
                 // Nếu đang reply A, parentId là ID của A
                 val actualParentId = targetComment?.parentId ?: targetComment?.id
 
+                // XÁC ĐỊNH NGƯỜI NHẬN THÔNG BÁO
+                val finalReceiverId = if (targetComment != null) {
+                    // Nếu đang reply, người nhận là chủ của bình luận đó
+                    // Lưu ý: Bạn cần đảm bảo CommentUIState có chứa authorId (userId của người viết comment đó)
+                    targetComment.authorId
+                } else {
+                    // Nếu là comment mới, người nhận là chủ bài viết
+                    postOwnerId ?: ""
+                }
+
                 repository.insertComment(
                     postId = postId,
                     userId = userId,
                     content = content.trim(),
+                    receiverId = finalReceiverId, // Truyền ID đã xác định
                     parentId = actualParentId
                 )
 

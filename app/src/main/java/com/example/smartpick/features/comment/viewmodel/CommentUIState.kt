@@ -9,6 +9,7 @@ import androidx.compose.runtime.Immutable
 @Immutable
 data class CommentUIState(
     val id: String,
+    val authorId: String,
     val authorName: String,
     val authorAvatar: String?,
     val content: String,
