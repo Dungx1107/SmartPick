@@ -121,4 +121,8 @@
     <string name="GioHang">Giỏ hàng</string>
     <string name="TatCaMuc">Tất cả mục</string>
     <string name="add">Add</string>
+    <string name="ThietBiKhongHoTroNhanDienGion">Thiết bị không hỗ trợ nhận diện giọng nói</string>
+    <string name="DaThemVaoGioHang">Đã thêm vào giỏ</string>
+    <string name="SanPhamNayChuaCoBaiDang">Sản phẩm này chưa có bài đăng!</string>
+    <string name="KoCoSanPham">Không có sản phẩm</string>
 </resources>

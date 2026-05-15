@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.app.Activity
@@ -20,10 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.R
+import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.features.home.ui.components.CartBottomSheet
 import com.example.smartpick.features.home.ui.components.ProductDetailContent
@@ -34,7 +35,6 @@ import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -43,89 +43,149 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
+    val scope = rememberCoroutineScope()
 
+    HomeContent(
+        uiState = uiState,
+        cartItems = cartItems,
+        paddingValues = paddingValues,
+        onSearch = { viewModel.searchProducts(it) },
+        onAddToCart = { product, onSuccess, onError ->
+            viewModel.addToCart(product, onSuccess, onError)
+        },
+        onViewFeed = { productId, onPostFound ->
+            scope.launch {
+                val postId = viewModel.getPostId(productId)
+                onPostFound(postId)
+            }
+        },
+        onIncrease = { viewModel.increaseQuantity(it) },
+        onDecrease = { viewModel.decreaseQuantity(it) },
+        onNavigateToPost = { postId ->
+            navController.navigate(Routes.PostDetail.createRoute(postId))
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeContent(
+    uiState: HomeUiState,
+    cartItems: List<CartItem>,
+    paddingValues: PaddingValues,
+    onSearch: (String) -> Unit,
+    onAddToCart: (Product, () -> Unit, (String) -> Unit) -> Unit,
+    onViewFeed: (String, (String?) -> Unit) -> Unit,
+    onIncrease: (CartItem) -> Unit,
+    onDecrease: (CartItem) -> Unit,
+    onNavigateToPost: (String) -> Unit
+) {
     var showCart by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var searchQuery by remember { mutableStateOf("") }
 
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val speechRecognizerLauncher = rememberLauncherForActivityResult(
+    // Speech to Text logic
+    val speechLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val data = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            val recognizedText = data?.get(0) ?: ""
+            val recognizedText =
+                result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0) ?: ""
             searchQuery = recognizedText
-            viewModel.searchProducts(recognizedText)
+            onSearch(recognizedText)
         }
     }
 
-    fun startSpeechToText() {
+    fun startSpeech() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, context.getString(R.string.NoiTenSanPhamBanMuonTim))
         }
         try {
-            speechRecognizerLauncher.launch(intent)
-        } catch (e: Exception) {
-            Toast.makeText(context, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show()
+            speechLauncher.launch(intent)
+        } catch (e: Exception) { /* Handle error */
+            e.printStackTrace()
         }
     }
 
     Scaffold(
         modifier = Modifier.padding(paddingValues),
         floatingActionButton = {
-            // FIX: Bỏ điều kiện if, LUÔN LUÔN hiện nút Giỏ Hàng
             FloatingActionButton(onClick = { showCart = true }) {
-                val totalQuantity = cartItems.sumOf { it.quantity }
-                if (totalQuantity > 0) {
-                    BadgedBox(badge = { Badge { Text(totalQuantity.toString()) } }) {
-                        Icon(Icons.Default.ShoppingCart, stringResource(R.string.cart))
+                val total = cartItems.sumOf { it.quantity }
+                if (total > 0) {
+                    BadgedBox(badge = { Badge { Text(total.toString()) } }) {
+                        Icon(Icons.Default.ShoppingCart, stringResource(R.string.GioHang))
                     }
                 } else {
-                    Icon(Icons.Default.ShoppingCart, stringResource(R.string.cart))
+                    Icon(Icons.Default.ShoppingCart, stringResource(R.string.GioHang))
                 }
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-
+        Column(modifier = Modifier
+            .padding(innerPadding)
+            .fillMaxSize()) {
             SearchBar(
                 query = searchQuery,
                 onQueryChange = {
                     searchQuery = it
-                    viewModel.searchProducts(it)
+                    onSearch(it)
                 },
-                onMicClick = { startSpeechToText() }
+                onMicClick = { startSpeech() }
             )
 
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                when (val state = uiState) {
-                    is HomeUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    is HomeUiState.Error -> Text("Lỗi: ${state.message}", modifier = Modifier.align(Alignment.Center))
+            Box(modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()) {
+                when (uiState) {
+                    is HomeUiState.Loading -> CircularProgressIndicator(
+                        modifier = Modifier.align(
+                            Alignment.Center
+                        )
+                    )
+
+                    is HomeUiState.Error -> Text(
+                        "Lỗi: ${uiState.message}",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+
                     is HomeUiState.Success -> {
-                        if (state.products.isEmpty()) {
-                            Text(stringResource(R.string.KoTimThaySanPhamNao), modifier = Modifier.align(Alignment.Center))
+                        if (uiState.products.isEmpty()) {
+                            Text(stringResource(R.string.KoCoSanPham), modifier = Modifier.align(Alignment.Center))
                         } else {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
                                 contentPadding = PaddingValues(8.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
-                                items(state.products) { product ->
+                                items(uiState.products) { product ->
                                     ProductGridCard(
                                         product = product,
                                         onProductClick = { selectedProduct = product },
                                         onAddToCart = {
-                                            // FIX: Chỉ gọi Toast khi API trả về kết quả
-                                            viewModel.addToCart(
-                                                product = it,
-                                                onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show() },
-                                                onError = { errorMsg -> Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show() }
+                                            onAddToCart(
+                                                it,
+                                                {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Đã thêm!",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
+                                                },
+                                                { msg ->
+                                                    Toast.makeText(
+                                                        context,
+                                                        msg,
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                }
                                             )
                                         }
                                     )
@@ -138,33 +198,27 @@ fun HomeScreen(
         }
     }
 
+    // Modal & Sheet logic
     if (selectedProduct != null) {
         ModalBottomSheet(
             onDismissRequest = { selectedProduct = null },
             sheetState = sheetState,
-            modifier = Modifier.fillMaxHeight(0.9f),
-            containerColor = MaterialTheme.colorScheme.surface
+            modifier = Modifier.fillMaxHeight(0.9f)
         ) {
             ProductDetailContent(
                 product = selectedProduct!!,
                 onViewFeed = {
-                    scope.launch {
-                        val postId = viewModel.getPostId(selectedProduct!!.id ?: "")
+                    onViewFeed(selectedProduct!!.id ?: "") { postId ->
                         if (postId != null) {
                             selectedProduct = null
-                            navController.navigate(Routes.PostDetail.createRoute(postId))
+                            onNavigateToPost(postId)
                         } else {
-                            Toast.makeText(context, "Sản phẩm này chưa có bài đăng!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Chưa có bài đăng", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
                 onAddToCart = {
-                    // FIX: Chỉ gọi Toast khi API trả về kết quả
-                    viewModel.addToCart(
-                        product = selectedProduct!!,
-                        onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show() },
-                        onError = { errorMsg -> Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show() }
-                    )
+                    onAddToCart(selectedProduct!!, {}, {})
                 },
                 onBuyNow = {
                     selectedProduct = null
@@ -177,10 +231,37 @@ fun HomeScreen(
     if (showCart) {
         CartBottomSheet(
             cartItems = cartItems,
-            onIncrease = { viewModel.increaseQuantity(it) }, // Đã mở khóa nút Tăng
-            onDecrease = { viewModel.decreaseQuantity(it) }, // Đã mở khóa nút Giảm (Tự xóa khi số lượng = 1)
+            onIncrease = onIncrease,
+            onDecrease = onDecrease,
             onDismiss = { showCart = false },
-            onCheckout = { /* TODO: Xử lý thanh toán */ }
+            onCheckout = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeContentPreview() {
+    val mockProducts = listOf(
+        Product(id = "1", name = "Sản phẩm mẫu 1", price = 150000.0, ownerId = "u1"),
+        Product(id = "2", name = "Sản phẩm mẫu 2", price = 250000.0, ownerId = "u1")
+    )
+
+    val mockCart = listOf(
+        CartItem(id = "c1", userId = "u1", productId = "1", quantity = 2)
+    )
+
+    MaterialTheme {
+        HomeContent(
+            uiState = HomeUiState.Success(mockProducts),
+            cartItems = mockCart,
+            paddingValues = PaddingValues(0.dp),
+            onSearch = {},
+            onAddToCart = { _, _, _ -> },
+            onViewFeed = { _, _ -> },
+            onIncrease = {},
+            onDecrease = {},
+            onNavigateToPost = {}
         )
     }
 }

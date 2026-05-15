@@ -1,5 +1,6 @@
 package com.example.smartpick.features.home.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,9 +18,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,6 +36,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -47,23 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.smartpick.R
+import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.TextSecondary
 import com.example.smartpick.core.ui.theme.White
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.Article
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.filled.Delete
-import com.example.smartpick.core.model.CartItem
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.Surface
+import androidx.compose.ui.tooling.preview.Preview
+
 
 @Composable
 fun SearchBar(
@@ -105,7 +99,11 @@ fun SearchBar(
             onClick = onMicClick,
             modifier = Modifier.size(24.dp)
         ) {
-            Icon(Icons.Default.Mic, contentDescription = stringResource(R.string.TimKiemBangGiongNoi), tint = TextSecondary)
+            Icon(
+                Icons.Default.Mic,
+                contentDescription = stringResource(R.string.TimKiemBangGiongNoi),
+                tint = TextSecondary
+            )
         }
     }
 }
@@ -201,13 +199,22 @@ fun CartBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (cartItems.isEmpty()) {
-                Text(stringResource(R.string.GioHangTrong), modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text(
+                    stringResource(R.string.GioHangTrong),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             } else {
                 cartItems.forEach { item ->
                     val product = item.product
                     if (product != null) {
                         ListItem(
-                            headlineContent = { Text(product.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            headlineContent = {
+                                Text(
+                                    product.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
                             supportingContent = { Text("${product.price}đ") },
                             leadingContent = {
                                 AsyncImage(
@@ -228,9 +235,15 @@ fun CartBottomSheet(
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        modifier = Modifier.padding(
+                                            horizontal = 4.dp,
+                                            vertical = 2.dp
+                                        )
                                     ) {
-                                        IconButton(onClick = { onDecrease(item) }, modifier = Modifier.size(30.dp)) {
+                                        IconButton(
+                                            onClick = { onDecrease(item) },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
                                             Icon(
                                                 imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
                                                 contentDescription = null,
@@ -244,8 +257,15 @@ fun CartBottomSheet(
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp
                                         )
-                                        IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(30.dp)) {
-                                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        IconButton(
+                                            onClick = { onIncrease(item) },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp)
+                                            )
                                         }
                                     }
                                 }
@@ -304,7 +324,12 @@ fun ProductDetailContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(text = product.name, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-        Text(text = "${product.price}đ", fontSize = 20.sp, color = Color.Red, fontWeight = FontWeight.Bold)
+        Text(
+            text = "${product.price}đ",
+            fontSize = 20.sp,
+            color = Color.Red,
+            fontWeight = FontWeight.Bold
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -318,7 +343,10 @@ fun ProductDetailContent(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Button(
                 onClick = onAddToCart,
                 modifier = Modifier
@@ -343,4 +371,99 @@ fun ProductDetailContent(
 
         Spacer(modifier = Modifier.height(32.dp)) // Padding cho thanh điều hướng hệ thống
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewSearchBar() {
+    SearchBar(
+        query = "",
+        onQueryChange = {},
+        onMicClick = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewProductGridCard() {
+
+    val sampleProduct = Product(
+        id = "1",
+        ownerId = "user_1",
+        name = "iPhone 15 Pro Max",
+        brand = "Apple",
+        category = "Smartphone",
+        price = 32990000.0,
+        imageUrls = listOf("https://picsum.photos/300"),
+        videoUrl = null,
+        status = "available",
+        createdAt = null
+    )
+
+    ProductGridCard(
+        product = sampleProduct,
+        onProductClick = {},
+        onAddToCart = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewProductDetailContent() {
+
+    val sampleProduct = Product(
+        id = "1",
+        ownerId = "user_1",
+        name = "MacBook Pro M3",
+        brand = "Apple",
+        category = "Laptop",
+        price = 45990000.0,
+        imageUrls = listOf("https://picsum.photos/500"),
+        videoUrl = null,
+        status = "available",
+        createdAt = null
+    )
+
+    ProductDetailContent(
+        product = sampleProduct,
+        onViewFeed = {},
+        onAddToCart = {},
+        onBuyNow = {}
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewCartBottomSheet() {
+
+    val sampleProduct = Product(
+        id = "1",
+        ownerId = "user_1",
+        name = "Samsung Galaxy S24",
+        brand = "Samsung",
+        category = "Smartphone",
+        price = 21990000.0,
+        imageUrls = listOf("https://picsum.photos/400"),
+        videoUrl = null,
+        status = "available",
+        createdAt = null
+    )
+
+    val sampleCart = listOf(
+        CartItem(
+            id = "1",
+            userId = "user_1",
+            productId = "1",
+            quantity = 2,
+            product = sampleProduct
+        )
+    )
+
+    CartBottomSheet(
+        cartItems = sampleCart,
+        onIncrease = {},
+        onDecrease = {},
+        onDismiss = {},
+        onCheckout = {}
+    )
 }
