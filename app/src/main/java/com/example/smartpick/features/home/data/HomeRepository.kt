@@ -6,10 +6,14 @@ import com.example.smartpick.core.data.dto.CartItemRequest
 import com.example.smartpick.core.data.dto.ProductDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.CartItem
+import com.example.smartpick.core.model.OrderItemRequest
+import com.example.smartpick.core.model.OrderRequest
+import com.example.smartpick.core.model.OrderResponse
 import com.example.smartpick.core.model.Product
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -30,7 +34,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class HomeRepository @Inject constructor(
-    private val supabase: SupabaseClient
+    supabase: SupabaseClient
 ) {
 
     /* Dùng để thao tác database */
@@ -140,6 +144,7 @@ class HomeRepository @Inject constructor(
                 emptyList()
             }
         }
+
 
     /**
      * Thêm sản phẩm vào giỏ hàng.
@@ -261,6 +266,42 @@ class HomeRepository @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "updateCartItemQuantity error", e)
             Result.failure(e)
+        }
+    }
+
+    suspend fun checkout(userId: String, cartItems: List<CartItem>): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            if (cartItems.isEmpty()) return@withContext Result.failure(Exception("Giỏ hàng trống"))
+            val totalAmount = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
+            val orderRequest = OrderRequest(userId = userId, totalAmount = totalAmount)
+            val orderResponse = postgrest["orders"].insert(orderRequest) { select() }.decodeSingle<OrderResponse>()
+            val orderItems = cartItems.map { item ->
+                OrderItemRequest(
+                    orderId = orderResponse.id,
+                    productId = item.productId,
+                    quantity = item.quantity,
+                    priceAtPurchase = item.product?.price ?: 0.0
+                )
+            }
+            postgrest["order_items"].insert(orderItems)
+            postgrest["cart_items"].delete { filter { eq("user_id", userId) } }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Lấy danh sách lịch sử đơn hàng
+     */
+    suspend fun getOrders(userId: String): List<OrderResponse> = withContext(Dispatchers.IO) {
+        try {
+            postgrest["orders"].select {
+                filter { eq("user_id", userId) }
+                order("created_at", Order.DESCENDING)
+            }.decodeList<OrderResponse>()
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }

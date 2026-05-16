@@ -179,7 +179,6 @@ fun AppNavigation(
                     )
                 }
 
-                // Các màn hình đơn giản khác cũng làm tương tự
                 composable(route = Routes.ChatBot.route) { ChatbotScreen() }
                 composable(route = Routes.Saved.route) {
                     SavedCollectionScreen(navController = navController)

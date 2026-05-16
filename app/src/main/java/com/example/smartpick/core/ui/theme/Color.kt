@@ -39,3 +39,4 @@ val ErrorRedBg = Color(0xFFFFEBEE)
 
 // --- Gradients ---
 val PrimaryGradient = listOf(SmartPickColor, AccentBlue)
+
