@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="21" />
+    <bytecodeTargetLevel target="21">
+      <module name="SmartPick.core.common" target="21" />
+      <module name="SmartPick.core.navigation" target="21" />
+      <module name="SmartPick.core.network" target="21" />
+      <module name="SmartPick.core.ui" target="21" />
+      <module name="SmartPick.data.auth" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>
