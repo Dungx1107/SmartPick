@@ -3,10 +3,14 @@ package com.example.smartpick.features.comment.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +31,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
@@ -201,25 +206,26 @@ fun LikeSection(
     count: Int,
     onLikeClick: (String) -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(start = 12.dp)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(start = 12.dp)
+            .clickable { onLikeClick(id) } // Bấm vào cả cụm Row (trái tim + số) để tương tác dễ hơn
     ) {
         Icon(
             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
             contentDescription = null,
-            tint = if (isLiked) Color.Red else Color(0xFF94A3B8),
-            modifier = Modifier
-                .size(18.dp)
-                .clickable { onLikeClick(id) }
+            tint = if (isLiked) Color.Red else Color(0xFF94A3B8), // Đỏ khi đã thích, xám khi chưa thích
+            modifier = Modifier.size(18.dp)
         )
-        if (count > 0) {
-            Text(
-                text = count.toString(),
-                fontSize = 11.sp,
-                color = Color(0xFF94A3B8),
-                modifier = Modifier.padding(top = 2.dp)
-            )
-        }
+
+        Spacer(modifier = Modifier.width(4.dp)) // Khoảng cách giữa trái tim và số lượng
+
+        Text(
+            text = count.toString(),
+            fontSize = 13.sp,
+            color = if (isLiked) Color.Red else Color(0xFF94A3B8), // Chuyển màu số theo trạng thái like
+            fontWeight = if (isLiked) FontWeight.Bold else FontWeight.Medium
+        )
     }
 }

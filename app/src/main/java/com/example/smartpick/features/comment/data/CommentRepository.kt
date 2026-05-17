@@ -1,9 +1,9 @@
 package com.example.smartpick.features.comment.data
 
-import com.example.smartpick.core.model.Notification
 import android.util.Log
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Comment
+import com.example.smartpick.core.model.Notification
 import com.example.smartpick.core.utils.Constants.TABLE_COMMENTS
 import com.example.smartpick.core.utils.Constants.TABLE_COMMENT_LIKES
 import com.example.smartpick.features.comment.data.dto.CommentResponse
@@ -11,8 +11,7 @@ import com.example.smartpick.features.notification.data.NotificationRepository
 import com.example.smartpick.features.notification.data.NotificationType
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
@@ -28,19 +27,21 @@ class CommentRepository @Inject constructor(
     private val notificationRepository: NotificationRepository
 ) {
     /**
-     * Lấy toàn bộ comment của bài viết,
-     * kèm thông tin user và sắp xếp theo thời gian.
+     * Lấy toàn bộ comment của bài viết, tính toán likes_count và is_liked thông qua RPC.
      */
-    suspend fun getComments(postId: String): List<Comment> = withContext(Dispatchers.IO) {
-        /* Query danh sách comment từ Supabase */
-        val response = supabase.postgrest[TABLE_COMMENTS]
-            .select(columns = Columns.raw("*, users(*)")) {
-                filter { eq("post_id", postId) }                /* Lọc comment theo postId */
-                order("created_at", Order.ASCENDING)                /* Sắp xếp comment cũ -> mới */
-            }.decodeList<CommentResponse>()
-        return@withContext response.map { it.toDomain() }        /* Chuyển DTO sang Domain Model */
+    suspend fun getComments(postId: String, currentUserId: String): List<Comment> =
+        withContext(Dispatchers.IO) {
+            /* Thay thế select thông thường bằng lệnh gọi hàm RPC get_comments_with_likes */
+            val response = supabase.postgrest.rpc(
+                "get_comments_with_likes",
+                mapOf(
+                    "current_post_id" to postId,
+                    "current_user_id" to currentUserId
+                )
+            ).decodeList<CommentResponse>()
 
-    }
+            return@withContext response.map { it.toDomain() }
+        }
 
     /**
      * Thêm comment mới và gửi notification nếu cần.
@@ -89,33 +90,65 @@ class CommentRepository @Inject constructor(
             notificationRepository.sendNotification(notification)
         }
     }
+// File: CommentRepository.kt
 
-    /**
-     * Xử lý like hoặc unlike comment.
-     */
     suspend fun toggleLike(
         commentId: String,
         userId: String,
-        isLiked: Boolean
+        isLiked: Boolean,
+        commentOwnerId: String,
+        postId: String
     ) = withContext(Dispatchers.IO) {
+        android.util.Log.d("NotifDebug", "==================================================")
+        android.util.Log.d("NotifDebug", "[SEND STEP 1] toggleLike gọi tại Repository")
+        android.util.Log.d("NotifDebug", "   -> Người thực hiện (userId): $userId")
+        android.util.Log.d("NotifDebug", "   -> Chủ bình luận (commentOwnerId): $commentOwnerId")
+        android.util.Log.d("NotifDebug", "   -> Trạng thái click (isLiked): $isLiked")
 
-        /* Nếu đã like thì unlike */
         if (isLiked) {
             supabase.postgrest[TABLE_COMMENT_LIKES].delete {
-                /* Xóa like theo comment và user */
                 filter {
                     eq("comment_id", commentId)
                     eq("user_id", userId)
                 }
             }
         } else {
-            /* Nếu chưa like thì thêm mới */
-            supabase.postgrest[TABLE_COMMENT_LIKES].insert(
-                mapOf(
-                    "comment_id" to commentId,
-                    "user_id" to userId
+            try {
+                supabase.postgrest[TABLE_COMMENT_LIKES].insert(
+                    mapOf(
+                        "comment_id" to commentId,
+                        "user_id" to userId
+                    )
                 )
-            )
+                android.util.Log.d("NotifDebug", "[SEND STEP 2] Ghi nhận lượt thích vào bảng comment_likes thành công.")
+
+                /* KIỂM TRA ĐIỀU KIỆN GỬI THÔNG BÁO */
+                if (userId != commentOwnerId) {
+                    android.util.Log.d("NotifDebug", "[SEND STEP 3] Thỏa mãn điều kiện gửi (Người thích khác chủ bình luận). Tiến hành build object.")
+                    val notification = Notification(
+                        receiverId = commentOwnerId,
+                        senderId = userId,
+                        postId = postId,
+                        type = NotificationType.COMMUNITY.databaseValue,
+                        title = "Lượt thích mới",
+                        content = "Một người dùng đã thích bình luận của bạn.",
+                        targetId = postId
+                    )
+
+                    val result = notificationRepository.sendNotification(notification)
+                    android.util.Log.d("NotifDebug", "[SEND STEP 5] Đã thực hiện xong lệnh sendNotification. Kết quả Result: ${result.isSuccess}")
+                } else {
+                    android.util.Log.d("NotifDebug", "[SEND SKIPPED] Tự thích bình luận của chính mình ($userId == $commentOwnerId). Bỏ qua luồng gửi thông báo.")
+                }
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: ""
+                if (errorMsg.contains("duplicate key") || errorMsg.contains("already exists")) {
+                    android.util.Log.d("NotifDebug", "[IDEMPOTENT] Trùng khóa thích. Bỏ qua.")
+                } else {
+                    android.util.Log.e("NotifDebug", "[SEND ERROR] Lỗi phát sinh tại toggleLike: ${e.message}", e)
+                    throw e
+                }
+            }
         }
     }
 }

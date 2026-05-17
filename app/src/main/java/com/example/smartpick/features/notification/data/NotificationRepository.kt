@@ -30,7 +30,9 @@ class NotificationRepository @Inject constructor(
         return channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "notifications"
             filter = "receiver_id=eq.$userId"
-        }.map {
+        }.map { action ->
+            println("DEBUG_NOTIFICATION: [Real-time Event] Phát hiện thay đổi hành động: ${action.toString()}")
+
             // 1. Decode ra danh sách DTO thay vì Domain Model
             val listDto = supabase.postgrest.from("notifications")
                 .select {
@@ -39,9 +41,23 @@ class NotificationRepository @Inject constructor(
                 }
                 .decodeList<NotificationDto>()
 
+            println("DEBUG_NOTIFICATION: [Real-time Fetch] Danh sách DTO thô từ DB (${listDto.size} mục):")
+            listDto.forEachIndexed { index, dto ->
+                println("   -> DTO [$index]: ID=${dto.id}, Type=${dto.type}, Title='${dto.title}', CreatedAt=${dto.createdAt}")
+            }
+
             // 2. Map từng phần tử sang Domain Model dùng cho UI
-            listDto.map { it.toDomain() }
+            val domainList = listDto.map { it.toDomain() }
+
+            println("DEBUG_NOTIFICATION: [Real-time Mapped] Danh sách Domain sau khi Map:")
+            domainList.forEachIndexed { index, domain ->
+                println("   -> Domain [$index]: ID=${domain.id}, Type=${domain.type}, Title='${domain.title}'")
+            }
+
+            domainList
         }.onStart {
+            println("DEBUG_NOTIFICATION: [Initial Fetch] Bắt đầu lấy dữ liệu lần đầu cho userId: $userId")
+
             val initialDto = supabase.postgrest.from("notifications")
                 .select {
                     filter { eq("receiver_id", userId) }
@@ -49,19 +65,33 @@ class NotificationRepository @Inject constructor(
                 }
                 .decodeList<NotificationDto>()
 
+            println("DEBUG_NOTIFICATION: [Initial Fetch] Danh sách DTO ban đầu thu được (${initialDto.size} mục):")
+            initialDto.forEachIndexed { index, dto ->
+                println("   -> DTO ban đầu [$index]: ID=${dto.id}, Type=${dto.type}, Title='${dto.title}', CreatedAt=${dto.createdAt}")
+            }
+
             emit(initialDto.map { it.toDomain() })
             channel.subscribe()
+            println("DEBUG_NOTIFICATION: [Real-time Subscribed] Đã kết nối channel lắng nghe real-time.")
         }
     }
+
     // Gửi thông báo
     suspend fun sendNotification(notification: Notification): Result<Unit> =
         withContext(Dispatchers.IO) {
             try {
-                supabase.postgrest.from("notifications").insert(notification.toDto())
-                println("DEBUG_NOTIFICATION: Gửi thông báo thành công cho ${notification.receiverId}")
+                val dto = notification.toDto()
+
+                println("DEBUG_NOTIFICATION: [Prepare Insert] Chuẩn bị gửi thông báo:")
+                println("   -> Dữ liệu gốc (Domain): ID='${notification.id}', Type='${notification.type}', Title='${notification.title}'")
+                println("   -> Dữ liệu chuyển đổi (DTO): ID='${dto.id}', Type='${dto.type}', ReceiverId='${dto.receiverId}'")
+
+                supabase.postgrest.from("notifications").insert(dto)
+
+                println("DEBUG_NOTIFICATION: [Insert Success] Gửi thông báo thành công cho receiver_id: ${notification.receiverId}")
                 Result.success(Unit)
             } catch (e: Exception) {
-                println("ERROR_NOTIFICATION: Lỗi khi gửi thông báo: ${e.message}")
+                println("ERROR_NOTIFICATION: [Insert Failed] Lỗi khi gửi thông báo: ${e.message}")
                 e.printStackTrace()
                 Result.failure(e)
             }
@@ -70,6 +100,8 @@ class NotificationRepository @Inject constructor(
     // Đánh dấu đã đọc
     suspend fun markAsRead(notificationId: String) = withContext(Dispatchers.IO) {
         try {
+            println("DEBUG_NOTIFICATION: [Mark As Read] Thực hiện cập nhật is_read = true cho ID: $notificationId")
+
             supabase.postgrest.from("notifications").update(
                 { set("is_read", true) }
             ) {
@@ -78,7 +110,7 @@ class NotificationRepository @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            println("ERROR_NOTIFICATION: Lỗi khi đánh dấu đã đọc: ${e.message}")
+            println("ERROR_NOTIFICATION: [Mark As Read Failed] Lỗi khi đánh dấu đã đọc: ${e.message}")
         }
     }
 }

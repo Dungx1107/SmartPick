@@ -89,7 +89,7 @@ fun NotificationDto.toDomain(): Notification = Notification(
 )
 
 fun Notification.toDto(): NotificationDto = NotificationDto(
-    id = id,
+    id = id.ifEmpty { java.util.UUID.randomUUID().toString() },
     receiverId = receiverId,
     senderId = senderId,
     postId = postId,

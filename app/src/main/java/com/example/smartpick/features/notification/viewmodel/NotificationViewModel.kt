@@ -27,31 +27,23 @@ class NotificationViewModel @Inject constructor(
     private val _uiNotifications = MutableStateFlow<List<AppNotification>>(emptyList())
     val uiNotifications = _uiNotifications.asStateFlow()
 
-    // Khai báo Job để quản lý luồng real-time
-    private var notificationJob: Job? = null
+    private var notificationJob: Job? = null    // Khai báo Job để quản lý luồng real-time
+
 
     fun subscribeToNotifications(userId: String) {
-        // Hủy luồng lắng nghe cũ nếu có, tránh duplicate connection
         notificationJob?.cancel()
 
         viewModelScope.launch {
-
-            // repository.observeNotifications trả về Flow<List<Notification>>
             repository.observeNotifications(userId).collect { dataList ->
-                // dataList là List<Notification>
+                val sortedDataList = dataList.sortedByDescending { it.createdAt ?: "9999-12-31T23:59:59Z" }
 
-                // 1. Map sang UI Model
-                val mappedList = dataList.map { it.toUiModel() }
+                val mappedList = sortedDataList.map { it.toUiModel() }
                 _uiNotifications.value = mappedList
 
-                // 2. Lọc các thông báo chưa đọc
-                // Nếu compiler không biết Notification là gì, 'it' sẽ bị đỏ
-                val unreadItems = dataList.filter { !it.isRead }
+                val unreadItems = sortedDataList.filter { !it.isRead }
 
-                // 3. Cập nhật số lượng (size sẽ không lỗi nếu dataList được nhận diện là List)
                 _unreadCount.value = unreadItems.size
 
-                // 4. Tìm thông báo mới nhất
                 if (unreadItems.isNotEmpty()) {
                     val latest = unreadItems.maxByOrNull { it.createdAt ?: "" }
                     _latestNotification.value = latest?.toUiModel()

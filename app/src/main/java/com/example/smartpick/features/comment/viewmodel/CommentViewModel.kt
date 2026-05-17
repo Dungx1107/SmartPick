@@ -46,12 +46,11 @@ class CommentViewModel @Inject constructor(
         _error.value = null
     }
 
-    fun loadComments(postId: String, postOwnerId: String?) {
+    fun loadComments(postId: String, postOwnerId: String?, currentUserId: String) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response: List<Comment> = repository.getComments(postId)
-
+                val response: List<Comment> = repository.getComments(postId, currentUserId)
                 // 1. Lọc bình luận gốc (Tầng 1)
                 val topLevelComments = response.filter { it.parentId == null }
 
@@ -65,6 +64,10 @@ class CommentViewModel @Inject constructor(
                     }
                     mapToUIState(parent, postOwnerId, null, childReplies)
                 }
+                Log.d(
+                    "LikeDebug",
+                    "[UI UPDATE] Đã tải xong danh sách mới từ DB. UI chuẩn bị render lại trạng thái."
+                )
             } catch (e: Exception) {
                 _error.value = "Lỗi tải bình luận"
                 e.printStackTrace()
@@ -131,14 +134,11 @@ class CommentViewModel @Inject constructor(
                 val actualParentId = targetComment?.parentId ?: targetComment?.id
 
                 // XÁC ĐỊNH NGƯỜI NHẬN THÔNG BÁO
-                val finalReceiverId = if (targetComment != null) {
-                    // Nếu đang reply, người nhận là chủ của bình luận đó
-                    // Lưu ý: Bạn cần đảm bảo CommentUIState có chứa authorId (userId của người viết comment đó)
-                    targetComment.authorId
-                } else {
-                    // Nếu là comment mới, người nhận là chủ bài viết
-                    postOwnerId ?: ""
-                }
+                val finalReceiverId =
+                    targetComment?.// Nếu đang reply, người nhận là chủ của bình luận đó
+                        // Lưu ý: Bạn cần đảm bảo CommentUIState có chứa authorId (userId của người viết comment đó)
+                    authorId ?: (// Nếu là comment mới, người nhận là chủ bài viết
+                            postOwnerId ?: "")
 
                 repository.insertComment(
                     postId = postId,
@@ -153,7 +153,7 @@ class CommentViewModel @Inject constructor(
                 // Sau khi gửi thành công:
                 _replyingTo.value = null // Thoát chế độ reply
                 // Reload comments
-                loadComments(postId, postOwnerId)
+                loadComments(postId, postOwnerId, userId)
 
             } catch (e: Exception) {
                 Log.e("CommentDebug", "LỖI KHI GỬI: ${e.message}", e)
@@ -164,5 +164,49 @@ class CommentViewModel @Inject constructor(
         }
     }
 
+
+    fun toggleLikeComment(
+        commentId: String,
+        currentUserId: String,
+        postId: String,
+        postOwnerId: String?
+    ) {
+        Log.d(
+            "LikeDebug",
+            "[START] Người dùng $currentUserId thực hiện Click Like commentId: $commentId"
+        )
+        viewModelScope.launch {
+            // Tìm comment trong danh sách UI hiện tại (quét cả bình luận gốc và các phản hồi con)
+            val currentList = _comments.value
+            val targetComment = currentList.find { it.id == commentId }
+                ?: currentList.flatMap { it.replies }.find { it.id == commentId }
+
+            if (targetComment == null) {
+                Log.e("CommentDebug", "Không tìm thấy comment với ID: $commentId để thực hiện like")
+                return@launch
+            }
+
+            try {
+                Log.d("LikeDebug", "[REQUEST] Đang gửi yêu cầu toggleLike xuống Repository...")
+                // Gọi sang repository xử lý (Đã bao gồm logic gửi thông báo ở bước trước)
+                repository.toggleLike(
+                    commentId = commentId,
+                    userId = currentUserId,
+                    isLiked = targetComment.isLiked,
+                    commentOwnerId = targetComment.authorId,
+                    postId = postId
+                )
+                Log.d(
+                    "LikeDebug",
+                    "[SUCCESS] Repository xử lý thành công. Tiến hành gọi loadComments để đồng bộ..."
+                )
+                // Tải lại danh sách bình luận để cập nhật UI mới nhất
+                loadComments(postId, postOwnerId, currentUserId)
+            } catch (e: Exception) {
+                Log.e("CommentDebug", "LỖI KHI TOGGLE LIKE: ${e.message}", e)
+                _error.value = "Không thể thực hiện tương tác"
+            }
+        }
+    }
 
 }

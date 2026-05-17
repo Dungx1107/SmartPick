@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,7 +36,7 @@ fun CommentsScreen(
     val replyingTo by viewModel.replyingTo.collectAsState()
 
     LaunchedEffect(postId) {
-        viewModel.loadComments(postId, postOwnerId)
+        viewModel.loadComments(postId, postOwnerId, currentUserId)
     }
 
     CommentsContent(
@@ -47,16 +46,28 @@ fun CommentsScreen(
         onSendComment = { text ->
             viewModel.sendComment(postId, currentUserId, text, postOwnerId)
         },
-        onLikeClick = { /* Gọi viewModel toggleLike */ },
+        onLikeClick = { commentId ->
+            viewModel.toggleLikeComment(
+                commentId = commentId,
+                currentUserId = currentUserId,
+                postId = postId,
+                postOwnerId = postOwnerId
+            )
+        },
         onReplyClick = { comment ->
-            Log.d("CommentDebug", "UI: Bấm trả lời comment ID=${comment.id} của ${comment.authorName}")
-            Toast.makeText(context, "Đang trả lời: ${comment.authorName}", Toast.LENGTH_SHORT).show()
+            Log.d(
+                "CommentDebug",
+                "UI: Bấm trả lời comment ID=${comment.id} của ${comment.authorName}"
+            )
+            Toast.makeText(context, "Đang trả lời: ${comment.authorName}", Toast.LENGTH_SHORT)
+                .show()
             viewModel.setReplyingTo(comment)
         },
         onCancelReply = { viewModel.setReplyingTo(null) },
         replyingTo = replyingTo,
     )
 }
+
 @Composable
 fun CommentsContent(
     comments: List<CommentUIState>,

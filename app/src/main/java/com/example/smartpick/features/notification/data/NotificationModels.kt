@@ -10,9 +10,12 @@ enum class NotificationType(val databaseValue: String) {
 
     companion object {
         fun fromString(type: String): NotificationType {
-            return entries.find {
-                it.databaseValue.equals(type.trim(), ignoreCase = true)
-            } ?: SYSTEM
+            return when (type.trim().lowercase()) {
+                "order" -> ORDER
+                "promo" -> PROMO
+                "community", "comment", "like" -> COMMUNITY
+                else -> SYSTEM
+            }
         }
     }
 }
@@ -30,7 +33,7 @@ data class AppNotification(
 // 3. Hàm Mapper (Kết nối 2 class)
 fun Notification.toUiModel(): AppNotification {
     return AppNotification(
-        id = this.id ?: "",
+        id = this.id,
         title = this.title,
         content = this.content,
         timeAgo = TimeFormatter.formatTimeAgo(this.createdAt),
