@@ -26,8 +26,10 @@ fun CommentsScreen(
     postId: String,
     postOwnerId: String?,
     currentUserId: String,
+    targetCommentId: String? = null,
     viewModel: CommentViewModel = hiltViewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+
 ) {
     val context = LocalContext.current
     val comments by viewModel.comments.collectAsState()
@@ -43,6 +45,7 @@ fun CommentsScreen(
         comments = comments,
         isLoading = isLoading,
         isSending = isSending,
+        targetCommentId = targetCommentId,
         onSendComment = { text ->
             viewModel.sendComment(postId, currentUserId, text, postOwnerId)
         },
@@ -73,6 +76,7 @@ fun CommentsContent(
     comments: List<CommentUIState>,
     isLoading: Boolean,
     isSending: Boolean,
+    targetCommentId: String?,
     onSendComment: (String) -> Unit,
     onLikeClick: (String) -> Unit,
     onReplyClick: (CommentUIState) -> Unit,
@@ -82,6 +86,17 @@ fun CommentsContent(
     var commentText by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
 
+    LaunchedEffect(comments) {
+        if (!targetCommentId.isNullOrEmpty() && comments.isNotEmpty()) {
+            val targetIndex = comments.indexOfFirst { uiState ->
+                uiState.id == targetCommentId || uiState.replies.any { it.id == targetCommentId }
+            }
+
+            if (targetIndex != -1) {
+                listState.animateScrollToItem(targetIndex)
+            }
+        }
+    }
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -185,7 +200,8 @@ private fun CommentsContentPreview() {
             onLikeClick = {},
             onReplyClick = {},
             replyingTo = null,
-            onCancelReply = {}
+            onCancelReply = {},
+            targetCommentId = null,
         )
     }
 }

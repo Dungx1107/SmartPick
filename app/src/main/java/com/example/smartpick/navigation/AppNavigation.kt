@@ -33,6 +33,7 @@ import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
 import com.example.smartpick.features.post_creation.ui.CreatePostScreen
 import com.example.smartpick.features.home.ui.HomeScreen
+import com.example.smartpick.features.notification.data.NotificationType
 import com.example.smartpick.features.notification.ui.NotificationsScreen
 import com.example.smartpick.features.notification.viewmodel.NotificationViewModel
 import com.example.smartpick.features.profile.ui.main.ProfileScreen
@@ -40,7 +41,6 @@ import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
-
 
 @Composable
 fun AppNavigation(
@@ -52,40 +52,31 @@ fun AppNavigation(
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry.value?.destination?.route
 
-    val currentUser by authViewModel.currentUser.collectAsState()// Lắng nghe thông tin User hiện tại
+    val currentUser by authViewModel.currentUser.collectAsState()
     val isInitializing by authViewModel.isInitializing.collectAsState()
 
     val isMainScreen = shouldShowBottomBar(currentRoute)
-
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
-    // Lắng nghe thông báo ngay khi có userId
     LaunchedEffect(currentUser) {
         currentUser?.id?.let { userId ->
             notificationViewModel.subscribeToNotifications(userId)
         }
     }
 
-    // Tự động điều hướng khi trạng thái đăng nhập thay đổi
     LaunchedEffect(currentUser, isInitializing) {
-        // 1. Nếu đang khởi tạo thì không làm gì cả
         if (isInitializing) return@LaunchedEffect
 
-        // 2. Kiểm tra xem NavController đã sẵn sàng chưa (tránh crash "graph not set")
-        // Nếu currentDestination == null nghĩa là NavHost chưa gắn graph thành công
         val destination = navController.currentDestination ?: return@LaunchedEffect
         val route = destination.route
 
         if (currentUser != null) {
-            // Nếu đã có user mà đang ở màn Auth -> Nhảy vào Home
             if (route == Routes.Login.route || route == Routes.SignUp.route) {
                 navController.navigate(Routes.Home.route) {
                     popUpTo(Routes.Login.route) { inclusive = true }
                 }
             }
         } else {
-            // Nếu currentUser == null (đã logout hoặc chưa login)
-            // Chỉ navigate nếu đang ở các màn hình bên trong (không phải Login/SignUp)
             if (route != Routes.Login.route && route != Routes.SignUp.route) {
                 navController.navigate(Routes.Login.route) {
                     popUpTo(0) { inclusive = true }
@@ -93,6 +84,7 @@ fun AppNavigation(
             }
         }
     }
+
     if (isInitializing) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -105,12 +97,8 @@ fun AppNavigation(
             topBar = {
                 if (isMainScreen) {
                     MainTopBar(
-                        onMenuClick = {
-                            navController.navigate(Routes.Settings.route)
-                        },
-                        onNotificationClick = {
-                            navController.navigate(Routes.Notifications.route)
-                        },
+                        onMenuClick = { navController.navigate(Routes.Settings.route) },
+                        onNotificationClick = { navController.navigate(Routes.Notifications.route) },
                         tagText = when (currentRoute) {
                             Routes.Home.route -> stringResource(R.string.app_name)
                             Routes.Feed.route -> stringResource(R.string.feeds)
@@ -121,7 +109,6 @@ fun AppNavigation(
                             Routes.Notifications.route -> stringResource(R.string.notifications)
                             else -> null
                         },
-
                         showNotificationBadge = unreadCount
                     )
                 }
@@ -134,10 +121,9 @@ fun AppNavigation(
                             navController.navigate(route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
-                                } // 1. Quay về màn hình đầu tiên (thường là Home) để tránh tích tụ stack
-                                launchSingleTop =
-                                    true //Tránh việc mở màn hình đó nhiều lần khi nhấn liên tục vào icon
-                                restoreState = true  //Khôi phục lại trạng thái khi quay lại tab đó
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
                     )
@@ -173,21 +159,15 @@ fun AppNavigation(
                 }
 
                 composable(route = Routes.Home.route) {
-                    HomeScreen(
-                        navController = navController,
-                        paddingValues = PaddingValues(0.dp)
-                    )
+                    HomeScreen(navController = navController, paddingValues = PaddingValues(0.dp))
                 }
 
                 composable(route = Routes.ChatBot.route) { ChatbotScreen() }
-                composable(route = Routes.Saved.route) {
-                    SavedCollectionScreen()
-                }
-                composable(route = Routes.Profile.route) {
-                    ProfileScreen(
-                        navController
-                    )
-                }
+
+                composable(route = Routes.Saved.route) { SavedCollectionScreen() }
+
+                composable(route = Routes.Profile.route) { ProfileScreen(navController) }
+
                 composable(route = Routes.EditProfile.route) {
                     EditProfileScreen(onNavigateBack = { navController.popBackStack() })
                 }
@@ -209,20 +189,22 @@ fun AppNavigation(
                 }
 
                 composable(
-                    route = Routes.Comments.route,
+                    route = "${Routes.Comments.route}?commentId={commentId}",
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
-                        navArgument("postOwnerId") { type = NavType.StringType }
+                        navArgument("postOwnerId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
                     )
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
-                    val postOwnerId = backStackEntry.arguments?.getString("postOwnerId") ?: ""
-                    val currentUser by authViewModel.currentUser.collectAsState()
+                    val postOwnerId = backStackEntry.arguments?.getString("postOwnerId")
+                    val commentId = backStackEntry.arguments?.getString("commentId")
 
                     CommentsScreen(
                         postId = postId,
                         postOwnerId = postOwnerId,
                         currentUserId = currentUser?.id ?: "",
+                        targetCommentId = commentId, // Truyền sang CommentsScreen xử lý hiệu ứng cuộn tự động
                         onBackClick = { navController.popBackStack() }
                     )
                 }
@@ -230,11 +212,9 @@ fun AppNavigation(
                 composable(route = Routes.Feed.route) {
                     FeedScreen(
                         paddingValues = PaddingValues(0.dp),
-                        onPostClick = { postId ->
-                            navController.navigate(Routes.PostDetail.createRoute(postId))
-                        },
+                        onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
                         onCommentClick = { postId, ownerId ->
-                            currentUser?.id?.let { //Chỉ chuyển trang khi người dùng đã đăng nhập
+                            currentUser?.id?.let {
                                 navController.navigate(Routes.Comments.createRoute(postId, ownerId))
                             }
                         },
@@ -243,21 +223,27 @@ fun AppNavigation(
                 }
 
                 composable(route = Routes.CreatePost.route) {
-                    CreatePostScreen(
-                        currentUser = currentUser,
-                        onClose = {
-                            navController.popBackStack()
-                        },
-                    )
+                    CreatePostScreen(currentUser = currentUser, onClose = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.Notifications.route) {
                     NotificationsScreen(
                         paddingValues = PaddingValues(0.dp),
+                        currentUserId = currentUser?.id ?: "",
                         onNotificationClick = { notification ->
-                            println("Clicked on notification: ${notification.title}")
-                        },
-                        currentUserId = currentUser?.id ?: ""
+                            if (notification.type == NotificationType.COMMUNITY) {
+                                val postId = notification.postId ?: ""
+                                val commentId = notification.targetId
+
+                                if (postId.isNotEmpty()) {
+                                    if (!commentId.isNullOrEmpty()) {
+                                        navController.navigate(Routes.CommentsFromNotification.createRoute(postId, commentId))
+                                    } else {
+                                        navController.navigate("comments_notification/$postId")
+                                    }
+                                }
+                            }
+                        }
                     )
                 }
 
@@ -273,20 +259,34 @@ fun AppNavigation(
                 }
 
                 composable(
-                    // Định nghĩa route hỗ trợ tham số không bắt buộc (Optional Argument) sử dụng dấu ?
                     route = "${Routes.Saved.route}?category={category}",
                     arguments = listOf(
                         navArgument("category") {
                             type = NavType.StringType
-                            defaultValue = "Giỏ hàng" // Nếu không truyền gì (ví dụ nhấn từ BottomBar) thì mặc định là Giỏ hàng
+                            defaultValue = "Giỏ hàng"
                         }
                     )
                 ) { backStackEntry ->
-                    // Lấy chuỗi argument ra, nếu lỗi null thì lấy giá trị mặc định là "Giỏ hàng"
                     val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
+                    SavedCollectionScreen(initialCategory = category)
+                }
 
-                    SavedCollectionScreen(
-                        initialCategory = category
+                composable(
+                    route = Routes.CommentsFromNotification.route, // "comments_notification/{postId}?commentId={commentId}"
+                    arguments = listOf(
+                        navArgument("postId") { type = NavType.StringType },
+                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                    )
+                ) { backStackEntry ->
+                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                    val commentId = backStackEntry.arguments?.getString("commentId")
+
+                    CommentsScreen(
+                        postId = postId,
+                        postOwnerId = null, // Không có thông tin chủ bài viết từ thông báo, gán null
+                        currentUserId = currentUser?.id ?: "",
+                        targetCommentId = commentId, // Truyền sang để CommentsScreen tự động cuộn đến vị trí comment
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
             }

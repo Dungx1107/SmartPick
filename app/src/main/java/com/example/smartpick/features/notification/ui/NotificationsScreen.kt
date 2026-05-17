@@ -25,7 +25,7 @@ fun NotificationsScreen(
     paddingValues: PaddingValues,
     viewModel: NotificationViewModel = hiltViewModel(),
     currentUserId: String,
-    onNotificationClick: (AppNotification) -> Unit = {}
+    onNotificationClick: (AppNotification) -> Unit = {} // Lambda nhận sự kiện click từ bên ngoài NavHost
 ) {
     val labelAll = stringResource(R.string.TatCa)
     val labelUnread = stringResource(R.string.ChuaDoc)
@@ -60,7 +60,9 @@ fun NotificationsScreen(
         selectedFilter = selectedFilter,
         onFilterSelected = { selectedFilter = it },
         onNotificationClick = { notification ->
+            // 1. Đánh dấu thông báo đã đọc dưới database thông qua ViewModel cục bộ
             viewModel.markAsRead(notification.id)
+            // 2. Bắn thực thể thông báo ra ngoài cho NavGraph xử lý điều hướng màn hình
             onNotificationClick(notification)
         }
     )
@@ -94,7 +96,7 @@ fun NotificationsContent(
             items(notifications) { notification ->
                 NotificationItem(
                     notification = notification,
-                    onClick = { onNotificationClick(notification) }
+                    onClick = { onNotificationClick(notification) } // Chuyển tiếp callback sạch, không lồng logic
                 )
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
@@ -114,46 +116,11 @@ fun NotificationsContent(
 fun NotificationsScreenPreview() {
     SmartPickTheme {
         val notifications = listOf(
-            AppNotification(
-                "1",
-                "Đơn hàng đang giao",
-                "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến.",
-                "10 phút trước",
-                NotificationType.ORDER,
-                true
-            ),
-            AppNotification(
-                "2",
-                "Lê Hải An đã bình luận",
-                "Gõ cực êm nha bác, build nhôm đầm tay lắm.",
-                "45 phút trước",
-                NotificationType.COMMUNITY,
-                true
-            ),
-            AppNotification(
-                "3",
-                "Khuyến mãi cuối tuần!",
-                "Giảm ngay 20% cho tất cả thiết bị âm thanh.",
-                "2 giờ trước",
-                NotificationType.PROMO,
-                false
-            ),
-            AppNotification(
-                "4",
-                "Cập nhật ứng dụng",
-                "SmartPick phiên bản mới đã sẵn sàng.",
-                "1 ngày trước",
-                NotificationType.SYSTEM,
-                false
-            ),
-            AppNotification(
-                "5",
-                "Giao hàng thành công",
-                "Đơn hàng #SP88921 đã được giao thành công.",
-                "2 ngày trước",
-                NotificationType.ORDER,
-                false
-            )
+            AppNotification("1", "Đơn hàng đang giao", "Bàn phím cơ Keychron Q1 Pro của bạn đang được giao đến.", "10 phút trước", NotificationType.ORDER, true),
+            AppNotification("2", "Lê Hải An đã bình luận", "Gõ cực êm nha bác, build nhôm đầm tay lắm.", "45 phút trước", NotificationType.COMMUNITY, true),
+            AppNotification("3", "Khuyến mãi cuối tuần!", "Giảm ngay 20% cho tất cả thiết bị âm thanh.", "2 giờ trước", NotificationType.PROMO, false),
+            AppNotification("4", "Cập nhật ứng dụng", "SmartPick phiên bản mới đã sẵn sàng.", "1 ngày trước", NotificationType.SYSTEM, false),
+            AppNotification("5", "Giao hàng thành công", "Đơn hàng #SP88921 đã được giao thành công.", "2 ngày trước", NotificationType.ORDER, false)
         )
 
         NotificationsContent(

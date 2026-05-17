@@ -54,8 +54,10 @@ class CommentRepository @Inject constructor(
         parentId: String? = null
     ) = withContext(Dispatchers.IO) {
 
+        val commentId = java.util.UUID.randomUUID().toString()
         /* Tạo data comment để insert */
         val data = mutableMapOf(
+            "id" to commentId,
             "post_id" to postId,
             "user_id" to userId,
             "content" to content.trim(),
@@ -83,7 +85,7 @@ class CommentRepository @Inject constructor(
                 type = NotificationType.COMMUNITY.databaseValue,
                 title = notificationTitle,
                 content = content.trim(),
-                targetId = postId
+                targetId = commentId
             )
 
             /* Gửi notification */
@@ -99,11 +101,11 @@ class CommentRepository @Inject constructor(
         commentOwnerId: String,
         postId: String
     ) = withContext(Dispatchers.IO) {
-        android.util.Log.d("NotifDebug", "==================================================")
-        android.util.Log.d("NotifDebug", "[SEND STEP 1] toggleLike gọi tại Repository")
-        android.util.Log.d("NotifDebug", "   -> Người thực hiện (userId): $userId")
-        android.util.Log.d("NotifDebug", "   -> Chủ bình luận (commentOwnerId): $commentOwnerId")
-        android.util.Log.d("NotifDebug", "   -> Trạng thái click (isLiked): $isLiked")
+        Log.d("NotifDebug", "==================================================")
+        Log.d("NotifDebug", "[SEND STEP 1] toggleLike gọi tại Repository")
+        Log.d("NotifDebug", "   -> Người thực hiện (userId): $userId")
+        Log.d("NotifDebug", "   -> Chủ bình luận (commentOwnerId): $commentOwnerId")
+        Log.d("NotifDebug", "   -> Trạng thái click (isLiked): $isLiked")
 
         if (isLiked) {
             supabase.postgrest[TABLE_COMMENT_LIKES].delete {
@@ -120,11 +122,11 @@ class CommentRepository @Inject constructor(
                         "user_id" to userId
                     )
                 )
-                android.util.Log.d("NotifDebug", "[SEND STEP 2] Ghi nhận lượt thích vào bảng comment_likes thành công.")
+                Log.d("NotifDebug", "[SEND STEP 2] Ghi nhận lượt thích vào bảng comment_likes thành công.")
 
                 /* KIỂM TRA ĐIỀU KIỆN GỬI THÔNG BÁO */
                 if (userId != commentOwnerId) {
-                    android.util.Log.d("NotifDebug", "[SEND STEP 3] Thỏa mãn điều kiện gửi (Người thích khác chủ bình luận). Tiến hành build object.")
+                    Log.d("NotifDebug", "[SEND STEP 3] Thỏa mãn điều kiện gửi (Người thích khác chủ bình luận). Tiến hành build object.")
                     val notification = Notification(
                         receiverId = commentOwnerId,
                         senderId = userId,
@@ -136,16 +138,16 @@ class CommentRepository @Inject constructor(
                     )
 
                     val result = notificationRepository.sendNotification(notification)
-                    android.util.Log.d("NotifDebug", "[SEND STEP 5] Đã thực hiện xong lệnh sendNotification. Kết quả Result: ${result.isSuccess}")
+                    Log.d("NotifDebug", "[SEND STEP 5] Đã thực hiện xong lệnh sendNotification. Kết quả Result: ${result.isSuccess}")
                 } else {
-                    android.util.Log.d("NotifDebug", "[SEND SKIPPED] Tự thích bình luận của chính mình ($userId == $commentOwnerId). Bỏ qua luồng gửi thông báo.")
+                    Log.d("NotifDebug", "[SEND SKIPPED] Tự thích bình luận của chính mình ($userId == $commentOwnerId). Bỏ qua luồng gửi thông báo.")
                 }
             } catch (e: Exception) {
                 val errorMsg = e.message ?: ""
                 if (errorMsg.contains("duplicate key") || errorMsg.contains("already exists")) {
-                    android.util.Log.d("NotifDebug", "[IDEMPOTENT] Trùng khóa thích. Bỏ qua.")
+                    Log.d("NotifDebug", "[IDEMPOTENT] Trùng khóa thích. Bỏ qua.")
                 } else {
-                    android.util.Log.e("NotifDebug", "[SEND ERROR] Lỗi phát sinh tại toggleLike: ${e.message}", e)
+                    Log.e("NotifDebug", "[SEND ERROR] Lỗi phát sinh tại toggleLike: ${e.message}", e)
                     throw e
                 }
             }

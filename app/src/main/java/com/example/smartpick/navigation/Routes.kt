@@ -24,4 +24,8 @@ sealed class Routes(val route: String) {
     }
 
     object Settings : Routes("settings")
+
+    object CommentsFromNotification : Routes("comments_notification/{postId}?commentId={commentId}") {
+        fun createRoute(postId: String, commentId: String) = "comments_notification/$postId?commentId=$commentId"
+    }
 }

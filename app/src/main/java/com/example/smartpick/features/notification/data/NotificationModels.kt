@@ -27,7 +27,8 @@ data class AppNotification(
     val timeAgo: String,
     val type: NotificationType,
     val isUnread: Boolean,
-    val targetId: String? = null
+    val targetId: String? = null,
+    val postId: String? = null
 )
 
 // 3. Hàm Mapper (Kết nối 2 class)
@@ -39,6 +40,7 @@ fun Notification.toUiModel(): AppNotification {
         timeAgo = TimeFormatter.formatTimeAgo(this.createdAt),
         type = NotificationType.fromString(this.type),
         isUnread = !this.isRead,
-        targetId = this.targetId
+        targetId = this.targetId,
+        postId = this.postId
     )
 }
