@@ -20,6 +20,7 @@
         android:screenOrientation="landscape"
         android:configChanges="orientation|screenSize|screenLayout"
         android:usesCleartextTraffic="true"
+        android:windowSoftInputMode="adjustResize"
         tools:targetApi="m"
         >
         <activity

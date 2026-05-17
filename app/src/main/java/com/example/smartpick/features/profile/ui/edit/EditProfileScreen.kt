@@ -63,6 +63,8 @@ import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.profile.ui.main.CameraBadgeButton
 import com.example.smartpick.features.profile.ui.main.ProfileTextField
 import com.example.smartpick.features.profile.viewmodel.EditProfileViewModel
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,7 +78,7 @@ fun EditProfileScreen(
     val isUploading by editProfileViewModel.isUploading.collectAsState()
     val user by authViewModel.currentUser.collectAsState()
 
-    var showBottomSheet by remember { mutableStateOf(false) }
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
     val selectedImage by editProfileViewModel.selectedImage.collectAsState()
@@ -230,7 +232,6 @@ fun EditProfileScreen(
                             context,
                             context.getString(R.string.CapNhatThanhCong), Toast.LENGTH_SHORT
                         ).show()
-                        onNavigateBack()
                     },
                     onError = { errorMsg ->
                         Toast.makeText(
@@ -291,6 +292,7 @@ fun EditProfileContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally

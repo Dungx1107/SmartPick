@@ -96,6 +96,7 @@ fun CreatePostContent(
         Box(
             modifier = Modifier.fillMaxSize()
                 .padding(paddingValues)
+                .windowInsetsPadding(WindowInsets.ime)
                 .background(MaterialTheme.colorScheme.background)
         ) {
 
@@ -105,6 +106,7 @@ fun CreatePostContent(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .weight(1f)
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
