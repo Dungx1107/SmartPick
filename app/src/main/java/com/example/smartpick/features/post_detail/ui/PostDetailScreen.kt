@@ -221,7 +221,6 @@ private fun PostDetailContentPreview() {
                 "https://images.unsplash.com/photo-1519677100203-a0e668c92439",
                 "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
             ),
-            status = "available",
             createdAt = "2 giờ trước"
         )
 

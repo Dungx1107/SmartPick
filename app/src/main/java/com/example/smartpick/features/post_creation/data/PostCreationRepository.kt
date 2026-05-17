@@ -19,6 +19,10 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.example.smartpick.core.data.dto.PostDto
+import com.example.smartpick.core.data.dto.ProductDto
+import com.example.smartpick.core.data.mapper.toDomain
+import com.example.smartpick.core.data.mapper.toDto
 
 /**
  * Repository xử lý logic tạo bài viết và upload media lên Supabase.
@@ -68,7 +72,6 @@ class PostCreationRepository @Inject constructor(
     ): String = withContext(Dispatchers.IO) {
 
         try {
-
             val contentResolver = context.contentResolver
 
             // Lấy MIME type thực tế của file
@@ -173,10 +176,11 @@ class PostCreationRepository @Inject constructor(
                 // Lưu Product vào database
                 val savedProduct =
                     supabase.postgrest[TABLE_PRODUCTS]
-                        .insert(newProduct) {
+                        .insert(newProduct.toDto()) {
                             select()
                         }
-                        .decodeSingle<Product>()
+                        .decodeSingle<ProductDto>()
+                        .toDomain()
 
                 finalProductId = savedProduct.id
             }
@@ -191,12 +195,12 @@ class PostCreationRepository @Inject constructor(
             )
 
             // Lưu bài viết vào database
-            supabase.postgrest[TABLE_POSTS].insert(newPost)
+            supabase.postgrest[TABLE_POSTS].insert(newPost.toDto())
 
         } catch (e: Exception) {
             Log.e("POST_CREATION", "Lỗi chi tiết: ${e.localizedMessage}")
             e.printStackTrace()
-            throw e // Ném lỗi để UI nhận biết
+            throw e
         }
 
     }
@@ -238,7 +242,7 @@ class PostCreationRepository @Inject constructor(
                     limit(1)
 
                 }
-                .decodeSingleOrNull<Post>()
+                .decodeSingleOrNull<PostDto>()?.toDomain()
 
         } catch (e: Exception) {
             e.printStackTrace()

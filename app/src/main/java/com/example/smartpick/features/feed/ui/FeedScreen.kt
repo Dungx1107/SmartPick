@@ -219,7 +219,6 @@ private fun FeedContentPreview() {
             "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
             "https://images.unsplash.com/photo-1519677100203-a0e668c92439"
         ),
-        status = "available",
         createdAt = "2026-05-11T10:00:00"
     )
 
@@ -231,7 +230,6 @@ private fun FeedContentPreview() {
         mediaUrls = listOf(
             "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
         ),
-        status = "available",
         createdAt = "2026-05-11T11:00:00"
     )
 

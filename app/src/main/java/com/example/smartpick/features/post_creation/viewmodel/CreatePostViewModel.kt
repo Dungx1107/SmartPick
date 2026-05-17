@@ -79,6 +79,7 @@ class CreatePostViewModel @Inject constructor(
                  * - Dừng coroutine
                  */
                 if (user == null) {
+                    Log.e("POST_CREATION", "Đăng bài thất bại: Thao tác yêu cầu user đăng nhập.")
                     _uiState.value =
                         CreatePostUiState.Error(
                             "Bạn chưa đăng nhập"
@@ -119,10 +120,7 @@ class CreatePostViewModel @Inject constructor(
                  * - In log lỗi
                  * - Chuyển UI sang Error
                  */
-                Log.e(
-                    "POST_CREATION",
-                    "Error: ${e.message}"
-                )
+                Log.e("POST_CREATION", "Quá trình đăng bài xảy ra ngoại lệ: ", e)
 
                 _uiState.value =
                     CreatePostUiState.Error(

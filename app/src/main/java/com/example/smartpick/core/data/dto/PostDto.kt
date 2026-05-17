@@ -10,7 +10,6 @@ data class PostDto(
     @SerialName("product_id") val productId: String? = null,
     val content: String? = null,
     @SerialName("media_urls") val mediaUrls: List<String> = emptyList(),
-    val status: String? = "available",
     @SerialName("created_at") val createdAt: String? = null
 )
 

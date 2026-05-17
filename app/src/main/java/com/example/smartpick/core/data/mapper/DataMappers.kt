@@ -62,7 +62,6 @@ fun PostDto.toDomain(): Post = Post(
     productId = productId,
     content = content,
     mediaUrls = mediaUrls,
-    status = status,
     createdAt = createdAt
 )
 
@@ -72,7 +71,6 @@ fun Post.toDto(): PostDto = PostDto(
     productId = productId,
     content = content,
     mediaUrls = mediaUrls,
-    status = status,
     createdAt = createdAt
 )
 
@@ -153,7 +151,6 @@ fun FullPostResponse.toPostDomain(): Post {
         productId = productId,
         content = content,
         mediaUrls = mediaUrls,
-        status = "available",
         createdAt = createdAt
     )
 }
