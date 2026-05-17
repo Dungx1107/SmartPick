@@ -138,7 +138,10 @@ fun ProfileHeaderCard(
 
 
 @Composable
-fun SettingsBentoGrid() {
+fun SettingsBentoGrid(
+    onHistoryClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {}
+) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SettingItemCard(
@@ -147,7 +150,8 @@ fun SettingsBentoGrid() {
                 iconBgColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                 iconColor = MaterialTheme.colorScheme.primary,
                 title = stringResource(R.string.LichSuMuaHang),
-                description = stringResource(R.string.XemDonHang)
+                description = stringResource(R.string.XemDonHang),
+                onClick = onHistoryClick,
             )
             SettingItemCard(
                 modifier = Modifier.weight(1f),
@@ -165,7 +169,8 @@ fun SettingsBentoGrid() {
                 iconBgColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
                 iconColor = MaterialTheme.colorScheme.tertiary,
                 title = stringResource(R.string.ThongBao),
-                description = stringResource(R.string.TuyChinhCachNhanTinTuc)
+                description = stringResource(R.string.TuyChinhCachNhanTinTuc),
+                onClick = onNotificationsClick
             )
             SettingItemCard(
                 modifier = Modifier.weight(1f),
@@ -186,10 +191,11 @@ fun SettingItemCard(
     iconBgColor: Color,
     iconColor: Color,
     title: String,
-    description: String
+    description: String,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = modifier.clickable { },
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

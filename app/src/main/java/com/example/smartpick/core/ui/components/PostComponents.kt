@@ -67,12 +67,12 @@ fun PostHeader(
  */
 @Composable
 fun PostMainContent(
+    modifier: Modifier = Modifier,
     content: String?,
     mediaUrls: List<String> = emptyList(),
     product: Product? = null,
     onMediaClick: (Int) -> Unit = {},
     onProductClick: (Product) -> Unit = {},
-    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         if (!content.isNullOrBlank()) {

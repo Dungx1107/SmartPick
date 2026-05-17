@@ -48,13 +48,15 @@ import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
 @Composable
 fun PostDetailScreen(
     viewModel: PostDetailViewModel = hiltViewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onCommentClick: (String, String) -> Unit = { _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     PostDetailContent(
         uiState = uiState,
         onBackClick = onBackClick,
+        onCommentClick = onCommentClick,
         onRetry = {
             uiState.post?.id?.let { viewModel.loadPostDetail(it) }
         }
@@ -65,6 +67,7 @@ fun PostDetailScreen(
 fun PostDetailContent(
     uiState: PostDetailUiState,
     onBackClick: () -> Unit,
+    onCommentClick: (String, String) -> Unit,
     onRetry: () -> Unit
 ) {
     Scaffold(
@@ -160,7 +163,17 @@ fun PostDetailContent(
                                 )
                             }
                         }
-                        item { PostFooterActions(onLikeClick = {}, onCommentClick = {}) }
+                        item {
+                            PostFooterActions(
+                                onLikeClick = {},
+                                onCommentClick = {
+                                    val postId = post.id ?: return@PostFooterActions
+                                    val ownerId = post.userId
+                                    onCommentClick(postId, ownerId)
+                                },
+                                onShareClick = {}
+                            )
+                        }
 
                     }
                 }
@@ -223,20 +236,7 @@ private fun PostDetailContentPreview() {
         PostDetailContent(
             uiState = fakeUiState,
             onBackClick = {},
-            onRetry = {}
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PostDetailLoadingPreview() {
-    SmartPickTheme {
-        PostDetailContent(
-            uiState = PostDetailUiState(
-                isLoading = true
-            ),
-            onBackClick = {},
+            onCommentClick = { _, _ -> },
             onRetry = {}
         )
     }
@@ -252,6 +252,7 @@ private fun PostDetailErrorPreview() {
                 error = "Không thể tải bài viết"
             ),
             onBackClick = {},
+            onCommentClick = { _, _ -> },
             onRetry = {}
         )
     }

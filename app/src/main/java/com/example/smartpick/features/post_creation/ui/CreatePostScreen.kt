@@ -21,7 +21,6 @@ import com.example.smartpick.features.post_creation.viewmodel.CreatePostUiState
 import com.example.smartpick.features.post_creation.viewmodel.CreatePostViewModel
 import java.util.UUID
 
-// ─── STATEFUL COMPOSABLE (Làm việc với ViewModel & Navigation) ───
 @Composable
 fun CreatePostScreen(
     currentUser: User?,

@@ -63,6 +63,16 @@ fun ProfileScreen(
         },
         onPostClick = { postId ->
             navController.navigate(Routes.PostDetail.createRoute(postId))
+        },
+        onHistoryClick = {
+            navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") {
+                launchSingleTop = true
+            }
+        },
+        onNotificationsClick = {
+            navController.navigate(Routes.Notifications.route) {
+                launchSingleTop = true
+            }
         }
     )
 }
@@ -76,7 +86,9 @@ fun ProfileContent(
     onLogout: () -> Unit,
     onEditProfile: () -> Unit,
     onCreatePostClick: () -> Unit,
-    onPostClick: (String) -> Unit
+    onPostClick: (String) -> Unit,
+    onHistoryClick: () -> Unit = {},
+    onNotificationsClick: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier
@@ -95,7 +107,10 @@ fun ProfileContent(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                SettingsBentoGrid()
+                SettingsBentoGrid(
+                    onHistoryClick = onHistoryClick,
+                    onNotificationsClick = onNotificationsClick
+                )
 
                 Spacer(modifier = Modifier.height(32.dp))
             }

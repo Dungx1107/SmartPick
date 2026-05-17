@@ -181,7 +181,7 @@ fun AppNavigation(
 
                 composable(route = Routes.ChatBot.route) { ChatbotScreen() }
                 composable(route = Routes.Saved.route) {
-                    SavedCollectionScreen(navController = navController)
+                    SavedCollectionScreen()
                 }
                 composable(route = Routes.Profile.route) {
                     ProfileScreen(
@@ -199,7 +199,12 @@ fun AppNavigation(
                     })
                 ) {
                     PostDetailScreen(
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        onCommentClick = { postId, ownerId ->
+                            currentUser?.id?.let {
+                                navController.navigate(Routes.Comments.createRoute(postId, ownerId))
+                            }
+                        }
                     )
                 }
 
@@ -264,6 +269,24 @@ fun AppNavigation(
                                 popUpTo(0) { inclusive = true }
                             }
                         }
+                    )
+                }
+
+                composable(
+                    // Định nghĩa route hỗ trợ tham số không bắt buộc (Optional Argument) sử dụng dấu ?
+                    route = "${Routes.Saved.route}?category={category}",
+                    arguments = listOf(
+                        navArgument("category") {
+                            type = NavType.StringType
+                            defaultValue = "Giỏ hàng" // Nếu không truyền gì (ví dụ nhấn từ BottomBar) thì mặc định là Giỏ hàng
+                        }
+                    )
+                ) { backStackEntry ->
+                    // Lấy chuỗi argument ra, nếu lỗi null thì lấy giá trị mặc định là "Giỏ hàng"
+                    val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
+
+                    SavedCollectionScreen(
+                        initialCategory = category
                     )
                 }
             }

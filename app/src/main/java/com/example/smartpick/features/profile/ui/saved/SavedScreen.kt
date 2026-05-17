@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,15 +38,19 @@ import java.util.Locale
 
 @Composable
 fun SavedCollectionScreen(
-    navController: NavController,
+    initialCategory: String = "Giỏ hàng",
     homeViewModel: HomeViewModel = hiltViewModel()
 ) {
     val cartItems by homeViewModel.cartItems.collectAsState()
     val orders by homeViewModel.orders.collectAsState()
 
     // Mặc định khi vào là Giỏ hàng
-    var selectedCategory by remember { mutableStateOf("Giỏ hàng") }
+    var selectedCategory by rememberSaveable { mutableStateOf(initialCategory) }
     val context = LocalContext.current
+
+    LaunchedEffect(initialCategory) {
+        selectedCategory = initialCategory
+    }
 
     Scaffold(
         containerColor = PageBg,
