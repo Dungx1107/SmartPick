@@ -110,6 +110,14 @@ fun ProductGridCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
+                // Thêm thông tin "Đã bán"
+                Text(
+                    text = "Đã bán ${product.soldCount}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMuted,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row(

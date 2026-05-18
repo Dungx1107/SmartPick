@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/core/ui/components/ProductComponents.kt
 package com.example.smartpick.core.ui.components
 
 import androidx.compose.foundation.background
@@ -24,10 +25,6 @@ import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.White
 import java.util.Locale
 
-/**
- * BIẾN THỂ 1: ProductVerticalCard (Dạng dọc)
- * Dùng cho Grid ở trang Home, Tìm kiếm.
- */
 @Composable
 fun ProductVerticalCard(
     product: Product,
@@ -62,6 +59,15 @@ fun ProductVerticalCard(
                     Text(it, fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
                 }
                 Text(product.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+
+                // Thêm thông tin "Đã bán"
+                Text(
+                    text = "Đã bán ${product.soldCount}",
+                    fontSize = 11.sp,
+                    color = TextMuted,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
@@ -76,10 +82,6 @@ fun ProductVerticalCard(
     }
 }
 
-/**
- * BIẾN THỂ 2: ProductHorizontalTag (Dạng ngang)
- * Dùng đính kèm trong Bài viết (Post), Chat, hoặc Danh sách nhỏ.
- */
 @Composable
 fun ProductHorizontalTag(
     product: Product,
@@ -112,12 +114,22 @@ fun ProductHorizontalTag(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Text(
-                    text = "${String.format(Locale.getDefault(), "%,.0f", product.price)} VNĐ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFEF4444),
-                    fontWeight = FontWeight.Bold
-                )
+
+                // Thêm thông tin "Đã bán" cạnh giá tiền
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "${String.format(Locale.getDefault(), "%,.0f", product.price)} VNĐ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFFEF4444),
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "• Đã bán ${product.soldCount}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted
+                    )
+                }
             }
 
             Text(
