@@ -1,9 +1,9 @@
+// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -78,7 +78,6 @@ fun HomeScreen(
     Scaffold(
         modifier = Modifier.padding(paddingValues),
         floatingActionButton = {
-            // FIX: Bỏ điều kiện if, LUÔN LUÔN hiện nút Giỏ Hàng
             FloatingActionButton(onClick = { showCart = true }) {
                 val totalQuantity = cartItems.sumOf { it.quantity }
                 if (totalQuantity > 0) {
@@ -120,7 +119,6 @@ fun HomeScreen(
                                         product = product,
                                         onProductClick = { selectedProduct = product },
                                         onAddToCart = {
-                                            // FIX: Chỉ gọi Toast khi API trả về kết quả
                                             viewModel.addToCart(
                                                 product = it,
                                                 onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show() },
@@ -158,7 +156,6 @@ fun HomeScreen(
                     }
                 },
                 onAddToCart = {
-                    // FIX: Chỉ gọi Toast khi API trả về kết quả
                     viewModel.addToCart(
                         product = selectedProduct!!,
                         onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show() },
@@ -176,20 +173,13 @@ fun HomeScreen(
     if (showCart) {
         CartBottomSheet(
             cartItems = cartItems,
-            onIncrease = { viewModel.increaseQuantity(it) }, // Đã mở khóa nút Tăng
-            onDecrease = { viewModel.decreaseQuantity(it) }, // Đã mở khóa nút Giảm (Tự xóa khi số lượng = 1)
             onDismiss = { showCart = false },
+            onIncrease = { viewModel.increaseQuantity(it) },
+            onDecrease = { viewModel.decreaseQuantity(it) },
             onCheckout = {
-                viewModel.processCheckout(
-                    onSuccess = {
-                        showCart = false
-                        Toast.makeText(context, "Thanh toán thành công! Đơn hàng đã được chốt.", Toast.LENGTH_LONG).show()
-                    },
-                    onError = { error ->
-                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                showCart = false
+                navController.navigate(Routes.Checkout.route)
             }
         )
-    }
+    } // FIX: Đã thêm dấu ngoặc nhọn đóng của hàm HomeScreen
 }

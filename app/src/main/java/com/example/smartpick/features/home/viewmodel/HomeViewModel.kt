@@ -133,7 +133,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun processCheckout(onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun processCheckout(
+        address: String,
+        phone: String,
+        paymentMethod: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val user = authRepository.getCurrentUser()
@@ -143,7 +149,15 @@ class HomeViewModel @Inject constructor(
                 }
 
                 val currentCart = _cartItems.value
-                val result = repository.checkout(user.id, currentCart)
+
+                // Gọi repository với đầy đủ các tham số mới
+                val result = repository.checkout(
+                    userId = user.id,
+                    cartItems = currentCart,
+                    address = address,
+                    phone = phone,
+                    paymentMethod = paymentMethod
+                )
 
                 if (result.isSuccess) {
                     fetchCartItems() // Reset giỏ hàng về rỗng

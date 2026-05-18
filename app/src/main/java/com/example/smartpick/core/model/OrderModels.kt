@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/core/model/OrderModels.kt
 package com.example.smartpick.core.model
 
 import kotlinx.serialization.SerialName
@@ -7,10 +8,12 @@ import kotlinx.serialization.Serializable
 data class OrderRequest(
     @SerialName("user_id") val userId: String,
     @SerialName("total_amount") val totalAmount: Double,
+    @SerialName("shipping_address") val shippingAddress: String,
+    @SerialName("phone_number") val phoneNumber: String,
+    @SerialName("payment_method") val paymentMethod: String,
     val status: String = "completed"
 )
 
-// Đã cập nhật: Thêm các trường để hiển thị Lịch sử mua hàng
 @Serializable
 data class OrderResponse(
     val id: String,

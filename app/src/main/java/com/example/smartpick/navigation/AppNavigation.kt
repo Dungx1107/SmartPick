@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/navigation/AppNavigation.kt
 package com.example.smartpick.navigation
 
 import androidx.compose.foundation.layout.Box
@@ -164,7 +165,19 @@ fun AppNavigation(
 
                 composable(route = Routes.ChatBot.route) { ChatbotScreen() }
 
-                composable(route = Routes.Saved.route) { SavedCollectionScreen() }
+                composable(route = Routes.Checkout.route) {
+                    com.example.smartpick.features.home.ui.CheckoutScreen(
+                        onBack = { navController.popBackStack() },
+                        onNavigateToSuccess = {
+                            navController.navigate(Routes.Saved.route) {
+                                popUpTo(Routes.Home.route)
+                            }
+                        }
+                    )
+                }
+
+                // FIX 1: Thêm tham số navController vào đây
+                composable(route = Routes.Saved.route) { SavedCollectionScreen(navController = navController) }
 
                 composable(route = Routes.Profile.route) { ProfileScreen(navController) }
 
@@ -204,7 +217,7 @@ fun AppNavigation(
                         postId = postId,
                         postOwnerId = postOwnerId,
                         currentUserId = currentUser?.id ?: "",
-                        targetCommentId = commentId, // Truyền sang CommentsScreen xử lý hiệu ứng cuộn tự động
+                        targetCommentId = commentId,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
@@ -258,6 +271,7 @@ fun AppNavigation(
                     )
                 }
 
+                // FIX 2: Thêm tham số navController vào đây
                 composable(
                     route = "${Routes.Saved.route}?category={category}",
                     arguments = listOf(
@@ -268,11 +282,11 @@ fun AppNavigation(
                     )
                 ) { backStackEntry ->
                     val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
-                    SavedCollectionScreen(initialCategory = category)
+                    SavedCollectionScreen(navController = navController, initialCategory = category)
                 }
 
                 composable(
-                    route = Routes.CommentsFromNotification.route, // "comments_notification/{postId}?commentId={commentId}"
+                    route = Routes.CommentsFromNotification.route,
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
                         navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
@@ -283,9 +297,9 @@ fun AppNavigation(
 
                     CommentsScreen(
                         postId = postId,
-                        postOwnerId = null, // Không có thông tin chủ bài viết từ thông báo, gán null
+                        postOwnerId = null,
                         currentUserId = currentUser?.id ?: "",
-                        targetCommentId = commentId, // Truyền sang để CommentsScreen tự động cuộn đến vị trí comment
+                        targetCommentId = commentId,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
