@@ -11,6 +11,8 @@ import com.example.smartpick.core.model.OrderItemRequest
 import com.example.smartpick.core.model.OrderRequest
 import com.example.smartpick.core.model.OrderResponse
 import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.model.ReviewRequest
+import com.example.smartpick.core.model.ReviewResponse
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
@@ -26,8 +28,6 @@ class HomeRepository @Inject constructor(
 ) {
     private val postgrest = supabase.postgrest
     private val TAG = "HomeRepository"
-
-    // ... các hàm getAllProducts, getPostIdByProductId, getCartItems, addToCart, removeFromCart, updateCartItemQuantity giữ nguyên ...
 
     suspend fun getAllProducts(): List<Product> = withContext(Dispatchers.IO) {
         try {
@@ -101,13 +101,6 @@ class HomeRepository @Inject constructor(
         }
     }
 
-    /**
-     * Logic Thanh toán mới:
-     * 1. Insert Order
-     * 2. Insert Order Items
-     * 3. Update Product Stock & Sold Count
-     * 4. Clear Cart
-     */
     suspend fun checkout(
         userId: String,
         cartItems: List<CartItem>,
@@ -117,9 +110,9 @@ class HomeRepository @Inject constructor(
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (cartItems.isEmpty()) return@withContext Result.failure(Exception("Giỏ hàng trống"))
-            
+
             val totalAmount = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
-            
+
             // 1. Insert Order
             val orderRequest = OrderRequest(
                 userId = userId,
@@ -129,7 +122,7 @@ class HomeRepository @Inject constructor(
                 paymentMethod = paymentMethod
             )
             val orderResponse = postgrest["orders"].insert(orderRequest) { select() }.decodeSingle<OrderResponse>()
-            
+
             // 2. Insert Order Items
             val orderItems = cartItems.map { item ->
                 OrderItemRequest(
@@ -140,7 +133,7 @@ class HomeRepository @Inject constructor(
                 )
             }
             postgrest["order_items"].insert(orderItems)
-            
+
             // 3. Update Product Stock & Sold Count
             cartItems.forEach { item ->
                 val currentProduct = item.product ?: return@forEach
@@ -151,10 +144,10 @@ class HomeRepository @Inject constructor(
                     filter { eq("id", item.productId) }
                 }
             }
-            
+
             // 4. Clear Cart
             postgrest["cart_items"].delete { filter { eq("user_id", userId) } }
-            
+
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Checkout error", e)
@@ -170,6 +163,53 @@ class HomeRepository @Inject constructor(
             }.decodeList<OrderResponse>()
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    /**
+     * Lấy danh sách đánh giá của sản phẩm
+     */
+    suspend fun getProductReviews(productId: String): List<ReviewResponse> = withContext(Dispatchers.IO) {
+        try {
+            postgrest["reviews"].select {
+                filter { eq("product_id", productId) }
+                order("created_at", Order.DESCENDING)
+            }.decodeList<ReviewResponse>()
+        } catch (e: Exception) {
+            Log.e(TAG, "getProductReviews error", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Kiểm tra User đã mua sản phẩm này chưa
+     */
+    suspend fun checkUserBoughtProduct(userId: String, productId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val response = postgrest["order_items"].select(Columns.raw("id, orders!inner(user_id)")) {
+                filter {
+                    eq("product_id", productId)
+                    eq("orders.user_id", userId)
+                }
+            }.decodeList<Map<String, String>>()
+
+            response.isNotEmpty()
+        } catch (e: Exception) {
+            Log.e(TAG, "checkUserBoughtProduct error", e)
+            false
+        }
+    }
+
+    /**
+     * Gửi đánh giá mới
+     */
+    suspend fun submitReview(request: ReviewRequest): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            postgrest["reviews"].insert(request)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "submitReview error", e)
+            Result.failure(e)
         }
     }
 }

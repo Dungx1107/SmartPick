@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/features/home/viewmodel/HomeViewModel.kt
 package com.example.smartpick.features.home.viewmodel
 
 import android.util.Log
@@ -6,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.OrderResponse
 import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.model.ReviewRequest
+import com.example.smartpick.core.model.ReviewResponse
 import com.example.smartpick.features.auth.data.AuthRepository
 import com.example.smartpick.features.home.data.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +17,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -28,16 +30,21 @@ class HomeViewModel @Inject constructor(
     private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
     val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
 
-    // Đã thêm: State lưu trữ Lịch sử mua hàng
     private val _orders = MutableStateFlow<List<OrderResponse>>(emptyList())
     val orders: StateFlow<List<OrderResponse>> = _orders.asStateFlow()
+
+    private val _productReviews = MutableStateFlow<List<ReviewResponse>>(emptyList())
+    val productReviews: StateFlow<List<ReviewResponse>> = _productReviews.asStateFlow()
+
+    private val _canReview = MutableStateFlow(false)
+    val canReview: StateFlow<Boolean> = _canReview.asStateFlow()
 
     private var allProductsList: List<Product> = emptyList()
 
     init {
         fetchProducts()
         fetchCartItems()
-        fetchOrderHistory() // Khởi tạo lấy lịch sử
+        fetchOrderHistory()
     }
 
     fun fetchProducts() {
@@ -69,7 +76,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // Đã thêm: Hàm lấy Lịch sử đơn hàng
     fun fetchOrderHistory() {
         viewModelScope.launch {
             try {
@@ -79,6 +85,50 @@ class HomeViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e("SupabaseOrders", "Lỗi fetchOrderHistory: ${e.message}", e)
+            }
+        }
+    }
+
+    fun fetchReviewsAndCheckEligibility(productId: String) {
+        viewModelScope.launch {
+            _productReviews.value = repository.getProductReviews(productId)
+
+            val user = authRepository.getCurrentUser()
+            if (user != null) {
+                _canReview.value = repository.checkUserBoughtProduct(user.id, productId)
+            } else {
+                _canReview.value = false
+            }
+        }
+    }
+
+    fun submitProductReview(
+        productId: String,
+        rating: Int,
+        content: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            val user = authRepository.getCurrentUser()
+            if (user == null) {
+                onError("Vui lòng đăng nhập")
+                return@launch
+            }
+
+            val request = ReviewRequest(
+                userId = user.id,
+                productId = productId, // FIX: Đã sửa lại product_id thành productId
+                rating = rating,
+                content = content
+            )
+
+            val result = repository.submitReview(request)
+            if (result.isSuccess) {
+                fetchReviewsAndCheckEligibility(productId)
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Lỗi gửi đánh giá")
             }
         }
     }
@@ -150,7 +200,6 @@ class HomeViewModel @Inject constructor(
 
                 val currentCart = _cartItems.value
 
-                // Gọi repository với đầy đủ các tham số mới
                 val result = repository.checkout(
                     userId = user.id,
                     cartItems = currentCart,
@@ -160,8 +209,8 @@ class HomeViewModel @Inject constructor(
                 )
 
                 if (result.isSuccess) {
-                    fetchCartItems() // Reset giỏ hàng về rỗng
-                    fetchOrderHistory() // Ngay lập tức cập nhật lại tab Lịch sử
+                    fetchCartItems()
+                    fetchOrderHistory()
                     onSuccess()
                 } else {
                     val errorMsg = result.exceptionOrNull()?.message ?: "Lỗi thanh toán từ Database"

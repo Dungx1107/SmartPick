@@ -43,6 +43,10 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
 
+    // Thu thập state của Review
+    val productReviews by viewModel.productReviews.collectAsState()
+    val canReview by viewModel.canReview.collectAsState()
+
     var showCart by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -59,6 +63,13 @@ fun HomeScreen(
             val recognizedText = data?.get(0) ?: ""
             searchQuery = recognizedText
             viewModel.searchProducts(recognizedText)
+        }
+    }
+
+    // Tự động load danh sách đánh giá khi người dùng click xem chi tiết 1 sản phẩm
+    LaunchedEffect(selectedProduct) {
+        selectedProduct?.id?.let { productId ->
+            viewModel.fetchReviewsAndCheckEligibility(productId)
         }
     }
 
@@ -144,6 +155,8 @@ fun HomeScreen(
         ) {
             ProductDetailContent(
                 product = selectedProduct!!,
+                reviews = productReviews,
+                canReview = canReview,
                 onViewFeed = {
                     scope.launch {
                         val postId = viewModel.getPostId(selectedProduct!!.id ?: "")
@@ -151,7 +164,7 @@ fun HomeScreen(
                             selectedProduct = null
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         } else {
-                            Toast.makeText(context, "Sản phẩm này chưa có bài đăng!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Sản phẩm này chưa có bài đăng thảo luận!", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
@@ -165,6 +178,15 @@ fun HomeScreen(
                 onBuyNow = {
                     selectedProduct = null
                     showCart = true
+                },
+                onSubmitReview = { rating, content ->
+                    viewModel.submitProductReview(
+                        productId = selectedProduct!!.id!!,
+                        rating = rating,
+                        content = content,
+                        onSuccess = { Toast.makeText(context, "Cảm ơn bạn đã đánh giá!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                    )
                 }
             )
         }
@@ -181,5 +203,5 @@ fun HomeScreen(
                 navController.navigate(Routes.Checkout.route)
             }
         )
-    } // FIX: Đã thêm dấu ngoặc nhọn đóng của hàm HomeScreen
+    }
 }
