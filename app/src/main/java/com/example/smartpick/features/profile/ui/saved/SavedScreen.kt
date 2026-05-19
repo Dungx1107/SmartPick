@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/features/profile/ui/saved/SavedScreen.kt
 package com.example.smartpick.features.profile.ui.saved
 
 import android.widget.Toast
@@ -34,10 +35,12 @@ import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.OrderResponse
 import com.example.smartpick.core.ui.theme.*
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
+import com.example.smartpick.navigation.Routes
 import java.util.Locale
 
 @Composable
 fun SavedCollectionScreen(
+    navController: NavController, // FIX: Đã thêm navController
     initialCategory: String = "Giỏ hàng",
     homeViewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -75,16 +78,7 @@ fun SavedCollectionScreen(
                         }
                         Button(
                             onClick = {
-                                homeViewModel.processCheckout(
-                                    onSuccess = {
-                                        Toast.makeText(context, "Thanh toán thành công! Đơn hàng đã được chốt.", Toast.LENGTH_LONG).show()
-                                        // Thanh toán xong tự chuyển sang tab Lịch sử xem cho sướng
-                                        selectedCategory = "Lịch sử mua hàng"
-                                    },
-                                    onError = { error ->
-                                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                                    }
-                                )
+                                navController.navigate(Routes.Checkout.route) // FIX: Gọi navigation
                             },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)

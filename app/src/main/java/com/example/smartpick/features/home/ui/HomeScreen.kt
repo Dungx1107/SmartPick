@@ -1,9 +1,9 @@
+// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.app.Activity
 import android.content.Intent
 import android.speech.RecognizerIntent
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,6 +43,10 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
 
+    // Thu thập state của Review
+    val productReviews by viewModel.productReviews.collectAsState()
+    val canReview by viewModel.canReview.collectAsState()
+
     var showCart by remember { mutableStateOf(false) }
     var selectedProduct by remember { mutableStateOf<Product?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -62,6 +66,13 @@ fun HomeScreen(
         }
     }
 
+    // Tự động load danh sách đánh giá khi người dùng click xem chi tiết 1 sản phẩm
+    LaunchedEffect(selectedProduct) {
+        selectedProduct?.id?.let { productId ->
+            viewModel.fetchReviewsAndCheckEligibility(productId)
+        }
+    }
+
     fun startSpeechToText() {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
@@ -78,7 +89,6 @@ fun HomeScreen(
     Scaffold(
         modifier = Modifier.padding(paddingValues),
         floatingActionButton = {
-            // FIX: Bỏ điều kiện if, LUÔN LUÔN hiện nút Giỏ Hàng
             FloatingActionButton(onClick = { showCart = true }) {
                 val totalQuantity = cartItems.sumOf { it.quantity }
                 if (totalQuantity > 0) {
@@ -120,7 +130,6 @@ fun HomeScreen(
                                         product = product,
                                         onProductClick = { selectedProduct = product },
                                         onAddToCart = {
-                                            // FIX: Chỉ gọi Toast khi API trả về kết quả
                                             viewModel.addToCart(
                                                 product = it,
                                                 onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show() },
@@ -146,6 +155,8 @@ fun HomeScreen(
         ) {
             ProductDetailContent(
                 product = selectedProduct!!,
+                reviews = productReviews,
+                canReview = canReview,
                 onViewFeed = {
                     scope.launch {
                         val postId = viewModel.getPostId(selectedProduct!!.id ?: "")
@@ -153,12 +164,11 @@ fun HomeScreen(
                             selectedProduct = null
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         } else {
-                            Toast.makeText(context, "Sản phẩm này chưa có bài đăng!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Sản phẩm này chưa có bài đăng thảo luận!", Toast.LENGTH_SHORT).show()
                         }
                     }
                 },
                 onAddToCart = {
-                    // FIX: Chỉ gọi Toast khi API trả về kết quả
                     viewModel.addToCart(
                         product = selectedProduct!!,
                         onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show() },
@@ -168,6 +178,15 @@ fun HomeScreen(
                 onBuyNow = {
                     selectedProduct = null
                     showCart = true
+                },
+                onSubmitReview = { rating, content ->
+                    viewModel.submitProductReview(
+                        productId = selectedProduct!!.id!!,
+                        rating = rating,
+                        content = content,
+                        onSuccess = { Toast.makeText(context, "Cảm ơn bạn đã đánh giá!", Toast.LENGTH_SHORT).show() },
+                        onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                    )
                 }
             )
         }
@@ -176,19 +195,12 @@ fun HomeScreen(
     if (showCart) {
         CartBottomSheet(
             cartItems = cartItems,
-            onIncrease = { viewModel.increaseQuantity(it) }, // Đã mở khóa nút Tăng
-            onDecrease = { viewModel.decreaseQuantity(it) }, // Đã mở khóa nút Giảm (Tự xóa khi số lượng = 1)
             onDismiss = { showCart = false },
+            onIncrease = { viewModel.increaseQuantity(it) },
+            onDecrease = { viewModel.decreaseQuantity(it) },
             onCheckout = {
-                viewModel.processCheckout(
-                    onSuccess = {
-                        showCart = false
-                        Toast.makeText(context, "Thanh toán thành công! Đơn hàng đã được chốt.", Toast.LENGTH_LONG).show()
-                    },
-                    onError = { error ->
-                        Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
-                    }
-                )
+                showCart = false
+                navController.navigate(Routes.Checkout.route)
             }
         )
     }
