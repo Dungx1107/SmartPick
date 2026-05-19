@@ -27,7 +27,6 @@ import androidx.navigation.navArgument
 import com.example.smartpick.R
 import com.example.smartpick.core.utils.NavigationUtils.shouldShowBottomBar
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import com.example.smartpick.features.chatbot.ui.ChatbotScreen
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
 import com.example.smartpick.features.comment.ui.CommentsScreen
@@ -42,6 +41,9 @@ import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
+// IMPORT MỚI:
+import com.example.smartpick.features.review.ui.ReviewHubScreen
+import com.example.smartpick.features.review.ui.WriteReviewScreen
 
 @Composable
 fun AppNavigation(
@@ -103,7 +105,7 @@ fun AppNavigation(
                         tagText = when (currentRoute) {
                             Routes.Home.route -> stringResource(R.string.app_name)
                             Routes.Feed.route -> stringResource(R.string.feeds)
-                            Routes.ChatBot.route -> stringResource(R.string.ai_curator)
+                            Routes.ReviewHub.route -> stringResource(R.string.reviews)
                             Routes.Saved.route -> stringResource(R.string.saved)
                             Routes.Profile.route -> stringResource(R.string.profile)
                             Routes.CreatePost.route -> stringResource(R.string.create_post)
@@ -163,7 +165,29 @@ fun AppNavigation(
                     HomeScreen(navController = navController, paddingValues = PaddingValues(0.dp))
                 }
 
-                composable(route = Routes.ChatBot.route) { ChatbotScreen() }
+                // FIX: Thay thế ChatBotScreen bằng ReviewHubScreen
+                composable(route = Routes.ReviewHub.route) {
+                    ReviewHubScreen(
+                        onNavigateToWriteReview = { productId ->
+                            navController.navigate(Routes.WriteReview.createRoute(productId))
+                        }
+                    )
+                }
+
+                composable(
+                    route = Routes.WriteReview.route,
+                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    WriteReviewScreen(
+                        productId = productId,
+                        onBack = { navController.popBackStack() },
+                        onReviewSubmitted = {
+                            // Quay lại màn hình trước đó sau khi gửi thành công
+                            navController.popBackStack()
+                        }
+                    )
+                }
 
                 composable(route = Routes.Checkout.route) {
                     com.example.smartpick.features.home.ui.CheckoutScreen(
@@ -176,7 +200,6 @@ fun AppNavigation(
                     )
                 }
 
-                // FIX 1: Thêm tham số navController vào đây
                 composable(route = Routes.Saved.route) { SavedCollectionScreen(navController = navController) }
 
                 composable(route = Routes.Profile.route) { ProfileScreen(navController) }
@@ -271,7 +294,6 @@ fun AppNavigation(
                     )
                 }
 
-                // FIX 2: Thêm tham số navController vào đây
                 composable(
                     route = "${Routes.Saved.route}?category={category}",
                     arguments = listOf(

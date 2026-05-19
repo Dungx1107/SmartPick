@@ -67,8 +67,8 @@ fun MainBottomBarContent(
         ),
         NavItem(
             Icons.Outlined.AutoAwesome,
-            stringResource(R.string.ai_curator),
-            Routes.ChatBot.route
+            stringResource(R.string.reviews),
+            Routes.ReviewHub.route
         ),
         NavItem(
             Icons.Outlined.BookmarkBorder,
@@ -126,7 +126,7 @@ fun MainBottomBarPreview() {
 @Composable
 fun MainBottomBarAIPreview() {
     MainBottomBarContent(
-        currentRoute = Routes.ChatBot.route, // Thử giả lập đang chọn AI Curator
+        currentRoute = Routes.ReviewHub.route, // Thử giả lập đang chọn AI Curator
         onNavigate = {}
     )
 }

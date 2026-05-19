@@ -19,5 +19,7 @@ data class ReviewResponse(
     @SerialName("product_id") val productId: String,
     val rating: Int,
     val content: String,
-    @SerialName("created_at") val createdAt: String
+    @SerialName("created_at") val createdAt: String,
+    // Thêm để lấy thông tin sản phẩm khi xem lịch sử đánh giá
+    val products: Product? = null
 )

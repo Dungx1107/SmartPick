@@ -14,6 +14,7 @@ data class ProductDto(
     @SerialName("image_urls") val imageUrls: List<String> = emptyList(),
     @SerialName("video_url") val videoUrl: String? = null,
     val status: String = "available",
+    @SerialName("stock") val stock: Int = 1000,
+    @SerialName("sold_count") val soldCount: Int = 0,
     @SerialName("created_at") val createdAt: String? = null
 )
-

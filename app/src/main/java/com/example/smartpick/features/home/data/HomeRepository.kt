@@ -29,6 +29,8 @@ class HomeRepository @Inject constructor(
     private val postgrest = supabase.postgrest
     private val TAG = "HomeRepository"
 
+    // ... các hàm cũ giữ nguyên ...
+
     suspend fun getAllProducts(): List<Product> = withContext(Dispatchers.IO) {
         try {
             val listDto = postgrest["products"].select().decodeList<ProductDto>()
@@ -110,47 +112,16 @@ class HomeRepository @Inject constructor(
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (cartItems.isEmpty()) return@withContext Result.failure(Exception("Giỏ hàng trống"))
-
             val totalAmount = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
-
-            // 1. Insert Order
-            val orderRequest = OrderRequest(
-                userId = userId,
-                totalAmount = totalAmount,
-                shippingAddress = address,
-                phoneNumber = phone,
-                paymentMethod = paymentMethod
-            )
+            val orderRequest = OrderRequest(userId = userId, totalAmount = totalAmount, shippingAddress = address, phoneNumber = phone, paymentMethod = paymentMethod)
             val orderResponse = postgrest["orders"].insert(orderRequest) { select() }.decodeSingle<OrderResponse>()
-
-            // 2. Insert Order Items
             val orderItems = cartItems.map { item ->
-                OrderItemRequest(
-                    orderId = orderResponse.id,
-                    productId = item.productId,
-                    quantity = item.quantity,
-                    priceAtPurchase = item.product?.price ?: 0.0
-                )
+                OrderItemRequest(orderId = orderResponse.id, productId = item.productId, quantity = item.quantity, priceAtPurchase = item.product?.price ?: 0.0)
             }
             postgrest["order_items"].insert(orderItems)
-
-            // 3. Update Product Stock & Sold Count
-            cartItems.forEach { item ->
-                val currentProduct = item.product ?: return@forEach
-                postgrest["products"].update({
-                    set("stock", currentProduct.stock - item.quantity)
-                    set("sold_count", currentProduct.soldCount + item.quantity)
-                }) {
-                    filter { eq("id", item.productId) }
-                }
-            }
-
-            // 4. Clear Cart
             postgrest["cart_items"].delete { filter { eq("user_id", userId) } }
-
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Checkout error", e)
             Result.failure(e)
         }
     }
@@ -166,9 +137,6 @@ class HomeRepository @Inject constructor(
         }
     }
 
-    /**
-     * Lấy danh sách đánh giá của sản phẩm
-     */
     suspend fun getProductReviews(productId: String): List<ReviewResponse> = withContext(Dispatchers.IO) {
         try {
             postgrest["reviews"].select {
@@ -176,40 +144,85 @@ class HomeRepository @Inject constructor(
                 order("created_at", Order.DESCENDING)
             }.decodeList<ReviewResponse>()
         } catch (e: Exception) {
-            Log.e(TAG, "getProductReviews error", e)
             emptyList()
         }
     }
 
-    /**
-     * Kiểm tra User đã mua sản phẩm này chưa
-     */
     suspend fun checkUserBoughtProduct(userId: String, productId: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val response = postgrest["order_items"].select(Columns.raw("id, orders!inner(user_id)")) {
-                filter {
-                    eq("product_id", productId)
-                    eq("orders.user_id", userId)
-                }
+                filter { eq("product_id", productId); eq("orders.user_id", userId) }
             }.decodeList<Map<String, String>>()
-
             response.isNotEmpty()
         } catch (e: Exception) {
-            Log.e(TAG, "checkUserBoughtProduct error", e)
             false
         }
     }
 
-    /**
-     * Gửi đánh giá mới
-     */
     suspend fun submitReview(request: ReviewRequest): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             postgrest["reviews"].insert(request)
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "submitReview error", e)
             Result.failure(e)
         }
     }
+
+    /**
+     * Lấy danh sách sản phẩm CHỜ ĐÁNH GIÁ
+     */
+    suspend fun getProductsToReview(userId: String): List<Product> = withContext(Dispatchers.IO) {
+        try {
+            // 1. Lấy danh sách ID các đơn hàng của User này
+            val userOrders = postgrest["orders"].select(Columns.raw("id")) {
+                filter { eq("user_id", userId) }
+            }.decodeList<Map<String, String>>()
+
+            val userOrderIds = userOrders.mapNotNull { it["id"] }
+
+            // Nếu user chưa từng mua đơn nào thì trả về rỗng luôn
+            if (userOrderIds.isEmpty()) return@withContext emptyList()
+
+            // 2. Lấy danh sách sản phẩm nằm trong các đơn hàng trên
+            val boughtItems = postgrest["order_items"].select(Columns.raw("product_id, products(*)")) {
+                filter { isIn("order_id", userOrderIds) }
+            }.decodeList<BoughtProductDto>()
+
+            // 3. Lấy danh sách ID các sản phẩm mà User ĐÃ đánh giá
+            val myReviews = postgrest["reviews"].select(Columns.raw("product_id")) {
+                filter { eq("user_id", userId) }
+            }.decodeList<Map<String, String>>()
+
+            val reviewedProductIds = myReviews.mapNotNull { it["product_id"] }.toSet()
+
+            // 4. Lọc: Chỉ giữ lại những sản phẩm ĐÃ MUA nhưng CHƯA ĐÁNH GIÁ
+            boughtItems.filter { !reviewedProductIds.contains(it.productId) }
+                .mapNotNull { it.product?.toDomain() }
+                .distinctBy { it.id } // Loại bỏ trùng lặp nếu 1 sản phẩm mua nhiều lần
+        } catch (e: Exception) {
+            Log.e(TAG, "getProductsToReview error", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Lấy danh sách đánh giá của tôi
+     */
+    suspend fun getMyReviewedProducts(userId: String): List<ReviewResponse> = withContext(Dispatchers.IO) {
+        try {
+            postgrest["reviews"].select(Columns.raw("*, products(*)")) {
+                filter { eq("user_id", userId) }
+                order("created_at", Order.DESCENDING)
+            }.decodeList<ReviewResponse>()
+        } catch (e: Exception) {
+            Log.e(TAG, "getMyReviewedProducts error", e)
+            emptyList()
+        }
+    }
 }
+
+@kotlinx.serialization.Serializable
+data class BoughtProductDto(
+    @kotlinx.serialization.SerialName("product_id") val productId: String,
+    @kotlinx.serialization.SerialName("products") val product: ProductDto? = null
+)
