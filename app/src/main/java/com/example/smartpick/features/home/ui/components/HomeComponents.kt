@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -113,11 +114,12 @@ fun ProductGridCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
+                // Hiển thị cả Đã bán và Kho trên thẻ sản phẩm
                 Text(
-                    text = "Đã bán ${product.soldCount}",
+                    text = "Đã bán: ${product.soldCount} | Kho: ${product.stock}",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
-                    modifier = Modifier.padding(top = 2.dp)
+                    modifier = Modifier.padding(top = 4.dp)
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -260,8 +262,8 @@ fun ProductDetailContent(
     onBuyNow: () -> Unit,
     onSubmitReview: (Int, String) -> Unit
 ) {
-    var reviewRating by remember { mutableIntStateOf(5) }
-    var reviewContent by remember { mutableStateOf("") }
+    var reviewRating by rememberSaveable { mutableIntStateOf(5) }
+    var reviewContent by rememberSaveable { mutableStateOf("") }
 
     LazyColumn(
         modifier = Modifier
@@ -290,7 +292,12 @@ fun ProductDetailContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "${product.price}đ", style = MaterialTheme.typography.titleLarge, color = ErrorRed, fontWeight = FontWeight.Bold)
-                    Text(text = "Đã bán ${product.soldCount}", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+
+                    // Hiển thị Đã bán và Kho theo chiều dọc cho đẹp mắt
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(text = "Kho: ${product.stock}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                        Text(text = "Đã bán: ${product.soldCount}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

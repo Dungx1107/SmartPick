@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/home/ui/CheckoutScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.widget.Toast
@@ -11,8 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,9 +32,10 @@ fun CheckoutScreen(
     val cartItems by viewModel.cartItems.collectAsState()
     val context = LocalContext.current
 
-    var phone by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var paymentMethod by remember { mutableStateOf("COD") }
+    // Đảm bảo dữ liệu thanh toán không bị mất khi thay đổi cấu hình
+    var phone by rememberSaveable { mutableStateOf("") }
+    var address by rememberSaveable { mutableStateOf("") }
+    var paymentMethod by rememberSaveable { mutableStateOf("COD") }
 
     Scaffold(
         topBar = {
@@ -92,7 +91,6 @@ fun CheckoutScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Khối 1: Thông tin nhận hàng
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = White)) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -115,7 +113,6 @@ fun CheckoutScreen(
                 }
             }
 
-            // Khối 2: Phương thức thanh toán
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = White)) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -132,7 +129,6 @@ fun CheckoutScreen(
                 }
             }
 
-            // Khối 3: Tóm tắt đơn hàng
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = White)) {
                     Column(modifier = Modifier.padding(16.dp)) {
