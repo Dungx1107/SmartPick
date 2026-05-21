@@ -1,6 +1,5 @@
 package com.example.smartpick.features.feed.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Post
@@ -38,13 +37,11 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = FeedUiState.Loading
             try {
-                val user = authRepository.getCurrentUser()
-                val currentUserId = user?.id ?: ""
+                val currentUserId = authRepository.getCurrentUser()?.id ?: ""
                 val posts = feedRepository.getPostsWithUsers(currentUserId)
-                val feedPosts = posts.filter { it.first.sharedPostId == null }
-                _uiState.value = FeedUiState.Success(feedPosts)
+                _uiState.value = FeedUiState.Success(posts.filter { it.first.sharedPostId == null })
             } catch (e: Exception) {
-                _uiState.value = FeedUiState.Error(e.message ?: "Đã xảy ra lỗi")
+                _uiState.value = FeedUiState.Error(e.message ?: "Lỗi")
             }
         }
     }
@@ -52,11 +49,9 @@ class FeedViewModel @Inject constructor(
     fun refreshFeedSilently() {
         viewModelScope.launch {
             try {
-                val user = authRepository.getCurrentUser()
-                val currentUserId = user?.id ?: ""
+                val currentUserId = authRepository.getCurrentUser()?.id ?: ""
                 val posts = feedRepository.getPostsWithUsers(currentUserId)
-                val feedPosts = posts.filter { it.first.sharedPostId == null }
-                _uiState.value = FeedUiState.Success(feedPosts)
+                _uiState.value = FeedUiState.Success(posts.filter { it.first.sharedPostId == null })
                 _reactedPosts.value = feedRepository.getReactedPosts(currentUserId)
             } catch (e: Exception) { }
         }
@@ -75,28 +70,34 @@ class FeedViewModel @Inject constructor(
         }
     }
 
-    // FIX: Quét cập nhật trạng thái nếu thả tim vào bài viết Gốc nằm trong bài Share
+    // TÍNH TOÁN NGẦM ĐỂ TĂNG/GIẢM CẢM XÚC
+    private fun updatePostReaction(post: Post, newReaction: ReactionType): Post {
+        val oldReaction = post.currentUserReaction
+        val breakdown = post.reactionBreakdown.toMutableMap()
+        var count = post.reactionCount
+
+        if (oldReaction == newReaction) {
+            breakdown[oldReaction] = maxOf(0, (breakdown[oldReaction] ?: 0) - 1)
+            if (breakdown[oldReaction] == 0) breakdown.remove(oldReaction)
+            count = maxOf(0, count - 1)
+            return post.copy(currentUserReaction = null, reactionCount = count, reactionBreakdown = breakdown)
+        } else {
+            if (oldReaction != null) {
+                breakdown[oldReaction] = maxOf(0, (breakdown[oldReaction] ?: 0) - 1)
+                if (breakdown[oldReaction] == 0) breakdown.remove(oldReaction)
+            } else count += 1
+            breakdown[newReaction] = (breakdown[newReaction] ?: 0) + 1
+            return post.copy(currentUserReaction = newReaction, reactionCount = count, reactionBreakdown = breakdown)
+        }
+    }
+
     fun toggleReaction(postId: String, reactionType: ReactionType) {
         val currentState = _uiState.value
         if (currentState is FeedUiState.Success) {
             val updatedPosts = currentState.posts.map { (post, user, product) ->
                 var updatedPost = post
-
-                if (updatedPost.id == postId) {
-                    val isRemoving = updatedPost.currentUserReaction == reactionType
-                    val newReaction = if (isRemoving) null else reactionType
-                    val newCount = if (isRemoving) maxOf(0, updatedPost.reactionCount - 1) else if (updatedPost.currentUserReaction == null) updatedPost.reactionCount + 1 else updatedPost.reactionCount
-                    updatedPost = updatedPost.copy(currentUserReaction = newReaction, reactionCount = newCount)
-                }
-
-                if (updatedPost.sharedPost?.id == postId) {
-                    val innerPost = updatedPost.sharedPost
-                    val isRemoving = innerPost.currentUserReaction == reactionType
-                    val newReaction = if (isRemoving) null else reactionType
-                    val newCount = if (isRemoving) maxOf(0, innerPost.reactionCount - 1) else if (innerPost.currentUserReaction == null) innerPost.reactionCount + 1 else innerPost.reactionCount
-                    updatedPost = updatedPost.copy(sharedPost = innerPost.copy(currentUserReaction = newReaction, reactionCount = newCount))
-                }
-
+                if (updatedPost.id == postId) updatedPost = updatePostReaction(updatedPost, reactionType)
+                if (updatedPost.sharedPost?.id == postId) updatedPost = updatedPost.copy(sharedPost = updatePostReaction(updatedPost.sharedPost, reactionType))
                 Triple(updatedPost, user, product)
             }
             _uiState.value = FeedUiState.Success(updatedPosts)
@@ -105,18 +106,10 @@ class FeedViewModel @Inject constructor(
         val updatedReacted = _reactedPosts.value.mapNotNull { (post, user, product) ->
             var updatedPost = post
             if (updatedPost.id == postId) {
-                val isRemoving = updatedPost.currentUserReaction == reactionType
-                if (isRemoving) return@mapNotNull null
-                val newCount = if (updatedPost.currentUserReaction == null) updatedPost.reactionCount + 1 else updatedPost.reactionCount
-                updatedPost = updatedPost.copy(currentUserReaction = reactionType, reactionCount = newCount)
+                if (updatedPost.currentUserReaction == reactionType) return@mapNotNull null
+                updatedPost = updatePostReaction(updatedPost, reactionType)
             }
-            if (updatedPost.sharedPost?.id == postId) {
-                val innerPost = updatedPost.sharedPost
-                val isRemoving = innerPost.currentUserReaction == reactionType
-                val newReaction = if (isRemoving) null else reactionType
-                val newCount = if (isRemoving) maxOf(0, innerPost.reactionCount - 1) else if (innerPost.currentUserReaction == null) innerPost.reactionCount + 1 else innerPost.reactionCount
-                updatedPost = updatedPost.copy(sharedPost = innerPost.copy(currentUserReaction = newReaction, reactionCount = newCount))
-            }
+            if (updatedPost.sharedPost?.id == postId) updatedPost = updatedPost.copy(sharedPost = updatePostReaction(updatedPost.sharedPost, reactionType))
             Triple(updatedPost, user, product)
         }
         _reactedPosts.value = updatedReacted
@@ -135,10 +128,7 @@ class FeedViewModel @Inject constructor(
                 val currentUserId = authRepository.getCurrentUser()?.id
                 if (currentUserId != null) {
                     val result = feedRepository.sharePost(postId, currentUserId, caption)
-                    if (result.isSuccess) {
-                        onSuccess()
-                        refreshFeedSilently()
-                    }
+                    if (result.isSuccess) { onSuccess(); refreshFeedSilently() }
                 }
             } catch (e: Exception) { }
         }

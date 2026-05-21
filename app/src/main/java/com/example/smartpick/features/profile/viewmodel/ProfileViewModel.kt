@@ -1,6 +1,5 @@
 package com.example.smartpick.features.profile.viewmodel
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Post
@@ -34,33 +33,36 @@ class ProfileViewModel @Inject constructor(
             try {
                 val posts = feedRepository.getUserPosts(profileUserId, currentUserId)
                 _userPosts.value = posts
-            } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Lỗi tải bài viết trang cá nhân: ${e.message}")
-            } finally {
-                _isLoading.value = false
-            }
+            } catch (e: Exception) { }
+            finally { _isLoading.value = false }
         }
     }
 
-    // FIX: Quét cập nhật trạng thái nếu thả tim vào bài viết Gốc
+    private fun updatePostReaction(post: Post, newReaction: ReactionType): Post {
+        val oldReaction = post.currentUserReaction
+        val breakdown = post.reactionBreakdown.toMutableMap()
+        var count = post.reactionCount
+
+        if (oldReaction == newReaction) {
+            breakdown[oldReaction] = maxOf(0, (breakdown[oldReaction] ?: 0) - 1)
+            if (breakdown[oldReaction] == 0) breakdown.remove(oldReaction)
+            count = maxOf(0, count - 1)
+            return post.copy(currentUserReaction = null, reactionCount = count, reactionBreakdown = breakdown)
+        } else {
+            if (oldReaction != null) {
+                breakdown[oldReaction] = maxOf(0, (breakdown[oldReaction] ?: 0) - 1)
+                if (breakdown[oldReaction] == 0) breakdown.remove(oldReaction)
+            } else count += 1
+            breakdown[newReaction] = (breakdown[newReaction] ?: 0) + 1
+            return post.copy(currentUserReaction = newReaction, reactionCount = count, reactionBreakdown = breakdown)
+        }
+    }
+
     fun toggleReaction(postId: String, reactionType: ReactionType) {
         val updatedPosts = _userPosts.value.map { (post, user, product) ->
             var updatedPost = post
-
-            if (updatedPost.id == postId) {
-                val isRemoving = updatedPost.currentUserReaction == reactionType
-                val newReaction = if (isRemoving) null else reactionType
-                val newCount = if (isRemoving) maxOf(0, updatedPost.reactionCount - 1) else if (updatedPost.currentUserReaction == null) updatedPost.reactionCount + 1 else updatedPost.reactionCount
-                updatedPost = updatedPost.copy(currentUserReaction = newReaction, reactionCount = newCount)
-            }
-
-            if (updatedPost.sharedPost?.id == postId) {
-                val innerPost = updatedPost.sharedPost
-                val isRemoving = innerPost.currentUserReaction == reactionType
-                val newReaction = if (isRemoving) null else reactionType
-                val newCount = if (isRemoving) maxOf(0, innerPost.reactionCount - 1) else if (innerPost.currentUserReaction == null) innerPost.reactionCount + 1 else innerPost.reactionCount
-                updatedPost = updatedPost.copy(sharedPost = innerPost.copy(currentUserReaction = newReaction, reactionCount = newCount))
-            }
+            if (updatedPost.id == postId) updatedPost = updatePostReaction(updatedPost, reactionType)
+            if (updatedPost.sharedPost?.id == postId) updatedPost = updatedPost.copy(sharedPost = updatePostReaction(updatedPost.sharedPost, reactionType))
             Triple(updatedPost, user, product)
         }
         _userPosts.value = updatedPosts
@@ -79,10 +81,7 @@ class ProfileViewModel @Inject constructor(
                 val currentUserId = authRepository.getCurrentUser()?.id
                 if (currentUserId != null) {
                     val result = feedRepository.sharePost(postId, currentUserId, caption)
-                    if (result.isSuccess) {
-                        onSuccess()
-                        loadUserPosts(currentUserId, currentUserId) // Load lại trang cá nhân
-                    }
+                    if (result.isSuccess) { onSuccess(); loadUserPosts(currentUserId, currentUserId) }
                 }
             } catch (e: Exception) { }
         }

@@ -19,7 +19,6 @@ enum class ReactionType {
     }
 }
 
-// FIX 1: Bỏ @Serializable ở đây vì đây là Domain Model, chỉ cần @Parcelize
 @Parcelize
 data class Post(
     val id: String? = null,
@@ -32,7 +31,9 @@ data class Post(
     val reactionCount: Int = 0,
     val currentUserReaction: ReactionType? = null,
 
-    // FIX 2: Thêm @RawValue để thư viện Parcelize hiểu cách truyền Object lồng nhau
+    // TÚI ĐẾM CẢM XÚC (Chỉ chứa những cảm xúc có người thả)
+    val reactionBreakdown: @RawValue Map<ReactionType, Int> = emptyMap(),
+
     val sharedPostId: String? = null,
     val sharedPost: @RawValue Post? = null,
     val sharedPostUser: @RawValue User? = null

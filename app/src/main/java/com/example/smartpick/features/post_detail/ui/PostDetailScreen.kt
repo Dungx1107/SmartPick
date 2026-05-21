@@ -77,9 +77,7 @@ fun PostDetailScreen(
     val latestReaction = remember(currentPostId, feedState) {
         if (feedState is FeedUiState.Success && currentPostId != null) {
             (feedState as FeedUiState.Success).posts.find { it.first.id == currentPostId }?.first?.currentUserReaction
-        } else {
-            uiState.post?.currentUserReaction
-        }
+        } else uiState.post?.currentUserReaction
     }
 
     PostDetailContent(
@@ -92,23 +90,17 @@ fun PostDetailScreen(
         onBackClick = onBackClick,
         onReactionClick = { postId, reactionType -> feedViewModel.toggleReaction(postId, reactionType) },
         onShareClick = { postId, caption ->
-            feedViewModel.sharePost(postId, caption) {
-                Toast.makeText(context, "Đã chia sẻ lên Trang cá nhân!", Toast.LENGTH_SHORT).show()
-            }
+            feedViewModel.sharePost(postId, caption) { Toast.makeText(context, "Đã chia sẻ lên Trang cá nhân!", Toast.LENGTH_SHORT).show() }
         },
         onSendComment = { text ->
             val postId = uiState.post?.id
             val currentUserId = currentUser?.id
-            if (postId != null && currentUserId != null) {
-                commentViewModel.sendComment(postId, currentUserId, text, uiState.post?.userId)
-            }
+            if (postId != null && currentUserId != null) commentViewModel.sendComment(postId, currentUserId, text, uiState.post?.userId)
         },
         onLikeCommentClick = { commentId ->
             val postId = uiState.post?.id
             val currentUserId = currentUser?.id
-            if (postId != null && currentUserId != null) {
-                commentViewModel.toggleLikeComment(commentId, currentUserId, postId, uiState.post?.userId)
-            }
+            if (postId != null && currentUserId != null) commentViewModel.toggleLikeComment(commentId, currentUserId, postId, uiState.post?.userId)
         },
         onReplyCommentClick = { comment -> commentViewModel.setReplyingTo(comment) },
         onCancelReply = { commentViewModel.setReplyingTo(null) },
@@ -140,6 +132,28 @@ fun PostDetailContent(
 
     val post = uiState.post
     var localReaction by remember(post?.id, latestReaction) { mutableStateOf(latestReaction) }
+    var localReactionCount by remember(post?.id, post?.reactionCount, latestReaction) { mutableIntStateOf(post?.reactionCount ?: 0) }
+    var localBreakdown by remember(post?.id, post?.reactionBreakdown, latestReaction) { mutableStateOf(post?.reactionBreakdown ?: emptyMap()) }
+
+    val handleReaction = { reaction: ReactionType ->
+        val oldReaction = localReaction
+        val newBreakdown = localBreakdown.toMutableMap()
+        if (oldReaction == reaction) {
+            localReaction = null
+            localReactionCount = maxOf(0, localReactionCount - 1)
+            newBreakdown[oldReaction] = maxOf(0, (newBreakdown[oldReaction] ?: 0) - 1)
+            if (newBreakdown[oldReaction] == 0) newBreakdown.remove(oldReaction)
+        } else {
+            if (oldReaction != null) {
+                newBreakdown[oldReaction] = maxOf(0, (newBreakdown[oldReaction] ?: 0) - 1)
+                if (newBreakdown[oldReaction] == 0) newBreakdown.remove(oldReaction)
+            } else localReactionCount += 1
+            localReaction = reaction
+            newBreakdown[reaction] = (newBreakdown[reaction] ?: 0) + 1
+        }
+        localBreakdown = newBreakdown
+        post?.id?.let { onReactionClick(it, reaction) }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.BaiViet), fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, contentDescription = null) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) },
@@ -170,15 +184,8 @@ fun PostDetailContent(
 
                         if (post.sharedPost != null && post.sharedPostUser != null) {
                             item {
-                                if (!post.content.isNullOrBlank()) {
-                                    Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp)
-                                }
-                                SharedPostCard(
-                                    sharedPost = post.sharedPost,
-                                    sharedUser = post.sharedPostUser,
-                                    onPostClick = {  },
-                                    onReactionClick = { id, reaction -> onReactionClick(id, reaction) }
-                                )
+                                if (!post.content.isNullOrBlank()) Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp)
+                                SharedPostCard(sharedPost = post.sharedPost, sharedUser = post.sharedPostUser, onPostClick = {  }, onReactionClick = { id, reaction -> onReactionClick(id, reaction) })
                             }
                         } else {
                             item { if (!post.content.isNullOrBlank()) { Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp, lineHeight = 24.sp) } }
@@ -204,30 +211,29 @@ fun PostDetailContent(
                         item {
                             Box(modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)) {
                                 Column {
+                                    if (localReactionCount > 0) {
+                                        Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp).padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            val topIcons = localBreakdown.entries.sortedByDescending { it.value }.take(3).joinToString(" ") { it.key.getIcon() }
+                                            Text(text = topIcons.ifEmpty { "👍" }, fontSize = 12.sp)
+                                            Spacer(Modifier.width(4.dp))
+                                            Text(text = "$localReactionCount", fontSize = 13.sp, color = TextMuted)
+                                        }
+                                    }
+
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                                            ReactionButton(
-                                                currentReaction = localReaction,
-                                                onLongPress = { showReactionPopup = true },
-                                                onClick = {
-                                                    if (localReaction == null) {
-                                                        localReaction = ReactionType.LIKE
-                                                        onReactionClick(post.id.toString(), ReactionType.LIKE)
-                                                    } else {
-                                                        val old = localReaction!!
-                                                        localReaction = null
-                                                        onReactionClick(post.id.toString(), old)
-                                                    }
-                                                }
-                                            )
+                                            ReactionButton(currentReaction = localReaction, onLongPress = { showReactionPopup = true }, onClick = { handleReaction(ReactionType.LIKE) })
                                         }
                                         PostActionButton(icon = Icons.Outlined.ChatBubbleOutline, text = stringResource(R.string.BinhLuan), onClick = { }, modifier = Modifier.weight(1f))
                                         PostActionButton(icon = Icons.Outlined.Share, text = stringResource(R.string.ChiaSe), onClick = { showShareDialog = true }, modifier = Modifier.weight(1f))
                                     }
                                 }
                                 if (showReactionPopup) {
-                                    ReactionPopup(onDismiss = { showReactionPopup = false }, onReactionSelected = { reaction -> localReaction = reaction; showReactionPopup = false; onReactionClick(post.id.toString(), reaction) })
+                                    ReactionPopup(onDismiss = { showReactionPopup = false }, onReactionSelected = { reaction ->
+                                        showReactionPopup = false
+                                        handleReaction(reaction)
+                                    })
                                 }
                             }
                         }
