@@ -108,8 +108,18 @@ fun PostMainContent(modifier: Modifier = Modifier, content: String?, mediaUrls: 
     }
 }
 
+// FIX: Nâng cấp bài chia sẻ có đầy đủ nút cảm xúc
 @Composable
-fun SharedPostCard(sharedPost: Post, sharedUser: User, onPostClick: () -> Unit) {
+fun SharedPostCard(
+    sharedPost: Post,
+    sharedUser: User,
+    onPostClick: () -> Unit,
+    onReactionClick: (String, ReactionType) -> Unit = { _, _ -> }
+) {
+    var showReactionPopup by remember { mutableStateOf(false) }
+    var localReaction by remember(sharedPost.currentUserReaction) { mutableStateOf(sharedPost.currentUserReaction) }
+    var localReactionCount by remember(sharedPost.reactionCount, sharedPost.currentUserReaction) { mutableIntStateOf(sharedPost.reactionCount) }
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).clickable { onPostClick() },
         shape = RoundedCornerShape(12.dp),
@@ -118,7 +128,46 @@ fun SharedPostCard(sharedPost: Post, sharedUser: User, onPostClick: () -> Unit) 
     ) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
             PostHeader(user = sharedUser, createdAt = sharedPost.createdAt ?: "Vừa xong")
-            PostMainContent(content = sharedPost.content, mediaUrls = sharedPost.mediaUrls, product = null, onMediaClick = { onPostClick() })
+            PostMainContent(content = sharedPost.content, mediaUrls = sharedPost.mediaUrls, product = null, onMediaClick = { _ -> onPostClick() })
+
+            if (localReactionCount > 0) {
+                Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "👍 ❤️ 😂", fontSize = 12.sp)
+                    Spacer(Modifier.width(4.dp))
+                    Text(text = "$localReactionCount", fontSize = 13.sp, color = TextMuted)
+                }
+            }
+
+            Box {
+                Column {
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 12.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+                        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                            ReactionButton(currentReaction = localReaction, onLongPress = { showReactionPopup = true }, onClick = {
+                                if (localReaction == null) {
+                                    localReaction = ReactionType.LIKE
+                                    localReactionCount += 1
+                                    onReactionClick(sharedPost.id.toString(), ReactionType.LIKE)
+                                } else {
+                                    val old = localReaction!!
+                                    localReaction = null
+                                    localReactionCount = maxOf(0, localReactionCount - 1)
+                                    onReactionClick(sharedPost.id.toString(), old)
+                                }
+                            })
+                        }
+                        PostActionButton(icon = Icons.Outlined.ChatBubbleOutline, text = stringResource(R.string.BinhLuan), onClick = { onPostClick() }, modifier = Modifier.weight(1f))
+                    }
+                }
+                if (showReactionPopup) {
+                    ReactionPopup(onDismiss = { showReactionPopup = false }, onReactionSelected = { reaction ->
+                        if (localReaction == null) localReactionCount += 1
+                        localReaction = reaction
+                        showReactionPopup = false
+                        onReactionClick(sharedPost.id.toString(), reaction)
+                    })
+                }
+            }
         }
     }
 }
@@ -187,8 +236,9 @@ fun PostItem(
     product: Product? = null,
     onPostClick: () -> Unit = {},
     onProductClick: (Product) -> Unit = {},
-    onReactionClick: (ReactionType) -> Unit = {},
-    onShareClick: (String) -> Unit = {}, // Trả về Nội dung Caption
+    // FIX: Nâng cấp hàm onClick nhận theo Id để phân biệt bài trong/ngoài
+    onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
+    onShareClick: (String) -> Unit = {},
     isDetailView: Boolean = false,
 ) {
     var showReactionPopup by remember { mutableStateOf(false) }
@@ -198,14 +248,18 @@ fun PostItem(
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onPostClick() }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), shape = RoundedCornerShape(0.dp)) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
 
-            // Xử lý bài Share chuẩn Facebook
             PostHeader(user = user, createdAt = post.createdAt ?: "Vừa xong", isShared = post.sharedPostId != null)
 
             if (post.sharedPost != null && post.sharedPostUser != null) {
                 if (!post.content.isNullOrBlank()) {
                     Text(text = post.content, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), fontSize = 15.sp)
                 }
-                SharedPostCard(sharedPost = post.sharedPost, sharedUser = post.sharedPostUser, onPostClick = { onPostClick() })
+                SharedPostCard(
+                    sharedPost = post.sharedPost,
+                    sharedUser = post.sharedPostUser,
+                    onPostClick = { onPostClick() },
+                    onReactionClick = onReactionClick // Chuyền sự kiện cho bài gốc
+                )
             } else {
                 PostMainContent(content = post.content, mediaUrls = post.mediaUrls, product = product, onMediaClick = { _ -> onPostClick() }, onProductClick = onProductClick)
             }
@@ -219,11 +273,11 @@ fun PostItem(
                             ReactionButton(currentReaction = localReaction, onLongPress = { showReactionPopup = true }, onClick = {
                                 if (localReaction == null) {
                                     localReaction = ReactionType.LIKE
-                                    onReactionClick(ReactionType.LIKE)
+                                    onReactionClick(post.id.toString(), ReactionType.LIKE)
                                 } else {
-                                    val oldReaction = localReaction!!
+                                    val old = localReaction!!
                                     localReaction = null
-                                    onReactionClick(oldReaction)
+                                    onReactionClick(post.id.toString(), old)
                                 }
                             })
                         }
@@ -232,10 +286,10 @@ fun PostItem(
                     }
                 }
                 if (showReactionPopup) {
-                    ReactionPopup(onDismiss = { showReactionPopup = false }, onReactionSelected = { selectedReaction ->
-                        localReaction = selectedReaction
+                    ReactionPopup(onDismiss = { showReactionPopup = false }, onReactionSelected = { reaction ->
+                        localReaction = reaction
                         showReactionPopup = false
-                        onReactionClick(selectedReaction)
+                        onReactionClick(post.id.toString(), reaction)
                     })
                 }
             }

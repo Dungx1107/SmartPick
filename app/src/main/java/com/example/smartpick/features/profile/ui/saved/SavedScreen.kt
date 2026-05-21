@@ -175,14 +175,13 @@ fun SavedCollectionScreen(
                     }
                 } else {
                     items(reactedPosts, span = { GridItemSpan(2) }) { (post, user, product) ->
-                        // Tái sử dụng lại trọn vẹn PostItem
                         PostItem(
                             post = post,
                             user = user,
                             product = product,
                             onPostClick = { navController.navigate(Routes.PostDetail.createRoute(post.id.toString())) },
-                            onReactionClick = { reactionType ->
-                                feedViewModel.toggleReaction(post.id.toString(), reactionType)
+                            onReactionClick = { id, reactionType ->
+                                feedViewModel.toggleReaction(id, reactionType)
                             }
                         )
                     }

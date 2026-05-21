@@ -54,9 +54,7 @@ fun FeedScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.refreshFeedSilently()
-            }
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.refreshFeedSilently()
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -68,9 +66,7 @@ fun FeedScreen(
         paddingValues = paddingValues,
         onPostClick = onPostClick,
         onCreatePostClick = onCreatePostClick,
-        onReactionClick = { postId, type ->
-            viewModel.toggleReaction(postId, type)
-        },
+        onReactionClick = { postId, type -> viewModel.toggleReaction(postId, type) },
         onShareClick = { postId, caption ->
             viewModel.sharePost(postId, caption) {
                 Toast.makeText(context, "Đã chia sẻ lên Trang cá nhân!", Toast.LENGTH_SHORT).show()
@@ -104,7 +100,7 @@ fun FeedContent(
                             product = product,
                             isDetailView = false,
                             onPostClick = { onPostClick(post.id.toString()) },
-                            onReactionClick = { reactionType -> onReactionClick(post.id.toString(), reactionType) },
+                            onReactionClick = { id, reaction -> onReactionClick(id, reaction) },
                             onShareClick = { caption -> onShareClick(post.id.toString(), caption) }
                         )
                     }

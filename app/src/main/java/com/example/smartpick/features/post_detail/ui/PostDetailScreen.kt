@@ -173,7 +173,12 @@ fun PostDetailContent(
                                 if (!post.content.isNullOrBlank()) {
                                     Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp)
                                 }
-                                SharedPostCard(sharedPost = post.sharedPost, sharedUser = post.sharedPostUser, onPostClick = {  })
+                                SharedPostCard(
+                                    sharedPost = post.sharedPost,
+                                    sharedUser = post.sharedPostUser,
+                                    onPostClick = {  },
+                                    onReactionClick = { id, reaction -> onReactionClick(id, reaction) }
+                                )
                             }
                         } else {
                             item { if (!post.content.isNullOrBlank()) { Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp, lineHeight = 24.sp) } }

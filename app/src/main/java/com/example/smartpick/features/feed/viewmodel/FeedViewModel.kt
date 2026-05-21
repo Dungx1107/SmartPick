@@ -41,8 +41,6 @@ class FeedViewModel @Inject constructor(
                 val user = authRepository.getCurrentUser()
                 val currentUserId = user?.id ?: ""
                 val posts = feedRepository.getPostsWithUsers(currentUserId)
-
-                // LỌC: Ẩn các bài đã chia sẻ khỏi Bảng tin (Chỉ hiện bài gốc)
                 val feedPosts = posts.filter { it.first.sharedPostId == null }
                 _uiState.value = FeedUiState.Success(feedPosts)
             } catch (e: Exception) {
@@ -57,13 +55,10 @@ class FeedViewModel @Inject constructor(
                 val user = authRepository.getCurrentUser()
                 val currentUserId = user?.id ?: ""
                 val posts = feedRepository.getPostsWithUsers(currentUserId)
-
                 val feedPosts = posts.filter { it.first.sharedPostId == null }
                 _uiState.value = FeedUiState.Success(feedPosts)
                 _reactedPosts.value = feedRepository.getReactedPosts(currentUserId)
-            } catch (e: Exception) {
-                Log.e("FeedViewModel", "Lỗi refresh ngầm", e)
-            }
+            } catch (e: Exception) { }
         }
     }
 
@@ -75,34 +70,54 @@ class FeedViewModel @Inject constructor(
                 if (user?.id?.isNotEmpty() == true) {
                     _reactedPosts.value = feedRepository.getReactedPosts(user.id)
                 }
-            } catch (e: Exception) {
-                Log.e("FeedViewModel", "Lỗi tải bài đã thích", e)
-            } finally {
-                _isReactedLoading.value = false
-            }
+            } catch (e: Exception) { }
+            finally { _isReactedLoading.value = false }
         }
     }
 
+    // FIX: Quét cập nhật trạng thái nếu thả tim vào bài viết Gốc nằm trong bài Share
     fun toggleReaction(postId: String, reactionType: ReactionType) {
         val currentState = _uiState.value
         if (currentState is FeedUiState.Success) {
             val updatedPosts = currentState.posts.map { (post, user, product) ->
-                if (post.id == postId) {
-                    val isRemoving = post.currentUserReaction == reactionType
+                var updatedPost = post
+
+                if (updatedPost.id == postId) {
+                    val isRemoving = updatedPost.currentUserReaction == reactionType
                     val newReaction = if (isRemoving) null else reactionType
-                    val newCount = if (isRemoving) maxOf(0, post.reactionCount - 1) else if (post.currentUserReaction == null) post.reactionCount + 1 else post.reactionCount
-                    Triple(post.copy(currentUserReaction = newReaction, reactionCount = newCount), user, product)
-                } else { Triple(post, user, product) }
+                    val newCount = if (isRemoving) maxOf(0, updatedPost.reactionCount - 1) else if (updatedPost.currentUserReaction == null) updatedPost.reactionCount + 1 else updatedPost.reactionCount
+                    updatedPost = updatedPost.copy(currentUserReaction = newReaction, reactionCount = newCount)
+                }
+
+                if (updatedPost.sharedPost?.id == postId) {
+                    val innerPost = updatedPost.sharedPost
+                    val isRemoving = innerPost.currentUserReaction == reactionType
+                    val newReaction = if (isRemoving) null else reactionType
+                    val newCount = if (isRemoving) maxOf(0, innerPost.reactionCount - 1) else if (innerPost.currentUserReaction == null) innerPost.reactionCount + 1 else innerPost.reactionCount
+                    updatedPost = updatedPost.copy(sharedPost = innerPost.copy(currentUserReaction = newReaction, reactionCount = newCount))
+                }
+
+                Triple(updatedPost, user, product)
             }
             _uiState.value = FeedUiState.Success(updatedPosts)
         }
 
         val updatedReacted = _reactedPosts.value.mapNotNull { (post, user, product) ->
-            if (post.id == postId) {
-                val isRemoving = post.currentUserReaction == reactionType
-                if (isRemoving) null
-                else Triple(post.copy(currentUserReaction = reactionType, reactionCount = if (post.currentUserReaction == null) post.reactionCount + 1 else post.reactionCount), user, product)
-            } else { Triple(post, user, product) }
+            var updatedPost = post
+            if (updatedPost.id == postId) {
+                val isRemoving = updatedPost.currentUserReaction == reactionType
+                if (isRemoving) return@mapNotNull null
+                val newCount = if (updatedPost.currentUserReaction == null) updatedPost.reactionCount + 1 else updatedPost.reactionCount
+                updatedPost = updatedPost.copy(currentUserReaction = reactionType, reactionCount = newCount)
+            }
+            if (updatedPost.sharedPost?.id == postId) {
+                val innerPost = updatedPost.sharedPost
+                val isRemoving = innerPost.currentUserReaction == reactionType
+                val newReaction = if (isRemoving) null else reactionType
+                val newCount = if (isRemoving) maxOf(0, innerPost.reactionCount - 1) else if (innerPost.currentUserReaction == null) innerPost.reactionCount + 1 else innerPost.reactionCount
+                updatedPost = updatedPost.copy(sharedPost = innerPost.copy(currentUserReaction = newReaction, reactionCount = newCount))
+            }
+            Triple(updatedPost, user, product)
         }
         _reactedPosts.value = updatedReacted
 
