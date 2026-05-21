@@ -1,3 +1,4 @@
+// File: app/src/main/java/com/example/smartpick/navigation/AppNavigation.kt
 package com.example.smartpick.navigation
 
 import androidx.compose.foundation.layout.Box
@@ -204,7 +205,6 @@ fun AppNavigation(
                     EditProfileScreen(onNavigateBack = { navController.popBackStack() })
                 }
 
-                // ĐÃ FIX: Xóa tham số onCommentClick dư thừa
                 composable(
                     route = Routes.PostDetail.route,
                     arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
@@ -216,7 +216,7 @@ fun AppNavigation(
                     )
                 }
 
-                // Route dành cho màn hình comments riêng (nếu bạn vẫn gọi từ FeedScreen)
+                // Route dành cho màn hình comments riêng (nếu bạn vẫn gọi từ thông báo)
                 composable(
                     route = "${Routes.Comments.route}?commentId={commentId}",
                     arguments = listOf(
@@ -242,12 +242,7 @@ fun AppNavigation(
                     FeedScreen(
                         paddingValues = PaddingValues(0.dp),
                         onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
-                        onCommentClick = { postId, ownerId ->
-                            currentUser?.id?.let {
-                                // Vẫn giữ điều hướng từ Bảng tin (Feed) sang màn hình Comments riêng nếu muốn
-                                navController.navigate(Routes.Comments.createRoute(postId, ownerId))
-                            }
-                        },
+                        // ĐÃ XÓA onCommentClick Ở ĐÂY ĐỂ FIX LỖI
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
                 }

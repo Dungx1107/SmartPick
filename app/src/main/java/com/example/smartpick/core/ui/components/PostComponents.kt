@@ -22,6 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -161,13 +162,10 @@ fun PostMainContent(
             )
         }
 
-        // FIX 1: Lọc bỏ các URL rỗng ("") để tránh bị lỗi khoảng trắng
-        val validMediaUrls = mediaUrls.filter { it.isNotBlank() }
-
-        if (validMediaUrls.isNotEmpty()) {
+        if (mediaUrls.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             MediaGrid(
-                mediaUrls = validMediaUrls,
+                mediaUrls = mediaUrls,
                 onMediaClick = onMediaClick,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
@@ -245,7 +243,6 @@ fun ReactionButton(
             }
             .padding(vertical = 12.dp)
     ) {
-        // Đã sửa lỗi !! không cần thiết ở đây
         if (currentReaction != null) {
             Text(currentReaction.getIcon(), fontSize = 18.sp)
         } else {
@@ -303,6 +300,8 @@ fun PostItem(
 ) {
     var showReactionPopup by remember { mutableStateOf(false) }
     var localReaction by remember(post.currentUserReaction) { mutableStateOf(post.currentUserReaction) }
+
+    // Vẫn giữ biến này để quản lý logic nội bộ (tránh lỗi logic Code cũ) nhưng KHÔNG HIỂN THỊ NỮA
     var localReactionCount by remember(post.reactionCount, post.currentUserReaction) { mutableIntStateOf(post.reactionCount) }
 
     Card(
@@ -321,22 +320,11 @@ fun PostItem(
                 content = post.content,
                 mediaUrls = post.mediaUrls,
                 product = product,
-                // ĐÃ FIX: Khi nhấn vào bức ảnh bất kỳ trong Grid, tự động mở màn hình chi tiết
                 onMediaClick = { _ -> onPostClick() },
                 onProductClick = onProductClick
             )
 
-            if (localReactionCount > 0) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "👍 ❤️ 😂", fontSize = 12.sp)
-                    Spacer(Modifier.width(4.dp))
-                    Text(text = "$localReactionCount", fontSize = 13.sp, color = TextMuted)
-                }
-            }
-
+            // ĐÃ XÓA KHỐI HIỂN THỊ SỐ LƯỢNG LIKE / LOVE TẠI ĐÂY
             Spacer(modifier = Modifier.height(8.dp))
 
             Box {
@@ -369,8 +357,6 @@ fun PostItem(
                         PostActionButton(
                             icon = Icons.Outlined.ChatBubbleOutline,
                             text = stringResource(R.string.BinhLuan),
-                            // Đổi onCommentClick thành click toàn bài để dễ điều hướng
-                            // (hoặc bạn có thể giữ nguyên nếu muốn mở luôn bàn phím)
                             onClick = { onPostClick() },
                             modifier = Modifier.weight(1f)
                         )

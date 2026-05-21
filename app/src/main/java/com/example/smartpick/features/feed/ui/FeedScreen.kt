@@ -14,31 +14,28 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.smartpick.R
-import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.PostItem
-import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.feed.viewmodel.FeedUiState
 import com.example.smartpick.features.feed.viewmodel.FeedViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.compose.runtime.DisposableEffect
 
 @Composable
 fun FeedScreen(
@@ -46,13 +43,12 @@ fun FeedScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit = {},
-    onCommentClick: (String, String) -> Unit = { _, _ -> },
     onCreatePostClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
 
-    // FIX 2: Tự động làm mới Feed ngầm mỗi khi quay lại màn hình này
+    // ĐÃ THÊM: Theo dõi Lifecycle để tự làm mới ngầm khi Back về từ Detail
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -69,7 +65,6 @@ fun FeedScreen(
         uiState = uiState,
         paddingValues = paddingValues,
         onPostClick = onPostClick,
-        onCommentClick = onCommentClick,
         onCreatePostClick = onCreatePostClick,
         onReactionClick = { postId, type ->
             viewModel.toggleReaction(postId, type)
@@ -83,7 +78,6 @@ fun FeedContent(
     uiState: FeedUiState,
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit,
-    onCommentClick: (String, String) -> Unit = { _, _ -> },
     onCreatePostClick: () -> Unit,
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> }
 ) {
@@ -104,10 +98,7 @@ fun FeedContent(
             is FeedUiState.Success -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(
-                        top = 8.dp,
-                        bottom = 8.dp
-                    ),
+                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item {
@@ -144,9 +135,6 @@ fun FeedContent(
                             product = product,
                             isDetailView = false,
                             onPostClick = { onPostClick(post.id.toString()) },
-                            onCommentClick = { onCommentClick(post.id.toString(), user.id) },
-                            onProductClick = { },
-                            // ĐÃ XÓA onViewImagesGalleryRequest Ở ĐÂY ĐỂ FIX LỖI
                             onReactionClick = { reactionType ->
                                 onReactionClick(post.id.toString(), reactionType)
                             }

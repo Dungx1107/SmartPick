@@ -99,10 +99,13 @@ class FeedViewModel @Inject constructor(
                 val user = authRepository.getCurrentUser()
                 val currentUserId = user?.id ?: ""
                 val posts = feedRepository.getPostsWithUsers(currentUserId)
+                // Đẩy data mới vào thẳng Success mà không làm chớp màn hình Loading
                 _uiState.value = FeedUiState.Success(posts)
             } catch (e: Exception) {
-                // Nếu lỗi thì im lặng bỏ qua, giữ nguyên giao diện cũ
+                Log.e("FeedViewModel", "Lỗi refresh ngầm", e)
             }
         }
     }
+
+
 }

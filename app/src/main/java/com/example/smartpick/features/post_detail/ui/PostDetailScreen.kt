@@ -35,11 +35,14 @@ import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.*
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.TextMuted
+import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.comment.ui.components.CommentInputField
 import com.example.smartpick.features.comment.ui.components.CommentItem
 import com.example.smartpick.features.comment.viewmodel.CommentUIState
 import com.example.smartpick.features.comment.viewmodel.CommentViewModel
+import com.example.smartpick.features.feed.viewmodel.FeedUiState
+import com.example.smartpick.features.feed.viewmodel.FeedViewModel
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailUiState
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
 
@@ -48,17 +51,17 @@ fun PostDetailScreen(
     viewModel: PostDetailViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
     commentViewModel: CommentViewModel = hiltViewModel(),
+    feedViewModel: FeedViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
+    val feedState by feedViewModel.uiState.collectAsState()
 
-    // States từ CommentViewModel
     val comments by commentViewModel.comments.collectAsState()
     val isCommentLoading by commentViewModel.isLoading.collectAsState()
     val replyingTo by commentViewModel.replyingTo.collectAsState()
 
-    // Tự động load comments khi có postId
     LaunchedEffect(uiState.post?.id, currentUser?.id) {
         val postId = uiState.post?.id
         val currentUserId = currentUser?.id
@@ -71,15 +74,26 @@ fun PostDetailScreen(
         }
     }
 
+    // ĐÃ FIX: Lấy trực tiếp trạng thái cảm xúc mới nhất từ Feed (đảm bảo đồng bộ ngay lập tức)
+    val currentPostId = uiState.post?.id
+    val latestReaction = remember(currentPostId, feedState) {
+        if (feedState is FeedUiState.Success && currentPostId != null) {
+            (feedState as FeedUiState.Success).posts.find { it.first.id == currentPostId }?.first?.currentUserReaction
+        } else {
+            uiState.post?.currentUserReaction
+        }
+    }
+
     PostDetailContent(
         uiState = uiState,
         currentUser = currentUser,
+        latestReaction = latestReaction, // Truyền cảm xúc mới nhất vào UI
         comments = comments,
         isCommentLoading = isCommentLoading,
         replyingTo = replyingTo,
         onBackClick = onBackClick,
         onReactionClick = { postId, reactionType ->
-            // Bổ sung toggleReaction bài viết (Nếu đã viết hàm trong PostDetailViewModel)
+            feedViewModel.toggleReaction(postId, reactionType)
         },
         onSendComment = { text ->
             val postId = uiState.post?.id
@@ -114,6 +128,7 @@ fun PostDetailScreen(
 fun PostDetailContent(
     uiState: PostDetailUiState,
     currentUser: User?,
+    latestReaction: ReactionType?,
     comments: List<CommentUIState>,
     isCommentLoading: Boolean,
     replyingTo: CommentUIState?,
@@ -129,8 +144,8 @@ fun PostDetailContent(
     var showReactionPopup by remember { mutableStateOf(false) }
 
     val post = uiState.post
-    var localReaction by remember(post?.currentUserReaction) { mutableStateOf(post?.currentUserReaction) }
-    var localReactionCount by remember(post?.reactionCount, post?.currentUserReaction) { mutableIntStateOf(post?.reactionCount ?: 0) }
+    // ĐỒNG BỘ: Sử dụng latestReaction làm gốc, hễ Feed thay đổi là ở trong cũng thay đổi
+    var localReaction by remember(post?.id, latestReaction) { mutableStateOf(latestReaction) }
 
     Scaffold(
         topBar = {
@@ -143,11 +158,9 @@ fun PostDetailContent(
             )
         },
         bottomBar = {
-            // THANH NHẬP BÌNH LUẬN GẮN ĐÁY - CÓ HỖ TRỢ HIỂN THỊ TRẠNG THÁI "ĐANG TRẢ LỜI..."
             val bottomPadding = WindowInsets.navigationBars.union(WindowInsets.ime)
             Box(modifier = Modifier.windowInsetsPadding(bottomPadding)) {
                 Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
-                    // Nếu đang trong chế độ Reply, hiển thị dải màu báo hiệu
                     if (replyingTo != null) {
                         Row(
                             modifier = Modifier
@@ -163,16 +176,12 @@ fun PostDetailContent(
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.primary
                             )
-                            IconButton(
-                                onClick = onCancelReply,
-                                modifier = Modifier.size(24.dp)
-                            ) {
+                            IconButton(onClick = onCancelReply, modifier = Modifier.size(24.dp)) {
                                 Icon(Icons.Default.Close, contentDescription = "Hủy", modifier = Modifier.size(16.dp))
                             }
                         }
                     }
 
-                    // Tái sử dụng Component CommentInputField cực xịn của bạn
                     CommentInputField(
                         commentText = commentText,
                         onCommentChange = { commentText = it },
@@ -202,10 +211,8 @@ fun PostDetailContent(
                 post != null && uiState.user != null -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-                        // 1. HEADER (Người đăng bài)
                         item { PostHeader(user = uiState.user, createdAt = post.createdAt ?: "") }
 
-                        // 2. TEXT CONTENT
                         item {
                             if (!post.content.isNullOrBlank()) {
                                 Text(
@@ -217,7 +224,6 @@ fun PostDetailContent(
                             }
                         }
 
-                        // 3. MEDIA (PAGER VUỐT ẢNH DẠNG CAROUSEL)
                         if (post.mediaUrls.isNotEmpty()) {
                             item {
                                 val pagerState = rememberPagerState(pageCount = { post.mediaUrls.size })
@@ -248,25 +254,13 @@ fun PostDetailContent(
                             }
                         }
 
-                        // 4. SẢN PHẨM NỔI BẬT ĐÍNH KÈM
                         uiState.product?.let { product ->
-                            item { ProductHighlightCard(product = product, onClick = { /* Mở chi tiết SP */ }) }
+                            item { ProductHighlightCard(product = product, onClick = { }) }
                         }
 
-                        // 5. CỤM TƯƠNG TÁC LIKE / SHARE BÀI VIẾT
                         item {
-                            if (localReactionCount > 0) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(text = "👍 ❤️ 😂", fontSize = 12.sp)
-                                    Spacer(Modifier.width(4.dp))
-                                    Text(text = "$localReactionCount", fontSize = 13.sp, color = TextMuted)
-                                }
-                            }
-
-                            Box(modifier = Modifier.padding(bottom = 8.dp)) {
+                            // CỤM TƯƠNG TÁC (Đã ẩn số lượng)
+                            Box(modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)) {
                                 Column {
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
@@ -277,12 +271,10 @@ fun PostDetailContent(
                                                 onClick = {
                                                     if (localReaction == null) {
                                                         localReaction = ReactionType.LIKE
-                                                        localReactionCount += 1
                                                         onReactionClick(post.id.toString(), ReactionType.LIKE)
                                                     } else {
                                                         val old = localReaction!!
                                                         localReaction = null
-                                                        localReactionCount = maxOf(0, localReactionCount - 1)
                                                         onReactionClick(post.id.toString(), old)
                                                     }
                                                 }
@@ -292,13 +284,13 @@ fun PostDetailContent(
                                         PostActionButton(
                                             icon = Icons.Outlined.ChatBubbleOutline,
                                             text = stringResource(R.string.BinhLuan),
-                                            onClick = { /* Bấm bình luận ở đây có thể gắn FocusRequester vào thanh Input (Nếu rảnh) */ },
+                                            onClick = { },
                                             modifier = Modifier.weight(1f)
                                         )
                                         PostActionButton(
                                             icon = Icons.Outlined.Share,
                                             text = stringResource(R.string.ChiaSe),
-                                            onClick = { /* Tạm ẩn */ },
+                                            onClick = { },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
@@ -308,7 +300,6 @@ fun PostDetailContent(
                                     ReactionPopup(
                                         onDismiss = { showReactionPopup = false },
                                         onReactionSelected = { reaction ->
-                                            if (localReaction == null) localReactionCount += 1
                                             localReaction = reaction
                                             showReactionPopup = false
                                             onReactionClick(post.id.toString(), reaction)
@@ -318,9 +309,6 @@ fun PostDetailContent(
                             }
                         }
 
-                        // ==========================================
-                        // 6. TÍCH HỢP HỆ THỐNG COMMENT THẬT TỪ DATABASE
-                        // ==========================================
                         item {
                             HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                             Text("Bình luận", modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -343,7 +331,6 @@ fun PostDetailContent(
                                 )
                             }
                         } else {
-                            // Duyệt danh sách Parent Comments
                             items(items = comments, key = { it.id }) { parentComment ->
                                 CommentItem(
                                     state = parentComment,
@@ -351,7 +338,6 @@ fun PostDetailContent(
                                     onReplyClick = onReplyCommentClick
                                 )
 
-                                // Nếu Parent Comment có các Reply (Bình luận con)
                                 if (parentComment.replies.isNotEmpty()) {
                                     Column(modifier = Modifier.fillMaxWidth()) {
                                         parentComment.replies.forEachIndexed { index, reply ->
@@ -374,7 +360,6 @@ fun PostDetailContent(
                             }
                         }
 
-                        // Thêm 1 khoảng trắng trống ở đáy để tránh bình luận bị bàn phím ảo che mất
                         item { Spacer(modifier = Modifier.height(100.dp)) }
                     }
                 }
@@ -382,8 +367,6 @@ fun PostDetailContent(
         }
     }
 }
-
-// ---------------- CÁC COMPONENT PHỤ BỔ SUNG CỦA MÀN CHI TIẾT ----------------
 
 @Composable
 fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
