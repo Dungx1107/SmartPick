@@ -35,6 +35,10 @@ import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.feed.viewmodel.FeedUiState
 import com.example.smartpick.features.feed.viewmodel.FeedViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.runtime.DisposableEffect
 
 @Composable
 fun FeedScreen(
@@ -47,6 +51,18 @@ fun FeedScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
+
+    // FIX 2: Tự động làm mới Feed ngầm mỗi khi quay lại màn hình này
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshFeedSilently()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     FeedContent(
         currentUser = currentUser,

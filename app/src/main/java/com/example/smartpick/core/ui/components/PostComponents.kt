@@ -161,10 +161,13 @@ fun PostMainContent(
             )
         }
 
-        if (mediaUrls.isNotEmpty()) {
+        // FIX 1: Lọc bỏ các URL rỗng ("") để tránh bị lỗi khoảng trắng
+        val validMediaUrls = mediaUrls.filter { it.isNotBlank() }
+
+        if (validMediaUrls.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             MediaGrid(
-                mediaUrls = mediaUrls,
+                mediaUrls = validMediaUrls,
                 onMediaClick = onMediaClick,
                 modifier = Modifier.padding(horizontal = 12.dp)
             )

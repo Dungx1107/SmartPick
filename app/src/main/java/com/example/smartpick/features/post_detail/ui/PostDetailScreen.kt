@@ -5,13 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
@@ -23,38 +24,84 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.R
-import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.*
 import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.SmartPickTheme
-import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.core.ui.theme.TextMuted
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
+import com.example.smartpick.features.comment.ui.components.CommentInputField
+import com.example.smartpick.features.comment.ui.components.CommentItem
+import com.example.smartpick.features.comment.viewmodel.CommentUIState
+import com.example.smartpick.features.comment.viewmodel.CommentViewModel
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailUiState
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
 
 @Composable
 fun PostDetailScreen(
     viewModel: PostDetailViewModel = hiltViewModel(),
-    onBackClick: () -> Unit,
-    onCommentClick: (String, String) -> Unit = { _, _ -> }
+    authViewModel: AuthViewModel = hiltViewModel(),
+    commentViewModel: CommentViewModel = hiltViewModel(),
+    onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentUser by authViewModel.currentUser.collectAsState()
+
+    // States từ CommentViewModel
+    val comments by commentViewModel.comments.collectAsState()
+    val isCommentLoading by commentViewModel.isLoading.collectAsState()
+    val replyingTo by commentViewModel.replyingTo.collectAsState()
+
+    // Tự động load comments khi có postId
+    LaunchedEffect(uiState.post?.id, currentUser?.id) {
+        val postId = uiState.post?.id
+        val currentUserId = currentUser?.id
+        if (postId != null && currentUserId != null) {
+            commentViewModel.loadComments(
+                postId = postId,
+                postOwnerId = uiState.post?.userId,
+                currentUserId = currentUserId
+            )
+        }
+    }
 
     PostDetailContent(
         uiState = uiState,
+        currentUser = currentUser,
+        comments = comments,
+        isCommentLoading = isCommentLoading,
+        replyingTo = replyingTo,
         onBackClick = onBackClick,
-        onCommentClick = onCommentClick,
         onReactionClick = { postId, reactionType ->
-            // Thêm hàm vào ViewModel sau
+            // Bổ sung toggleReaction bài viết (Nếu đã viết hàm trong PostDetailViewModel)
+        },
+        onSendComment = { text ->
+            val postId = uiState.post?.id
+            val currentUserId = currentUser?.id
+            val postOwnerId = uiState.post?.userId
+            if (postId != null && currentUserId != null) {
+                commentViewModel.sendComment(postId, currentUserId, text, postOwnerId)
+            }
+        },
+        onLikeCommentClick = { commentId ->
+            val postId = uiState.post?.id
+            val currentUserId = currentUser?.id
+            val postOwnerId = uiState.post?.userId
+            if (postId != null && currentUserId != null) {
+                commentViewModel.toggleLikeComment(commentId, currentUserId, postId, postOwnerId)
+            }
+        },
+        onReplyCommentClick = { comment ->
+            commentViewModel.setReplyingTo(comment)
+        },
+        onCancelReply = {
+            commentViewModel.setReplyingTo(null)
         },
         onRetry = {
             uiState.post?.id?.let { viewModel.loadPostDetail(it) }
@@ -66,16 +113,22 @@ fun PostDetailScreen(
 @Composable
 fun PostDetailContent(
     uiState: PostDetailUiState,
+    currentUser: User?,
+    comments: List<CommentUIState>,
+    isCommentLoading: Boolean,
+    replyingTo: CommentUIState?,
     onBackClick: () -> Unit,
-    onCommentClick: (String, String) -> Unit,
-    onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
+    onReactionClick: (String, ReactionType) -> Unit,
+    onSendComment: (String) -> Unit,
+    onLikeCommentClick: (String) -> Unit,
+    onReplyCommentClick: (CommentUIState) -> Unit,
+    onCancelReply: () -> Unit,
     onRetry: () -> Unit
 ) {
     var commentText by remember { mutableStateOf("") }
     var showReactionPopup by remember { mutableStateOf(false) }
 
     val post = uiState.post
-    // Optimistic UI states
     var localReaction by remember(post?.currentUserReaction) { mutableStateOf(post?.currentUserReaction) }
     var localReactionCount by remember(post?.reactionCount, post?.currentUserReaction) { mutableIntStateOf(post?.reactionCount ?: 0) }
 
@@ -90,11 +143,48 @@ fun PostDetailContent(
             )
         },
         bottomBar = {
-            CommentInputBar(
-                value = commentText,
-                onValueChange = { commentText = it },
-                onSendClick = { commentText = "" }
-            )
+            // THANH NHẬP BÌNH LUẬN GẮN ĐÁY - CÓ HỖ TRỢ HIỂN THỊ TRẠNG THÁI "ĐANG TRẢ LỜI..."
+            val bottomPadding = WindowInsets.navigationBars.union(WindowInsets.ime)
+            Box(modifier = Modifier.windowInsetsPadding(bottomPadding)) {
+                Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
+                    // Nếu đang trong chế độ Reply, hiển thị dải màu báo hiệu
+                    if (replyingTo != null) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Đang trả lời ${replyingTo.authorName}",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            IconButton(
+                                onClick = onCancelReply,
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Hủy", modifier = Modifier.size(16.dp))
+                            }
+                        }
+                    }
+
+                    // Tái sử dụng Component CommentInputField cực xịn của bạn
+                    CommentInputField(
+                        commentText = commentText,
+                        onCommentChange = { commentText = it },
+                        avatarAuthorUrl = currentUser?.avatarUrl,
+                        onSend = {
+                            onSendComment(commentText)
+                            commentText = ""
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -111,8 +201,11 @@ fun PostDetailContent(
                 }
                 post != null && uiState.user != null -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
+
+                        // 1. HEADER (Người đăng bài)
                         item { PostHeader(user = uiState.user, createdAt = post.createdAt ?: "") }
 
+                        // 2. TEXT CONTENT
                         item {
                             if (!post.content.isNullOrBlank()) {
                                 Text(
@@ -124,7 +217,7 @@ fun PostDetailContent(
                             }
                         }
 
-                        // HIỂN THỊ ẢNH DẠNG VUỐT (PAGER) THAY VÌ LƯỚI
+                        // 3. MEDIA (PAGER VUỐT ẢNH DẠNG CAROUSEL)
                         if (post.mediaUrls.isNotEmpty()) {
                             item {
                                 val pagerState = rememberPagerState(pageCount = { post.mediaUrls.size })
@@ -155,13 +248,12 @@ fun PostDetailContent(
                             }
                         }
 
-                        // SẢN PHẨM NỔI BẬT ĐÍNH KÈM
+                        // 4. SẢN PHẨM NỔI BẬT ĐÍNH KÈM
                         uiState.product?.let { product ->
                             item { ProductHighlightCard(product = product, onClick = { /* Mở chi tiết SP */ }) }
                         }
 
-                        // Đã xóa phần gọi SharedPostCard bị lỗi
-
+                        // 5. CỤM TƯƠNG TÁC LIKE / SHARE BÀI VIẾT
                         item {
                             if (localReactionCount > 0) {
                                 Row(
@@ -174,7 +266,7 @@ fun PostDetailContent(
                                 }
                             }
 
-                            Box(modifier = Modifier.padding(bottom = 16.dp)) {
+                            Box(modifier = Modifier.padding(bottom = 8.dp)) {
                                 Column {
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
@@ -200,13 +292,13 @@ fun PostDetailContent(
                                         PostActionButton(
                                             icon = Icons.Outlined.ChatBubbleOutline,
                                             text = stringResource(R.string.BinhLuan),
-                                            onClick = { onCommentClick(post.id.toString(), post.userId) },
+                                            onClick = { /* Bấm bình luận ở đây có thể gắn FocusRequester vào thanh Input (Nếu rảnh) */ },
                                             modifier = Modifier.weight(1f)
                                         )
                                         PostActionButton(
                                             icon = Icons.Outlined.Share,
                                             text = stringResource(R.string.ChiaSe),
-                                            onClick = { /* Share tính sau */ },
+                                            onClick = { /* Tạm ẩn */ },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
@@ -226,13 +318,64 @@ fun PostDetailContent(
                             }
                         }
 
-                        // DANH SÁCH BÌNH LUẬN
+                        // ==========================================
+                        // 6. TÍCH HỢP HỆ THỐNG COMMENT THẬT TỪ DATABASE
+                        // ==========================================
                         item {
                             HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
                             Text("Bình luận", modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         }
 
-                        items(5) { CommentItem() }
+                        if (isCommentLoading) {
+                            item {
+                                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                }
+                            }
+                        } else if (comments.isEmpty()) {
+                            item {
+                                Text(
+                                    text = "Chưa có bình luận nào. Hãy là người đầu tiên!",
+                                    modifier = Modifier.fillMaxWidth().padding(32.dp),
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                    color = TextMuted,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        } else {
+                            // Duyệt danh sách Parent Comments
+                            items(items = comments, key = { it.id }) { parentComment ->
+                                CommentItem(
+                                    state = parentComment,
+                                    onLikeClick = onLikeCommentClick,
+                                    onReplyClick = onReplyCommentClick
+                                )
+
+                                // Nếu Parent Comment có các Reply (Bình luận con)
+                                if (parentComment.replies.isNotEmpty()) {
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        parentComment.replies.forEachIndexed { index, reply ->
+                                            CommentItem(
+                                                state = reply,
+                                                onLikeClick = onLikeCommentClick,
+                                                onReplyClick = onReplyCommentClick,
+                                                isReply = true,
+                                                isLastReply = index == parentComment.replies.size - 1
+                                            )
+                                        }
+                                    }
+                                }
+
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    thickness = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+
+                        // Thêm 1 khoảng trắng trống ở đáy để tránh bình luận bị bàn phím ảo che mất
+                        item { Spacer(modifier = Modifier.height(100.dp)) }
                     }
                 }
             }
@@ -240,7 +383,7 @@ fun PostDetailContent(
     }
 }
 
-// ---------------- CÁC COMPONENT PHỤ CỦA MÀN CHI TIẾT ----------------
+// ---------------- CÁC COMPONENT PHỤ BỔ SUNG CỦA MÀN CHI TIẾT ----------------
 
 @Composable
 fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
@@ -270,63 +413,5 @@ fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
                 Text("Mua ngay", fontSize = 12.sp)
             }
         }
-    }
-}
-
-@Composable
-fun CommentItem() {
-    Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
-        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.LightGray))
-        Column(modifier = Modifier.padding(start = 12.dp)) {
-            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = SurfaceCard)) {
-                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                    Text("Người dùng", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                    Text("Bài viết rất hay, sản phẩm có vẻ chất lượng!", fontSize = 14.sp)
-                }
-            }
-            Text("2 giờ trước", modifier = Modifier.padding(start = 8.dp, top = 4.dp), fontSize = 12.sp, color = TextMuted)
-        }
-    }
-}
-
-@Composable
-fun CommentInputBar(value: String, onValueChange: (String) -> Unit, onSendClick: () -> Unit) {
-    Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).imePadding(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextField(
-                value = value,
-                onValueChange = onValueChange,
-                placeholder = { Text("Viết bình luận...") },
-                modifier = Modifier.weight(1f).padding(end = 8.dp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceCard,
-                    unfocusedContainerColor = SurfaceCard,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(24.dp)
-            )
-            IconButton(
-                onClick = onSendClick,
-                enabled = value.isNotBlank(),
-                colors = IconButtonDefaults.iconButtonColors(contentColor = SmartPickColor)
-            ) {
-                Icon(Icons.Default.Send, contentDescription = null)
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PostDetailErrorPreview() {
-    SmartPickTheme {
-        PostDetailContent(
-            uiState = PostDetailUiState(isLoading = false, error = "Không thể tải bài viết"),
-            onBackClick = {}, onCommentClick = { _, _ -> }, onRetry = {}
-        )
     }
 }

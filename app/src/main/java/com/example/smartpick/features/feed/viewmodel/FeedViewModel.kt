@@ -91,4 +91,18 @@ class FeedViewModel @Inject constructor(
             }
         }
     }
+
+    // Hàm tải lại Feed ngầm, không kích hoạt trạng thái Loading làm giật màn hình
+    fun refreshFeedSilently() {
+        viewModelScope.launch {
+            try {
+                val user = authRepository.getCurrentUser()
+                val currentUserId = user?.id ?: ""
+                val posts = feedRepository.getPostsWithUsers(currentUserId)
+                _uiState.value = FeedUiState.Success(posts)
+            } catch (e: Exception) {
+                // Nếu lỗi thì im lặng bỏ qua, giữ nguyên giao diện cũ
+            }
+        }
+    }
 }
