@@ -32,7 +32,6 @@ import com.example.smartpick.features.post_detail.data.dto.PostDetailResponse
 import com.example.smartpick.features.profile.viewmodel.ProfileViewModel
 import com.example.smartpick.navigation.Routes
 
-// 1. Stateful Composable
 @Composable
 fun ProfileScreen(
     navController: NavController,
@@ -43,7 +42,6 @@ fun ProfileScreen(
     val posts by profileViewModel.userPosts.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
 
-    // Tự động tải bài viết khi user đã sẵn sàng
     LaunchedEffect(user?.id) {
         user?.id?.let { profileViewModel.loadUserPosts(it) }
     }
@@ -52,32 +50,19 @@ fun ProfileScreen(
         user = user,
         posts = posts,
         isLoading = isLoading,
-        onLogout = {
-            authViewModel.logout()
-        },
-        onEditProfile = {
-            navController.navigate(Routes.EditProfile.route)
-        },
-        onCreatePostClick = {
-            navController.navigate(Routes.CreatePost.route)
-        },
-        onPostClick = { postId ->
-            navController.navigate(Routes.PostDetail.createRoute(postId))
-        },
+        onLogout = { authViewModel.logout() },
+        onEditProfile = { navController.navigate(Routes.EditProfile.route) },
+        onCreatePostClick = { navController.navigate(Routes.CreatePost.route) },
+        onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
         onHistoryClick = {
-            navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") {
-                launchSingleTop = true
-            }
+            navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") { launchSingleTop = true }
         },
         onNotificationsClick = {
-            navController.navigate(Routes.Notifications.route) {
-                launchSingleTop = true
-            }
+            navController.navigate(Routes.Notifications.route) { launchSingleTop = true }
         }
     )
 }
 
-// 2. Stateless Composable
 @Composable
 fun ProfileContent(
     user: User?,
@@ -96,32 +81,22 @@ fun ProfileContent(
             .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(bottom = 32.dp)
     ) {
-        // Phần 1: Thông tin cá nhân & Bento Grid
         item {
             Column(
-                modifier = Modifier
-                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 ProfileHeaderCard(user = user, onEditProfile = onEditProfile)
-
                 Spacer(modifier = Modifier.height(28.dp))
-
-                SettingsBentoGrid(
-                    onHistoryClick = onHistoryClick,
-                    onNotificationsClick = onNotificationsClick
-                )
-
+                SettingsBentoGrid(onHistoryClick = onHistoryClick, onNotificationsClick = onNotificationsClick)
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
 
-        // Phần 2: Thanh gợi ý đăng bài (Facebook style)
         item {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 CreatePostPrompt(user = user, onClick = onCreatePostClick)
                 Spacer(modifier = Modifier.height(32.dp))
-
                 Text(
                     text = stringResource(R.string.BaiVietCuaBan),
                     fontSize = 18.sp,
@@ -132,15 +107,9 @@ fun ProfileContent(
             }
         }
 
-        // Phần 3: Danh sách bài viết cá nhân
         if (isLoading && posts.isEmpty()) {
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(40.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             }
@@ -148,26 +117,36 @@ fun ProfileContent(
             item {
                 Text(
                     text = stringResource(R.string.ChuaCoBaiViet),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 40.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp),
                     textAlign = TextAlign.Center,
                     color = TextMuted
                 )
             }
         } else {
-            items(
-                items = posts,
-                key = { it.id } // Sử dụng ID bài viết làm key để tối ưu performance
-            ) { postDetail ->
-                // Ánh xạ dữ liệu từ DTO sang Model Post
+            items(items = posts, key = { it.id }) { postDetail ->
+
+                // ĐÃ FIX: Ánh xạ dữ liệu bài Share thủ công và an toàn tuyệt đối
                 val post = Post(
                     id = postDetail.id,
                     userId = postDetail.user.id,
                     productId = postDetail.product?.id,
                     content = postDetail.content ?: "",
                     mediaUrls = postDetail.mediaUrls,
-                    createdAt = postDetail.createdAt
+                    createdAt = postDetail.createdAt,
+
+                    // Lồng bài viết gốc vào trong
+                    sharedPostId = postDetail.sharedPostId,
+                    sharedPost = postDetail.sharedPost?.let { shared ->
+                        Post(
+                            id = shared.id,
+                            userId = shared.user.id,
+                            productId = shared.product?.id,
+                            content = shared.content ?: "",
+                            mediaUrls = shared.mediaUrls,
+                            createdAt = shared.createdAt
+                        )
+                    },
+                    sharedPostUser = postDetail.sharedPost?.user?.toDomain()
                 )
 
                 PostItem(
@@ -175,24 +154,15 @@ fun ProfileContent(
                     user = postDetail.user.toDomain(),
                     product = postDetail.product?.toDomain(),
                     onPostClick = { onPostClick(post.id.toString()) },
-                    onCommentClick = {
-                        onPostClick(post.id.toString())
-                    },
-                    onProductClick = { product ->
-                        // Xử lý khi nhấn vào sản phẩm đính kèm (nếu có)
-                    },
-
+                    onProductClick = { /* Xử lý click sản phẩm */ },
                     isDetailView = false
                 )
             }
         }
 
-        // Phần 4: Nút Đăng xuất & Thông tin phiên bản
         item {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(
@@ -202,35 +172,24 @@ fun ProfileContent(
                         contentColor = MaterialTheme.colorScheme.error
                     ),
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(60.dp)
+                    modifier = Modifier.fillMaxWidth().height(60.dp)
                 ) {
                     Icon(Icons.Default.ExitToApp, contentDescription = null)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        stringResource(R.string.DangXuat),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    Text(stringResource(R.string.DangXuat), fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Text(
                     text = stringResource(R.string.smartpick_version_1_0_0_2026),
-                    fontSize = 10.sp,
-                    color = TextMuted,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
+                    fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold, letterSpacing = 1.sp
                 )
             }
         }
     }
 }
 
-
-// 4. Preview
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {

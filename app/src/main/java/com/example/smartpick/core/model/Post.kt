@@ -2,6 +2,7 @@ package com.example.smartpick.core.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -18,8 +19,8 @@ enum class ReactionType {
     }
 }
 
+// FIX 1: Bỏ @Serializable ở đây vì đây là Domain Model, chỉ cần @Parcelize
 @Parcelize
-@Serializable
 data class Post(
     val id: String? = null,
     val userId: String,
@@ -27,7 +28,13 @@ data class Post(
     val content: String? = null,
     val mediaUrls: List<String> = emptyList(),
     val createdAt: String? = null,
-    // Tính năng Reaction mới
+
     val reactionCount: Int = 0,
-    val currentUserReaction: ReactionType? = null
+    val currentUserReaction: ReactionType? = null,
+
+    // FIX 2: Thêm @RawValue để thư viện Parcelize hiểu cách truyền Object lồng nhau
+    val sharedPostId: String? = null,
+    val sharedPost: @RawValue Post? = null,
+    val sharedPostUser: @RawValue User? = null
+
 ) : Parcelable

@@ -1,5 +1,6 @@
 package com.example.smartpick.features.feed.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,8 +49,8 @@ fun FeedScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
+    val context = LocalContext.current
 
-    // ĐÃ THÊM: Theo dõi Lifecycle để tự làm mới ngầm khi Back về từ Detail
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -68,6 +70,11 @@ fun FeedScreen(
         onCreatePostClick = onCreatePostClick,
         onReactionClick = { postId, type ->
             viewModel.toggleReaction(postId, type)
+        },
+        onShareClick = { postId, caption ->
+            viewModel.sharePost(postId, caption) {
+                Toast.makeText(context, "Đã chia sẻ lên Trang cá nhân!", Toast.LENGTH_SHORT).show()
+            }
         }
     )
 }
@@ -79,77 +86,31 @@ fun FeedContent(
     paddingValues: PaddingValues,
     onPostClick: (String) -> Unit,
     onCreatePostClick: () -> Unit,
-    onReactionClick: (String, ReactionType) -> Unit = { _, _ -> }
+    onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
+    onShareClick: (String, String) -> Unit = { _, _ -> }
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(paddingValues)
-    ) {
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(paddingValues)) {
         when (uiState) {
-            is FeedUiState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
+            is FeedUiState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
             is FeedUiState.Success -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    item {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.surface,
-                            shadowElevation = 2.dp
-                        ) {
-                            CreatePostPrompt(
-                                user = currentUser,
-                                onClick = onCreatePostClick,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    }
+                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 8.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { Surface(modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.surface, shadowElevation = 2.dp) { CreatePostPrompt(user = currentUser, onClick = onCreatePostClick, modifier = Modifier.padding(16.dp)) } }
+                    item { Text(text = stringResource(R.string.DanhChoBan), fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), color = MaterialTheme.colorScheme.primary) }
 
-                    item {
-                        Text(
-                            text = stringResource(R.string.DanhChoBan),
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    items(
-                        uiState.posts,
-                        key = { it.first.id.toString() }
-                    ) { (post, user, product) ->
+                    items(uiState.posts, key = { it.first.id.toString() }) { (post, user, product) ->
                         PostItem(
                             post = post,
                             user = user,
                             product = product,
                             isDetailView = false,
                             onPostClick = { onPostClick(post.id.toString()) },
-                            onReactionClick = { reactionType ->
-                                onReactionClick(post.id.toString(), reactionType)
-                            }
+                            onReactionClick = { reactionType -> onReactionClick(post.id.toString(), reactionType) },
+                            onShareClick = { caption -> onShareClick(post.id.toString(), caption) }
                         )
                     }
                 }
             }
-
-            is FeedUiState.Error -> {
-                Text(
-                    text = uiState.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+            is FeedUiState.Error -> Text(text = uiState.message, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center))
         }
     }
 }

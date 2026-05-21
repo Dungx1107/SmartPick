@@ -1,5 +1,6 @@
 package com.example.smartpick.features.post_detail.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,6 +59,7 @@ fun PostDetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
     val feedState by feedViewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     val comments by commentViewModel.comments.collectAsState()
     val isCommentLoading by commentViewModel.isLoading.collectAsState()
@@ -66,15 +69,10 @@ fun PostDetailScreen(
         val postId = uiState.post?.id
         val currentUserId = currentUser?.id
         if (postId != null && currentUserId != null) {
-            commentViewModel.loadComments(
-                postId = postId,
-                postOwnerId = uiState.post?.userId,
-                currentUserId = currentUserId
-            )
+            commentViewModel.loadComments(postId, uiState.post?.userId, currentUserId)
         }
     }
 
-    // ĐÃ FIX: Lấy trực tiếp trạng thái cảm xúc mới nhất từ Feed (đảm bảo đồng bộ ngay lập tức)
     val currentPostId = uiState.post?.id
     val latestReaction = remember(currentPostId, feedState) {
         if (feedState is FeedUiState.Success && currentPostId != null) {
@@ -87,39 +85,34 @@ fun PostDetailScreen(
     PostDetailContent(
         uiState = uiState,
         currentUser = currentUser,
-        latestReaction = latestReaction, // Truyền cảm xúc mới nhất vào UI
+        latestReaction = latestReaction,
         comments = comments,
         isCommentLoading = isCommentLoading,
         replyingTo = replyingTo,
         onBackClick = onBackClick,
-        onReactionClick = { postId, reactionType ->
-            feedViewModel.toggleReaction(postId, reactionType)
+        onReactionClick = { postId, reactionType -> feedViewModel.toggleReaction(postId, reactionType) },
+        onShareClick = { postId, caption ->
+            feedViewModel.sharePost(postId, caption) {
+                Toast.makeText(context, "Đã chia sẻ lên Trang cá nhân!", Toast.LENGTH_SHORT).show()
+            }
         },
         onSendComment = { text ->
             val postId = uiState.post?.id
             val currentUserId = currentUser?.id
-            val postOwnerId = uiState.post?.userId
             if (postId != null && currentUserId != null) {
-                commentViewModel.sendComment(postId, currentUserId, text, postOwnerId)
+                commentViewModel.sendComment(postId, currentUserId, text, uiState.post?.userId)
             }
         },
         onLikeCommentClick = { commentId ->
             val postId = uiState.post?.id
             val currentUserId = currentUser?.id
-            val postOwnerId = uiState.post?.userId
             if (postId != null && currentUserId != null) {
-                commentViewModel.toggleLikeComment(commentId, currentUserId, postId, postOwnerId)
+                commentViewModel.toggleLikeComment(commentId, currentUserId, postId, uiState.post?.userId)
             }
         },
-        onReplyCommentClick = { comment ->
-            commentViewModel.setReplyingTo(comment)
-        },
-        onCancelReply = {
-            commentViewModel.setReplyingTo(null)
-        },
-        onRetry = {
-            uiState.post?.id?.let { viewModel.loadPostDetail(it) }
-        }
+        onReplyCommentClick = { comment -> commentViewModel.setReplyingTo(comment) },
+        onCancelReply = { commentViewModel.setReplyingTo(null) },
+        onRetry = { uiState.post?.id?.let { viewModel.loadPostDetail(it) } }
     )
 }
 
@@ -134,6 +127,7 @@ fun PostDetailContent(
     replyingTo: CommentUIState?,
     onBackClick: () -> Unit,
     onReactionClick: (String, ReactionType) -> Unit,
+    onShareClick: (String, String) -> Unit,
     onSendComment: (String) -> Unit,
     onLikeCommentClick: (String) -> Unit,
     onReplyCommentClick: (CommentUIState) -> Unit,
@@ -142,56 +136,24 @@ fun PostDetailContent(
 ) {
     var commentText by remember { mutableStateOf("") }
     var showReactionPopup by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     val post = uiState.post
-    // ĐỒNG BỘ: Sử dụng latestReaction làm gốc, hễ Feed thay đổi là ở trong cũng thay đổi
     var localReaction by remember(post?.id, latestReaction) { mutableStateOf(latestReaction) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.BaiViet), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, contentDescription = null) }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
-        },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.BaiViet), fontWeight = FontWeight.Bold) }, navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, contentDescription = null) } }, colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)) },
         bottomBar = {
             val bottomPadding = WindowInsets.navigationBars.union(WindowInsets.ime)
             Box(modifier = Modifier.windowInsetsPadding(bottomPadding)) {
                 Column(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {
                     if (replyingTo != null) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Đang trả lời ${replyingTo.authorName}",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                            IconButton(onClick = onCancelReply, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Close, contentDescription = "Hủy", modifier = Modifier.size(16.dp))
-                            }
+                        Row(modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "Đang trả lời ${replyingTo.authorName}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.primary)
+                            IconButton(onClick = onCancelReply, modifier = Modifier.size(24.dp)) { Icon(Icons.Default.Close, contentDescription = "Hủy", modifier = Modifier.size(16.dp)) }
                         }
                     }
-
-                    CommentInputField(
-                        commentText = commentText,
-                        onCommentChange = { commentText = it },
-                        avatarAuthorUrl = currentUser?.avatarUrl,
-                        onSend = {
-                            onSendComment(commentText)
-                            commentText = ""
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    CommentInputField(commentText = commentText, onCommentChange = { commentText = it }, avatarAuthorUrl = currentUser?.avatarUrl, onSend = { onSendComment(commentText); commentText = "" }, modifier = Modifier.fillMaxWidth())
                 }
             }
         },
@@ -199,67 +161,42 @@ fun PostDetailContent(
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(MaterialTheme.colorScheme.surface)) {
             when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
-                }
-                uiState.error != null -> {
-                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = uiState.error, color = MaterialTheme.colorScheme.error)
-                        Button(onClick = onRetry) { Text("Thử lại") }
-                    }
-                }
+                uiState.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
+                uiState.error != null -> Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) { Text(text = uiState.error, color = MaterialTheme.colorScheme.error); Button(onClick = onRetry) { Text("Thử lại") } }
                 post != null && uiState.user != null -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
 
-                        item { PostHeader(user = uiState.user, createdAt = post.createdAt ?: "") }
+                        item { PostHeader(user = uiState.user, createdAt = post.createdAt ?: "", isShared = post.sharedPostId != null) }
 
-                        item {
-                            if (!post.content.isNullOrBlank()) {
-                                Text(
-                                    text = post.content,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    fontSize = 16.sp,
-                                    lineHeight = 24.sp
-                                )
-                            }
-                        }
-
-                        if (post.mediaUrls.isNotEmpty()) {
+                        if (post.sharedPost != null && post.sharedPostUser != null) {
                             item {
-                                val pagerState = rememberPagerState(pageCount = { post.mediaUrls.size })
-                                Column {
-                                    HorizontalPager(
-                                        state = pagerState,
-                                        modifier = Modifier.fillMaxWidth().height(350.dp)
-                                    ) { page ->
-                                        AsyncImage(
-                                            model = post.mediaUrls[page],
-                                            contentDescription = null,
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                    }
-                                    if (post.mediaUrls.size > 1) {
-                                        Row(
-                                            Modifier.fillMaxWidth().padding(top = 8.dp),
-                                            horizontalArrangement = Arrangement.Center
-                                        ) {
-                                            repeat(post.mediaUrls.size) { iteration ->
-                                                val color = if (pagerState.currentPage == iteration) SmartPickColor else Color.LightGray
-                                                Box(modifier = Modifier.padding(2.dp).clip(CircleShape).background(color).size(6.dp))
+                                if (!post.content.isNullOrBlank()) {
+                                    Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp)
+                                }
+                                SharedPostCard(sharedPost = post.sharedPost, sharedUser = post.sharedPostUser, onPostClick = {  })
+                            }
+                        } else {
+                            item { if (!post.content.isNullOrBlank()) { Text(text = post.content, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), fontSize = 16.sp, lineHeight = 24.sp) } }
+                            if (post.mediaUrls.isNotEmpty()) {
+                                item {
+                                    val pagerState = rememberPagerState(pageCount = { post.mediaUrls.size })
+                                    Column {
+                                        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().height(350.dp)) { page -> AsyncImage(model = post.mediaUrls[page], contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
+                                        if (post.mediaUrls.size > 1) {
+                                            Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center) {
+                                                repeat(post.mediaUrls.size) { iteration ->
+                                                    val color = if (pagerState.currentPage == iteration) SmartPickColor else Color.LightGray
+                                                    Box(modifier = Modifier.padding(2.dp).clip(CircleShape).background(color).size(6.dp))
+                                                }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
-
-                        uiState.product?.let { product ->
-                            item { ProductHighlightCard(product = product, onClick = { }) }
+                            uiState.product?.let { product -> item { ProductHighlightCard(product = product, onClick = { }) } }
                         }
 
                         item {
-                            // CỤM TƯƠNG TÁC (Đã ẩn số lượng)
                             Box(modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)) {
                                 Column {
                                     HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -280,31 +217,12 @@ fun PostDetailContent(
                                                 }
                                             )
                                         }
-
-                                        PostActionButton(
-                                            icon = Icons.Outlined.ChatBubbleOutline,
-                                            text = stringResource(R.string.BinhLuan),
-                                            onClick = { },
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        PostActionButton(
-                                            icon = Icons.Outlined.Share,
-                                            text = stringResource(R.string.ChiaSe),
-                                            onClick = { },
-                                            modifier = Modifier.weight(1f)
-                                        )
+                                        PostActionButton(icon = Icons.Outlined.ChatBubbleOutline, text = stringResource(R.string.BinhLuan), onClick = { }, modifier = Modifier.weight(1f))
+                                        PostActionButton(icon = Icons.Outlined.Share, text = stringResource(R.string.ChiaSe), onClick = { showShareDialog = true }, modifier = Modifier.weight(1f))
                                     }
                                 }
-
                                 if (showReactionPopup) {
-                                    ReactionPopup(
-                                        onDismiss = { showReactionPopup = false },
-                                        onReactionSelected = { reaction ->
-                                            localReaction = reaction
-                                            showReactionPopup = false
-                                            onReactionClick(post.id.toString(), reaction)
-                                        }
-                                    )
+                                    ReactionPopup(onDismiss = { showReactionPopup = false }, onReactionSelected = { reaction -> localReaction = reaction; showReactionPopup = false; onReactionClick(post.id.toString(), reaction) })
                                 }
                             }
                         }
@@ -315,86 +233,45 @@ fun PostDetailContent(
                         }
 
                         if (isCommentLoading) {
-                            item {
-                                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-                                }
-                            }
+                            item { Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) } }
                         } else if (comments.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "Chưa có bình luận nào. Hãy là người đầu tiên!",
-                                    modifier = Modifier.fillMaxWidth().padding(32.dp),
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                    color = TextMuted,
-                                    fontSize = 14.sp
-                                )
-                            }
+                            item { Text(text = "Chưa có bình luận nào. Hãy là người đầu tiên!", modifier = Modifier.fillMaxWidth().padding(32.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = TextMuted, fontSize = 14.sp) }
                         } else {
                             items(items = comments, key = { it.id }) { parentComment ->
-                                CommentItem(
-                                    state = parentComment,
-                                    onLikeClick = onLikeCommentClick,
-                                    onReplyClick = onReplyCommentClick
-                                )
-
+                                CommentItem(state = parentComment, onLikeClick = onLikeCommentClick, onReplyClick = onReplyCommentClick)
                                 if (parentComment.replies.isNotEmpty()) {
                                     Column(modifier = Modifier.fillMaxWidth()) {
-                                        parentComment.replies.forEachIndexed { index, reply ->
-                                            CommentItem(
-                                                state = reply,
-                                                onLikeClick = onLikeCommentClick,
-                                                onReplyClick = onReplyCommentClick,
-                                                isReply = true,
-                                                isLastReply = index == parentComment.replies.size - 1
-                                            )
-                                        }
+                                        parentComment.replies.forEachIndexed { index, reply -> CommentItem(state = reply, onLikeClick = onLikeCommentClick, onReplyClick = onReplyCommentClick, isReply = true, isLastReply = index == parentComment.replies.size - 1) }
                                     }
                                 }
-
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    thickness = 0.5.dp,
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                                )
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             }
                         }
-
                         item { Spacer(modifier = Modifier.height(100.dp)) }
                     }
                 }
             }
         }
     }
+
+    if (showShareDialog) {
+        SharePostDialog(
+            onDismiss = { showShareDialog = false },
+            onShare = { caption ->
+                showShareDialog = false
+                post?.id?.let { onShareClick(it, caption) }
+            }
+        )
+    }
 }
 
 @Composable
 fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = SmartPickColor.copy(alpha = 0.05f)),
-        border = BorderStroke(1.dp, SmartPickColor.copy(alpha = 0.2f))
-    ) {
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onClick() }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = SmartPickColor.copy(alpha = 0.05f)), border = BorderStroke(1.dp, SmartPickColor.copy(alpha = 0.2f))) {
         Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = product.imageUrls.firstOrNull(),
-                contentDescription = null,
-                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
-                Text("${product.price}đ", color = SmartPickColor, fontWeight = FontWeight.Bold)
-            }
-            Button(
-                onClick = onClick,
-                colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text("Mua ngay", fontSize = 12.sp)
-            }
+            AsyncImage(model = product.imageUrls.firstOrNull(), contentDescription = null, modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+            Column(Modifier.padding(start = 12.dp).weight(1f)) { Text(product.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1); Text("${product.price}đ", color = SmartPickColor, fontWeight = FontWeight.Bold) }
+            Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), shape = RoundedCornerShape(8.dp)) { Text("Mua ngay", fontSize = 12.sp) }
         }
     }
 }
