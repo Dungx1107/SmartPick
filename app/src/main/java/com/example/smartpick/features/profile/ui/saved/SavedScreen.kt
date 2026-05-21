@@ -33,26 +33,39 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.OrderResponse
+import com.example.smartpick.core.ui.components.PostItem
 import com.example.smartpick.core.ui.theme.*
+import com.example.smartpick.features.feed.viewmodel.FeedViewModel
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
 import java.util.Locale
 
 @Composable
 fun SavedCollectionScreen(
-    navController: NavController, // FIX: Đã thêm navController
+    navController: NavController,
     initialCategory: String = "Giỏ hàng",
-    homeViewModel: HomeViewModel = hiltViewModel()
+    homeViewModel: HomeViewModel = hiltViewModel(),
+    feedViewModel: FeedViewModel = hiltViewModel() // Khai báo FeedViewModel để lấy bài viết
 ) {
     val cartItems by homeViewModel.cartItems.collectAsState()
     val orders by homeViewModel.orders.collectAsState()
 
-    // Mặc định khi vào là Giỏ hàng
+    // State bài viết đã thích
+    val reactedPosts by feedViewModel.reactedPosts.collectAsState()
+    val isReactedLoading by feedViewModel.isReactedLoading.collectAsState()
+
     var selectedCategory by rememberSaveable { mutableStateOf(initialCategory) }
     val context = LocalContext.current
 
     LaunchedEffect(initialCategory) {
         selectedCategory = initialCategory
+    }
+
+    // Tải danh sách bài viết đã thích khi người dùng chọn tab này
+    LaunchedEffect(selectedCategory) {
+        if (selectedCategory == "Bài viết đã thích") {
+            feedViewModel.loadReactedPosts()
+        }
     }
 
     Scaffold(
@@ -78,7 +91,7 @@ fun SavedCollectionScreen(
                         }
                         Button(
                             onClick = {
-                                navController.navigate(Routes.Checkout.route) // FIX: Gọi navigation
+                                navController.navigate(Routes.Checkout.route)
                             },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
@@ -140,6 +153,38 @@ fun SavedCollectionScreen(
                 } else {
                     items(orders, span = { GridItemSpan(2) }) { order ->
                         OrderCard(order = order)
+                    }
+                }
+            } else if (selectedCategory == "Bài viết đã thích") {
+                // TAB MỚI: BÀI VIẾT ĐÃ THÍCH
+                item(span = { GridItemSpan(2) }) {
+                    Text("Bài viết bạn đã thích", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
+                }
+
+                if (isReactedLoading) {
+                    item(span = { GridItemSpan(2) }) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = SmartPickColor)
+                        }
+                    }
+                } else if (reactedPosts.isEmpty()) {
+                    item(span = { GridItemSpan(2) }) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                            Text("Chưa có bài viết nào được lưu", color = TextMuted)
+                        }
+                    }
+                } else {
+                    items(reactedPosts, span = { GridItemSpan(2) }) { (post, user, product) ->
+                        // Tái sử dụng lại trọn vẹn PostItem
+                        PostItem(
+                            post = post,
+                            user = user,
+                            product = product,
+                            onPostClick = { navController.navigate(Routes.PostDetail.createRoute(post.id.toString())) },
+                            onReactionClick = { reactionType ->
+                                feedViewModel.toggleReaction(post.id.toString(), reactionType)
+                            }
+                        )
                     }
                 }
             }
@@ -264,7 +309,7 @@ fun CategorySection(selectedCategory: String, onCategorySelected: (String) -> Un
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Quản lý mua sắm", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Quản lý mua sắm & Yêu thích", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             item {
@@ -279,6 +324,14 @@ fun CategorySection(selectedCategory: String, onCategorySelected: (String) -> Un
                     "Lịch sử mua hàng", Icons.Default.History,
                     isSelected = selectedCategory == "Lịch sử mua hàng",
                     onClick = { onCategorySelected("Lịch sử mua hàng") }
+                )
+            }
+            // THÊM TAB MỚI Ở ĐÂY
+            item {
+                CategoryItem(
+                    "Bài viết đã thích", Icons.Default.Favorite,
+                    isSelected = selectedCategory == "Bài viết đã thích",
+                    onClick = { onCategorySelected("Bài viết đã thích") }
                 )
             }
         }

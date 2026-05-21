@@ -3,6 +3,7 @@ package com.example.smartpick.features.feed.data
 import android.util.Log
 import com.example.smartpick.core.data.dto.PostReactionDto
 import com.example.smartpick.core.data.dto.PostReactionInsertDto
+import com.example.smartpick.core.data.dto.ReactedPostResponse
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.data.mapper.toPostDomain
 import com.example.smartpick.core.model.*
@@ -55,8 +56,6 @@ class FeedRepository @Inject constructor(
 
     suspend fun toggleReaction(postId: String, userId: String, reactionType: ReactionType): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // FIX 1: Dùng decodeList thay vì decodeSingleOrNull
-            // Lấy danh sách để tránh bị Crash nếu lỡ có dữ liệu rác (trùng lặp) trong DB
             val existingList = supabase.postgrest[TABLE_REACTIONS]
                 .select {
                     filter {
@@ -80,7 +79,6 @@ class FeedRepository @Inject constructor(
                     }
                 }
 
-                // TỰ DỌN RÁC: Nếu có nhiều hơn 1 cảm xúc của cùng 1 user trên bài đó, xóa các dòng thừa đi
                 if (existingList.size > 1) {
                     existingList.drop(1).forEach { duplicate ->
                         supabase.postgrest[TABLE_REACTIONS].delete {
@@ -89,7 +87,6 @@ class FeedRepository @Inject constructor(
                     }
                 }
             } else {
-                // FIX 2: Dùng Insert DTO chuẩn để tránh gửi biến id = null lên Database
                 val newReaction = PostReactionInsertDto(
                     postId = postId,
                     userId = userId,
@@ -101,6 +98,41 @@ class FeedRepository @Inject constructor(
         } catch (e: Exception) {
             Log.e("FEED_REPOSITORY", "Lỗi DB khi toggleReaction: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+    // ĐÃ THÊM HÀM NÀY VÀO ĐỂ FIX LỖI "Unresolved reference 'getReactedPosts'"
+    suspend fun getReactedPosts(currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
+        try {
+            val response = supabase.postgrest[TABLE_REACTIONS]
+                .select(columns = Columns.raw("post_id, user_id, posts(*, users(*), products(*), post_reactions(*))")) {
+                    filter {
+                        eq("user_id", currentUserId)
+                    }
+                    order("created_at", Order.DESCENDING)
+                }
+
+            val rawData = response.decodeList<ReactedPostResponse>()
+
+            rawData.mapNotNull { item ->
+                val postItem = item.post ?: return@mapNotNull null
+                val reactions = postItem.postReactions ?: emptyList()
+
+                val post = postItem.toPostDomain().copy(
+                    reactionCount = reactions.size,
+                    currentUserReaction = reactions.find { it.userId == currentUserId }?.let {
+                        try { ReactionType.valueOf(it.reactionType) } catch (e: Exception) { null }
+                    }
+                )
+
+                val user = postItem.users?.toDomain() ?: User(id = postItem.userId, fullName = "Người dùng SmartPick")
+                val product = postItem.products?.toDomain()
+
+                Triple(post, user, product)
+            }
+        } catch (e: Exception) {
+            Log.e("FEED_REPOSITORY", "Lỗi tải bài viết đã thích: ${e.message}")
+            emptyList()
         }
     }
 }

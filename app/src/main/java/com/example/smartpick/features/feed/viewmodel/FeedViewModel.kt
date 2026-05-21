@@ -16,7 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// (Đã xóa block sealed class FeedUiState ở đây để tránh lỗi Redeclaration)
+// LƯU Ý: Đã xóa khối `sealed class FeedUiState` ở đây để tránh lỗi Redeclaration.
+// Hệ thống sẽ tự dùng class FeedUiState mà bạn đã có sẵn.
 
 @HiltViewModel
 class FeedViewModel @Inject constructor(
@@ -27,6 +28,13 @@ class FeedViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<FeedUiState>(FeedUiState.Loading)
     val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
 
+    // Quản lý danh sách bài viết đã thích cho tab Saved
+    private val _reactedPosts = MutableStateFlow<List<Triple<Post, User, Product?>>>(emptyList())
+    val reactedPosts: StateFlow<List<Triple<Post, User, Product?>>> = _reactedPosts.asStateFlow()
+
+    private val _isReactedLoading = MutableStateFlow(false)
+    val isReactedLoading: StateFlow<Boolean> = _isReactedLoading.asStateFlow()
+
     init {
         loadFeed()
     }
@@ -35,10 +43,8 @@ class FeedViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = FeedUiState.Loading
             try {
-                // FIX: Dùng getCurrentUser() thay vì currentUser.value
                 val user = authRepository.getCurrentUser()
                 val currentUserId = user?.id ?: ""
-
                 val posts = feedRepository.getPostsWithUsers(currentUserId)
                 _uiState.value = FeedUiState.Success(posts)
             } catch (e: Exception) {
@@ -48,23 +54,51 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    fun refreshFeedSilently() {
+        viewModelScope.launch {
+            try {
+                val user = authRepository.getCurrentUser()
+                val currentUserId = user?.id ?: ""
+                val posts = feedRepository.getPostsWithUsers(currentUserId)
+                _uiState.value = FeedUiState.Success(posts)
+
+                // Refresh luôn cả tab Đã thích ngầm
+                val reacted = feedRepository.getReactedPosts(currentUserId)
+                _reactedPosts.value = reacted
+            } catch (e: Exception) {
+                Log.e("FeedViewModel", "Lỗi refresh ngầm", e)
+            }
+        }
+    }
+
+    // Tải danh sách bài viết đã thích
+    fun loadReactedPosts() {
+        viewModelScope.launch {
+            _isReactedLoading.value = true
+            try {
+                val user = authRepository.getCurrentUser()
+                val currentUserId = user?.id ?: ""
+                if (currentUserId.isNotEmpty()) {
+                    val posts = feedRepository.getReactedPosts(currentUserId)
+                    _reactedPosts.value = posts
+                }
+            } catch (e: Exception) {
+                Log.e("FeedViewModel", "Lỗi tải bài viết đã thích", e)
+            } finally {
+                _isReactedLoading.value = false
+            }
+        }
+    }
+
     fun toggleReaction(postId: String, reactionType: ReactionType) {
-        // BƯỚC 1: CẬP NHẬT GIAO DIỆN TỨC THÌ (OPTIMISTIC UPDATE)
+        // Cập nhật ngầm trên Feed
         val currentState = _uiState.value
         if (currentState is FeedUiState.Success) {
             val updatedPosts = currentState.posts.map { (post, user, product) ->
                 if (post.id == postId) {
                     val isRemoving = post.currentUserReaction == reactionType
                     val newReaction = if (isRemoving) null else reactionType
-
-                    val newCount = if (isRemoving) {
-                        maxOf(0, post.reactionCount - 1)
-                    } else if (post.currentUserReaction == null) {
-                        post.reactionCount + 1
-                    } else {
-                        post.reactionCount
-                    }
-
+                    val newCount = if (isRemoving) maxOf(0, post.reactionCount - 1) else if (post.currentUserReaction == null) post.reactionCount + 1 else post.reactionCount
                     Triple(post.copy(currentUserReaction = newReaction, reactionCount = newCount), user, product)
                 } else {
                     Triple(post, user, product)
@@ -73,39 +107,33 @@ class FeedViewModel @Inject constructor(
             _uiState.value = FeedUiState.Success(updatedPosts)
         }
 
-        // BƯỚC 2: GỌI API LƯU LÊN DATABASE NGẦM
+        // Cập nhật ngầm trên tab Đã thích (Xóa khỏi danh sách nếu Unlike)
+        val currentReacted = _reactedPosts.value
+        val updatedReacted = currentReacted.mapNotNull { (post, user, product) ->
+            if (post.id == postId) {
+                val isRemoving = post.currentUserReaction == reactionType
+                if (isRemoving) null // Xóa khỏi danh sách nếu gỡ cảm xúc
+                else {
+                    val newCount = if (post.currentUserReaction == null) post.reactionCount + 1 else post.reactionCount
+                    Triple(post.copy(currentUserReaction = reactionType, reactionCount = newCount), user, product)
+                }
+            } else {
+                Triple(post, user, product)
+            }
+        }
+        _reactedPosts.value = updatedReacted
+
+        // Lưu lên DB
         viewModelScope.launch {
             try {
-                // FIX: Dùng getCurrentUser() thay vì currentUser.value
                 val user = authRepository.getCurrentUser()
                 val currentUserId = user?.id
-
                 if (currentUserId != null) {
-                    val result = feedRepository.toggleReaction(postId, currentUserId, reactionType)
-                    if (result.isFailure) {
-                        Log.e("FeedViewModel", "Lỗi lưu cảm xúc: ${result.exceptionOrNull()?.message}")
-                    }
+                    feedRepository.toggleReaction(postId, currentUserId, reactionType)
                 }
             } catch (e: Exception) {
                 Log.e("FeedViewModel", "Exception khi thả cảm xúc", e)
             }
         }
     }
-
-    // Hàm tải lại Feed ngầm, không kích hoạt trạng thái Loading làm giật màn hình
-    fun refreshFeedSilently() {
-        viewModelScope.launch {
-            try {
-                val user = authRepository.getCurrentUser()
-                val currentUserId = user?.id ?: ""
-                val posts = feedRepository.getPostsWithUsers(currentUserId)
-                // Đẩy data mới vào thẳng Success mà không làm chớp màn hình Loading
-                _uiState.value = FeedUiState.Success(posts)
-            } catch (e: Exception) {
-                Log.e("FeedViewModel", "Lỗi refresh ngầm", e)
-            }
-        }
-    }
-
-
 }
