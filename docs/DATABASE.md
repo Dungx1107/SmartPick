@@ -4,7 +4,7 @@ SmartPick sử dụng **PostgreSQL** được cung cấp bởi Supabase. Hệ th
 
 ## 1. Sơ đồ Thực thể Quan hệ (ERD - Conceptual)
 
-Hệ thống bao gồm các bảng chính: `users`, `products`, `posts`, `comments`, `comment_likes`, và `notifications`.
+Hệ thống bao gồm các bảng chính: `users`, `products`, `posts`, `comments`, `comment_likes`, `notifications`, `cart_items`, `orders`, `order_items`, và `reviews`.
 
 ## 2. Chi tiết các Bảng
 
@@ -19,7 +19,7 @@ Lưu trữ thông tin định danh và hồ sơ người dùng.
 - `created_at` (Timestamp): Thời điểm đăng ký.
 
 ### Bảng: `products`
-Lưu trữ thông tin sản phẩm mà người dùng muốn chia sẻ hoặc bán.
+Lưu trữ thông tin sản phẩm.
 - `id` (UUID, Primary Key): Mã sản phẩm.
 - `owner_id` (UUID, Foreign Key -> `users.id`): Người sở hữu sản phẩm.
 - `name` (String): Tên sản phẩm.
@@ -48,22 +48,57 @@ Hỗ trợ bình luận đa tầng.
 - `content` (Text): Nội dung bình luận.
 - `created_at` (Timestamp): Thời điểm bình luận.
 
+### Bảng: `cart_items`
+Quản lý giỏ hàng của người dùng.
+- `id` (UUID, Primary Key).
+- `user_id` (UUID, Foreign Key -> `users.id`).
+- `product_id` (UUID, Foreign Key -> `products.id`).
+- `quantity` (Integer): Số lượng sản phẩm trong giỏ.
+
+### Bảng: `orders`
+Lưu trữ thông tin đơn hàng sau khi thanh toán.
+- `id` (UUID, Primary Key).
+- `user_id` (UUID, Foreign Key -> `users.id`).
+- `total_amount` (Numeric): Tổng giá trị đơn hàng.
+- `shipping_address` (Text): Địa chỉ nhận hàng.
+- `phone_number` (String): Số điện thoại nhận hàng.
+- `payment_method` (String): Phương thức thanh toán.
+- `status` (String): Trạng thái đơn hàng (mặc định: `completed`).
+- `created_at` (Timestamp).
+
+### Bảng: `order_items`
+Chi tiết các sản phẩm trong một đơn hàng.
+- `id` (UUID, Primary Key).
+- `order_id` (UUID, Foreign Key -> `orders.id`).
+- `product_id` (UUID, Foreign Key -> `products.id`).
+- `quantity` (Integer): Số lượng tại thời điểm mua.
+- `price_at_purchase` (Numeric): Giá sản phẩm tại thời điểm mua.
+
+### Bảng: `reviews`
+Lưu trữ đánh giá của người dùng về sản phẩm đã mua.
+- `id` (UUID, Primary Key).
+- `user_id` (UUID, Foreign Key -> `users.id`).
+- `product_id` (UUID, Foreign Key -> `products.id`).
+- `rating` (Integer): Điểm đánh giá (1-5).
+- `content` (Text): Nội dung đánh giá.
+- `created_at` (Timestamp).
+
 ### Bảng: `notifications`
 Quản lý thông báo thời gian thực.
-- `id` (UUID, Primary Key): Mã thông báo.
-- `receiver_id` (UUID, Foreign Key -> `users.id`): Người nhận thông báo.
-- `sender_id` (UUID, Foreign Key -> `users.id`): Người gây ra hành động (người like, comment).
-- `post_id` (UUID, Foreign Key -> `posts.id`): Bài viết liên quan.
+- `id` (UUID, Primary Key).
+- `receiver_id` (UUID, Foreign Key -> `users.id`).
+- `sender_id` (UUID, Foreign Key -> `users.id`).
+- `post_id` (UUID, Foreign Key -> `posts.id`).
 - `type` (String): Loại thông báo (`like`, `comment`, `system`, `order`).
-- `content` (Text, Nullable): Nội dung thông báo bổ sung.
-- `is_read` (Boolean): Trạng thái đã đọc hay chưa.
-- `created_at` (Timestamp): Thời điểm thông báo.
+- `content` (Text, Nullable).
+- `is_read` (Boolean).
+- `created_at` (Timestamp).
 
 ## 3. Các Ràng buộc & Logic (Constraints)
-- **Cascade Delete:** Khi xóa một `post`, toàn bộ `comments` và `notifications` liên quan sẽ bị xóa tự động (tùy cấu hình Postgres).
-- **Row Level Security (RLS):** Supabase áp dụng RLS để đảm bảo người dùng chỉ có thể sửa/xóa dữ liệu của chính mình.
-- **RPC (Remote Procedure Call):** Sử dụng hàm `check_user_availability` trong Postgres để tối ưu việc kiểm tra trùng lặp email/username khi đăng ký.
+- **RLS (Row Level Security):** Áp dụng nghiêm ngặt để bảo vệ dữ liệu cá nhân.
+- **Foreign Keys:** Đảm bảo tính toàn vẹn giữa người dùng, sản phẩm, đơn hàng và đánh giá.
+- **Triggers:** Tự động cập nhật `updated_at` hoặc gửi thông báo Realtime (nếu có).
 
 ## 4. Storage Buckets
-- `avatars`: Chứa ảnh đại diện của người dùng.
-- `media`: Chứa toàn bộ ảnh và video của bài viết và sản phẩm. Cơ chế đặt tên file: `post_media_{UUID}.extension`.
+- `avatars`: Ảnh đại diện.
+- `media`: Ảnh/Video bài viết và sản phẩm.

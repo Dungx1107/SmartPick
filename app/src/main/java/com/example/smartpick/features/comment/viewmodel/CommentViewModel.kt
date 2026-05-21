@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Comment
 import com.example.smartpick.core.utils.TimeFormatter
 import com.example.smartpick.features.comment.data.CommentRepository
+import com.example.smartpick.features.notification.data.NotificationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,8 @@ import kotlin.collections.filter
 
 @HiltViewModel
 class CommentViewModel @Inject constructor(
-    private val repository: CommentRepository
+    private val repository: CommentRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _comments = MutableStateFlow<List<CommentUIState>>(emptyList())
@@ -104,7 +106,8 @@ class CommentViewModel @Inject constructor(
         postId: String,
         userId: String,
         content: String,
-        postOwnerId: String?
+        postOwnerId: String?,
+        currentUserName: String
     ) {
 
         if (postId.isBlank()) {
@@ -136,7 +139,6 @@ class CommentViewModel @Inject constructor(
                 // XÁC ĐỊNH NGƯỜI NHẬN THÔNG BÁO
                 val finalReceiverId =
                     targetComment?.// Nếu đang reply, người nhận là chủ của bình luận đó
-                        // Lưu ý: Bạn cần đảm bảo CommentUIState có chứa authorId (userId của người viết comment đó)
                     authorId ?: (// Nếu là comment mới, người nhận là chủ bài viết
                             postOwnerId ?: "")
 
@@ -149,6 +151,30 @@ class CommentViewModel @Inject constructor(
                 )
 
                 Log.i("CommentDebug", "Gửi thành công!")
+
+                // --- BẮT ĐẦU ĐOẠN MÃ MỚI TÍCH HỢP PUSH NOTIFICATION ---
+                if (finalReceiverId.isNotEmpty() && finalReceiverId != userId) {
+                    // Chạy background job để gọi Edge Function, tránh làm chậm UI luồng chính
+                    viewModelScope.launch {
+                        try {
+                            val pushTitle = if (targetComment != null) "Phản hồi mới" else "Bình luận mới"
+                            val pushBody = "$currentUserName đã phản hồi: ${content.take(40)}${if (content.length > 40) "..." else ""}"
+
+                            Log.d("FCM_TRIGGER", "Đang gọi Edge Function để báo push cho user $finalReceiverId")
+
+                            notificationRepository.triggerPushNotification(
+                                receiverId = finalReceiverId,
+                                title = pushTitle,
+                                body = pushBody,
+                                type = "comment",
+                                postId = postId,
+                                targetId = null // Cập nhật targetId nếu cần Deep Link tới thẳng dòng comment
+                            )
+                        } catch (e: Exception) {
+                            Log.e("FCM_TRIGGER", "Lỗi trigger Push", e)
+                        }
+                    }
+                }
 
                 // Sau khi gửi thành công:
                 _replyingTo.value = null // Thoát chế độ reply
@@ -169,7 +195,8 @@ class CommentViewModel @Inject constructor(
         commentId: String,
         currentUserId: String,
         postId: String,
-        postOwnerId: String?
+        postOwnerId: String?,
+        currentUserName: String
     ) {
         Log.d(
             "LikeDebug",
@@ -200,6 +227,19 @@ class CommentViewModel @Inject constructor(
                     "LikeDebug",
                     "[SUCCESS] Repository xử lý thành công. Tiến hành gọi loadComments để đồng bộ..."
                 )
+                // MỞ RỘNG: Tích hợp Gửi thông báo Push khi một người like comment của bạn
+                if (!targetComment.isLiked && targetComment.authorId != currentUserId) {
+                    viewModelScope.launch {
+                        notificationRepository.triggerPushNotification(
+                            receiverId = targetComment.authorId,
+                            title = "Lượt thích mới",
+                            body = "$currentUserName đã thích bình luận của bạn",
+                            type = "like",
+                            postId = postId
+                        )
+                    }
+                }
+
                 // Tải lại danh sách bình luận để cập nhật UI mới nhất
                 loadComments(postId, postOwnerId, currentUserId)
             } catch (e: Exception) {

@@ -1,7 +1,10 @@
 package com.example.smartpick.features.home.ui
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.R
@@ -61,6 +65,31 @@ fun HomeScreen(
             selectedProduct
         }
     }
+    // --- BẮT ĐẦU PHẦN XIN QUYỀN THÔNG BÁO (ANDROID 13+) ---
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission()
+        ) { isGranted ->
+            if (isGranted) {
+                println("DEBUG_NOTIFICATION: Quyền POST_NOTIFICATIONS đã được cấp")
+            } else {
+                Toast.makeText(context, "Bạn có thể bỏ lỡ các thông báo quan trọng từ SmartPick", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        LaunchedEffect(Unit) {
+            val isGranted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            // Nếu chưa được cấp quyền, hiển thị hộp thoại xin quyền hệ thống
+            if (!isGranted) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+    // --- KẾT THÚC PHẦN XIN QUYỀN THÔNG BÁO ---
 
     val speechRecognizerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -88,6 +117,7 @@ fun HomeScreen(
         try {
             speechRecognizerLauncher.launch(intent)
         } catch (e: Exception) {
+            e.printStackTrace()
             Toast.makeText(context, "Thiết bị không hỗ trợ nhận diện giọng nói", Toast.LENGTH_SHORT).show()
         }
     }

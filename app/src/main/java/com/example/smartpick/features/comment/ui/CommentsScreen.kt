@@ -27,10 +27,11 @@ fun CommentsScreen(
     postOwnerId: String?,
     currentUserId: String,
     targetCommentId: String? = null,
+    currentUserName: String = "Một người dùng",
     viewModel: CommentViewModel = hiltViewModel(),
     onBackClick: () -> Unit,
 
-) {
+    ) {
     val context = LocalContext.current
     val comments by viewModel.comments.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -47,14 +48,15 @@ fun CommentsScreen(
         isSending = isSending,
         targetCommentId = targetCommentId,
         onSendComment = { text ->
-            viewModel.sendComment(postId, currentUserId, text, postOwnerId)
+            viewModel.sendComment(postId, currentUserId, text, postOwnerId, currentUserName)
         },
         onLikeClick = { commentId ->
             viewModel.toggleLikeComment(
                 commentId = commentId,
                 currentUserId = currentUserId,
                 postId = postId,
-                postOwnerId = postOwnerId
+                postOwnerId = postOwnerId,
+                currentUserName = currentUserName
             )
         },
         onReplyClick = { comment ->

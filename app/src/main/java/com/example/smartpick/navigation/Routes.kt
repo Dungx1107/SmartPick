@@ -31,7 +31,13 @@ sealed class Routes(val route: String) {
 
     object Settings : Routes("settings")
 
+    // Dành cho click thông báo bên trong màn hình NotificationsScreen của app
     object CommentsFromNotification : Routes("comments_notification/{postId}?commentId={commentId}") {
         fun createRoute(postId: String, commentId: String) = "comments_notification/$postId?commentId=$commentId"
+    }
+
+    // Dành riêng cho click từ thanh trạng thái (Status bar) của điện thoại
+    object SystemPushDeepLink : Routes("system_push/{type}?post_id={postId}&target_id={targetId}") {
+        // Route này không cần hàm createRoute vì nó chỉ được gọi thông qua Deep Link từ Intent
     }
 }

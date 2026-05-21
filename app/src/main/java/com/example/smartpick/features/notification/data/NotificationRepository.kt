@@ -1,5 +1,7 @@
 package com.example.smartpick.features.notification.data
 
+import PushPayload
+import android.util.Log
 import com.example.smartpick.core.data.dto.NotificationDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.data.mapper.toDto
@@ -17,6 +19,13 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import io.github.jan.supabase.functions.functions
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.content.TextContent
+import io.ktor.http.contentType
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 @Singleton
 class NotificationRepository @Inject constructor(
@@ -31,7 +40,7 @@ class NotificationRepository @Inject constructor(
             table = "notifications"
             filter = "receiver_id=eq.$userId"
         }.map { action ->
-            println("DEBUG_NOTIFICATION: [Real-time Event] Phát hiện thay đổi hành động: ${action.toString()}")
+            println("DEBUG_NOTIFICATION: [Real-time Event] Phát hiện thay đổi hành động: $action")
 
             // 1. Decode ra danh sách DTO thay vì Domain Model
             val listDto = supabase.postgrest.from("notifications")
@@ -111,6 +120,65 @@ class NotificationRepository @Inject constructor(
             }
         } catch (e: Exception) {
             println("ERROR_NOTIFICATION: [Mark As Read Failed] Lỗi khi đánh dấu đã đọc: ${e.message}")
+        }
+    }
+
+    // Lưu Token lên Supabase
+    suspend fun upsertPushToken(token: String, userId: String) = withContext(Dispatchers.IO) {
+        try {
+            println("DEBUG_NOTIFICATION: [Upsert Token] Đang lưu FCM Token cho userId: $userId")
+
+            // Xây dựng payload map.
+            // Postgres ON CONFLICT UPDATE sẽ hoạt động nhờ constraint UNIQUE(user_id, token) bạn đã setup
+            val payload = mapOf(
+                "user_id" to userId,
+                "token" to token,
+                "device_type" to "android",
+                "updated_at" to java.time.Instant.now().toString()
+            )
+
+            supabase.postgrest.from("user_push_tokens").upsert(payload)
+
+            println("DEBUG_NOTIFICATION: [Upsert Token Success] Lưu Token thành công")
+        } catch (e: Exception) {
+            println("ERROR_NOTIFICATION: [Upsert Token Failed] Lỗi khi lưu Token: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+    suspend fun triggerPushNotification(
+        receiverId: String,
+        title: String,
+        body: String,
+        type: String,
+        postId: String? = null,
+        targetId: String? = null
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val jsonPayload = buildJsonObject {
+                put("receiver_id", receiverId)
+                put("title", title)
+                put("body", body)
+                put("type", type)
+                put("post_id", postId ?: "")
+                put("target_id", targetId ?: "")
+            }
+
+            val jsonString = jsonPayload.toString()
+            Log.d("FCM_DEBUG", "Payload chuẩn bị gửi: $jsonString")
+
+            supabase.functions.invoke("send-fcm") {
+                // Đóng gói chuỗi JSON vào TextContent. Ktor sẽ tự động hiểu và bypass ContentNegotiation
+                setBody(
+                    TextContent(
+                        text = jsonString,
+                        contentType = ContentType.Application.Json
+                    )
+                )
+            }
+
+            Log.d("FCM_DEBUG", "Trigger Edge Function send-fcm thành công cho receiver_id: $receiverId")
+        } catch (e: Exception) {
+            Log.e("FCM_DEBUG", "Crash tại triggerPushNotification:\n${e.stackTraceToString()}")
         }
     }
 }
