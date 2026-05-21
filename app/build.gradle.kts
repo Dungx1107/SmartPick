@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("com.google.dagger.hilt.android")
     id("kotlin-parcelize")
+    id("com.google.gms.google-services")
 }
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
@@ -147,6 +148,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:gotrue-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.github.jan-tennert.supabase:realtime-kt")
+    implementation("io.github.jan-tennert.supabase:functions-kt")
 
 
     // Ktor client (Supabase dùng cái này để gọi mạng)
@@ -219,4 +221,10 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
     implementation("com.google.ai.client.generativeai:generativeai:0.7.0")
+
+    // Import the Firebase BoM (Bill of Materials) để tự động quản lý version
+    implementation(platform("com.google.firebase:firebase-bom:32.8.0"))
+
+    // Thêm FCM
+    implementation("com.google.firebase:firebase-messaging")
 }

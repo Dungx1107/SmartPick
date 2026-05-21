@@ -13,6 +13,7 @@ import kotlinx.serialization.json.Json
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import kotlin.time.Duration.Companion.seconds
+import io.github.jan.supabase.functions.Functions
 
 object SupabaseProvider {
     @OptIn(SupabaseInternal::class)
@@ -33,6 +34,7 @@ object SupabaseProvider {
         }
         install(Auth)
         install(Storage)
+        install(Functions)
         install(Realtime) {
             // Cấu hình Realtime
             // Tùy chọn: Tự động kết nối lại nếu mất mạng

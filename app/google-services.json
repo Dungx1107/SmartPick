@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565284488620",
+    "project_id": "smartpick-c4cef",
+    "storage_bucket": "smartpick-c4cef.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565284488620:android:53d53f612a6b5c13976609",
+        "android_client_info": {
+          "package_name": "com.example.smartpick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAg5p5xVHkvS4_VdVQjFl7xXWV87jIQ7cQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

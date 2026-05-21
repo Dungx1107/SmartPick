@@ -1,6 +1,7 @@
 // File: app/src/main/java/com/example/smartpick/navigation/AppNavigation.kt
 package com.example.smartpick.navigation
 
+import androidx.navigation.navDeepLink
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -321,9 +322,87 @@ fun AppNavigation(
                         postId = postId,
                         postOwnerId = null,
                         currentUserId = currentUser?.id ?: "",
+                        currentUserName = currentUser?.fullName ?: "Một người dùng",
                         targetCommentId = commentId,
                         onBackClick = { navController.popBackStack() }
                     )
+                }
+
+                // 1. Luồng IN-APP: Xử lý click từ NotificationsScreen (Giữ nguyên logic của bạn, KHÔNG chứa deepLinks)
+                composable(
+                    route = Routes.CommentsFromNotification.route,
+                    arguments = listOf(
+                        navArgument("postId") { type = NavType.StringType },
+                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                    )
+                ) { backStackEntry ->
+                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                    val commentId = backStackEntry.arguments?.getString("commentId")
+
+                    CommentsScreen(
+                        postId = postId,
+                        postOwnerId = null,
+                        currentUserId = currentUser?.id ?: "",
+                        targetCommentId = commentId,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+
+                // 2. Luồng SYSTEM PUSH: Hứng Deep Link từ hệ điều hành (khi bấm vào push notification)
+                composable(
+                    route = Routes.SystemPushDeepLink.route,
+                    arguments = listOf(
+                        navArgument("type") { type = NavType.StringType },
+                        navArgument("postId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                        navArgument("targetId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                    ),
+                    deepLinks = listOf(
+                        navDeepLink { uriPattern = "smartpick://notification/{type}?post_id={postId}&target_id={targetId}" }
+                    )
+                ) { backStackEntry ->
+                    val type = backStackEntry.arguments?.getString("type") ?: ""
+                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                    val targetId = backStackEntry.arguments?.getString("targetId")
+
+                    // Chuyển hướng tới màn hình tương ứng với loại thông báo
+                    when (type) {
+                        "comment", "reply" -> {
+                            CommentsScreen(
+                                postId = postId,
+                                postOwnerId = null,
+                                currentUserId = currentUser?.id ?: "",
+                                targetCommentId = targetId,
+                                onBackClick = {
+                                    // Khi bấm từ bên ngoài vào, nếu ấn back thì nên đưa về Home thay vì thoát app
+                                    navController.navigate(Routes.Home.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+                        "like" -> {
+                            PostDetailScreen(
+                                onBackClick = {
+                                    navController.navigate(Routes.Home.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                },
+                                onCommentClick = { pId, ownerId ->
+                                    currentUser?.id?.let {
+                                        navController.navigate(Routes.Comments.createRoute(pId, ownerId))
+                                    }
+                                }
+                            )
+                        }
+                        else -> {
+                            // System notification hoặc các type khác -> Mở trang chủ
+                            LaunchedEffect(Unit) {
+                                navController.navigate(Routes.Home.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
