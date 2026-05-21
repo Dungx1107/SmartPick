@@ -1,11 +1,11 @@
 package com.example.smartpick.features.feed.data
 
 import android.util.Log
+import com.example.smartpick.core.data.dto.PostReactionDto
+import com.example.smartpick.core.data.dto.PostReactionInsertDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.data.mapper.toPostDomain
-import com.example.smartpick.core.model.Post
-import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.model.User
+import com.example.smartpick.core.model.*
 import com.example.smartpick.core.utils.Constants.TABLE_POSTS
 import com.example.smartpick.features.feed.data.dto.FullPostResponse
 import io.github.jan.supabase.SupabaseClient
@@ -21,26 +21,28 @@ import javax.inject.Singleton
 class FeedRepository @Inject constructor(
     private val supabase: SupabaseClient
 ) {
-    suspend fun getPostsWithUsers(): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
+    private val TABLE_REACTIONS = "post_reactions"
+
+    suspend fun getPostsWithUsers(currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
             val response = supabase.postgrest[TABLE_POSTS]
-                .select(columns = Columns.raw("*, users(*), products(*)")) {
+                .select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
                     order("created_at", Order.DESCENDING)
                 }
 
             val rawData = response.decodeList<FullPostResponse>()
 
             rawData.map { item ->
-                // 1. Map Post bằng toPostDomain()
-                val post = item.toPostDomain()
+                val reactions = item.postReactions ?: emptyList()
 
-                // 2. Map User: Nếu null thì tạo default User model thuần
-                val user = item.users?.toDomain() ?: User(
-                    id = item.userId,
-                    fullName = "Người dùng SmartPick"
+                val post = item.toPostDomain().copy(
+                    reactionCount = reactions.size,
+                    currentUserReaction = reactions.find { it.userId == currentUserId }?.let {
+                        try { ReactionType.valueOf(it.reactionType) } catch (e: Exception) { null }
+                    }
                 )
 
-                // 3. Map Product: Chuyển ProductDto sang Product model
+                val user = item.users?.toDomain() ?: User(id = item.userId, fullName = "Người dùng SmartPick")
                 val product = item.products?.toDomain()
 
                 Triple(post, user, product)
@@ -48,6 +50,57 @@ class FeedRepository @Inject constructor(
         } catch (e: Exception) {
             Log.e("FEED_REPOSITORY", "Lỗi tải dữ liệu feed: ${e.message}")
             emptyList()
+        }
+    }
+
+    suspend fun toggleReaction(postId: String, userId: String, reactionType: ReactionType): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            // FIX 1: Dùng decodeList thay vì decodeSingleOrNull
+            // Lấy danh sách để tránh bị Crash nếu lỡ có dữ liệu rác (trùng lặp) trong DB
+            val existingList = supabase.postgrest[TABLE_REACTIONS]
+                .select {
+                    filter {
+                        eq("post_id", postId)
+                        eq("user_id", userId)
+                    }
+                }.decodeList<PostReactionDto>()
+
+            val existing = existingList.firstOrNull()
+
+            if (existing != null) {
+                if (existing.reactionType == reactionType.name) {
+                    supabase.postgrest[TABLE_REACTIONS].delete {
+                        filter { eq("id", existing.id!!) }
+                    }
+                } else {
+                    supabase.postgrest[TABLE_REACTIONS].update(
+                        mapOf("reaction_type" to reactionType.name)
+                    ) {
+                        filter { eq("id", existing.id!!) }
+                    }
+                }
+
+                // TỰ DỌN RÁC: Nếu có nhiều hơn 1 cảm xúc của cùng 1 user trên bài đó, xóa các dòng thừa đi
+                if (existingList.size > 1) {
+                    existingList.drop(1).forEach { duplicate ->
+                        supabase.postgrest[TABLE_REACTIONS].delete {
+                            filter { eq("id", duplicate.id!!) }
+                        }
+                    }
+                }
+            } else {
+                // FIX 2: Dùng Insert DTO chuẩn để tránh gửi biến id = null lên Database
+                val newReaction = PostReactionInsertDto(
+                    postId = postId,
+                    userId = userId,
+                    reactionType = reactionType.name
+                )
+                supabase.postgrest[TABLE_REACTIONS].insert(newReaction)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FEED_REPOSITORY", "Lỗi DB khi toggleReaction: ${e.message}", e)
+            Result.failure(e)
         }
     }
 }

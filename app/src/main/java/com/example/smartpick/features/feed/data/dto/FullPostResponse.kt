@@ -1,7 +1,9 @@
 package com.example.smartpick.features.feed.data.dto
 
+import com.example.smartpick.core.data.dto.PostDto
 import com.example.smartpick.core.data.dto.ProductDto
 import com.example.smartpick.core.data.dto.UserDto
+import com.example.smartpick.core.data.dto.PostReactionDto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -13,6 +15,8 @@ data class FullPostResponse(
     val content: String? = null,
     @SerialName("media_urls") val mediaUrls: List<String> = emptyList(),
     @SerialName("created_at") val createdAt: String? = null,
-    val users: UserDto? = null, // Chuyển sang UserDto
-    val products: ProductDto? = null // Chuyển sang ProductDto
+    // Sử dụng nullable để chống lỗi parse khi dữ liệu nested trống
+    val users: UserDto? = null,
+    val products: ProductDto? = null,
+    @SerialName("post_reactions") val postReactions: List<PostReactionDto>? = emptyList()
 )
