@@ -20,15 +20,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.R
-import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Post
+import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.core.ui.components.PostItem
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import com.example.smartpick.features.post_detail.data.dto.PostDetailResponse
 import com.example.smartpick.features.profile.viewmodel.ProfileViewModel
 import com.example.smartpick.navigation.Routes
 
@@ -42,8 +41,11 @@ fun ProfileScreen(
     val posts by profileViewModel.userPosts.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
 
+    // Tự động tải bài viết đồng bộ cấu trúc 2 chiều
     LaunchedEffect(user?.id) {
-        user?.id?.let { profileViewModel.loadUserPosts(it) }
+        user?.id?.let { id ->
+            profileViewModel.loadUserPosts(profileUserId = id, currentUserId = id)
+        }
     }
 
     ProfileContent(
@@ -66,7 +68,7 @@ fun ProfileScreen(
 @Composable
 fun ProfileContent(
     user: User?,
-    posts: List<PostDetailResponse>,
+    posts: List<Triple<Post, User, Product?>>,
     isLoading: Boolean,
     onLogout: () -> Unit,
     onEditProfile: () -> Unit,
@@ -123,38 +125,17 @@ fun ProfileContent(
                 )
             }
         } else {
-            items(items = posts, key = { it.id }) { postDetail ->
-
-                // ĐÃ FIX: Ánh xạ dữ liệu bài Share thủ công và an toàn tuyệt đối
-                val post = Post(
-                    id = postDetail.id,
-                    userId = postDetail.user.id,
-                    productId = postDetail.product?.id,
-                    content = postDetail.content ?: "",
-                    mediaUrls = postDetail.mediaUrls,
-                    createdAt = postDetail.createdAt,
-
-                    // Lồng bài viết gốc vào trong
-                    sharedPostId = postDetail.sharedPostId,
-                    sharedPost = postDetail.sharedPost?.let { shared ->
-                        Post(
-                            id = shared.id,
-                            userId = shared.user.id,
-                            productId = shared.product?.id,
-                            content = shared.content ?: "",
-                            mediaUrls = shared.mediaUrls,
-                            createdAt = shared.createdAt
-                        )
-                    },
-                    sharedPostUser = postDetail.sharedPost?.user?.toDomain()
-                )
-
+            // Duyệt danh sách Triple đã được xử lý lồng ghép bài gốc từ Repository
+            items(
+                items = posts,
+                key = { it.first.id.toString() }
+            ) { (post, postUser, product) ->
                 PostItem(
                     post = post,
-                    user = postDetail.user.toDomain(),
-                    product = postDetail.product?.toDomain(),
+                    user = postUser,
+                    product = product,
                     onPostClick = { onPostClick(post.id.toString()) },
-                    onProductClick = { /* Xử lý click sản phẩm */ },
+                    onProductClick = { /* Xử lý sản phẩm */ },
                     isDetailView = false
                 )
             }

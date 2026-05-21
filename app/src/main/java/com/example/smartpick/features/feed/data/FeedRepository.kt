@@ -184,4 +184,42 @@ class FeedRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    // THÊM VÀO FeedRepository.kt
+    suspend fun getUserPosts(profileUserId: String, currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
+        try {
+            // Bước 1: Chỉ lấy các bài viết thuộc về riêng User này (dành cho màn hình Profile)
+            val response = supabase.postgrest[TABLE_POSTS]
+                .select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
+                    filter {
+                        eq("user_id", profileUserId)
+                    }
+                    order("created_at", Order.DESCENDING)
+                }
+
+            val rawPosts = response.decodeList<SafePostResponse>()
+
+            // Bước 2: Lọc lấy danh sách ID của các bài viết gốc (bài được chia sẻ)
+            val sharedPostIds = rawPosts.mapNotNull { it.sharedPostId }.distinct()
+            val sharedPostsMap = mutableMapOf<String, Triple<Post, User, Product?>>()
+
+            // Bước 3: Truy vấn riêng các bài gốc này và đưa vào bản đồ bộ nhớ tạm
+            if (sharedPostIds.isNotEmpty()) {
+                val sharedResponse = supabase.postgrest[TABLE_POSTS]
+                    .select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
+                        filter { isIn("id", sharedPostIds) }
+                    }.decodeList<SafePostResponse>()
+
+                sharedResponse.forEach { sharedRaw ->
+                    sharedPostsMap[sharedRaw.id] = sharedRaw.toDomainTriple(currentUserId)
+                }
+            }
+
+            // Bước 4: Ghép nối đệ quy tạo cấu trúc lồng nhau hoàn hảo
+            rawPosts.map { it.toDomainTriple(currentUserId, sharedPostsMap) }
+        } catch (e: Exception) {
+            Log.e("FEED_REPOSITORY", "Lỗi tải bài viết cá nhân: ${e.message}", e)
+            emptyList()
+        }
+    }
 }
