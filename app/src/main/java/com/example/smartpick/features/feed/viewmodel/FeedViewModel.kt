@@ -1,9 +1,12 @@
 package com.example.smartpick.features.feed.viewmodel
 
-import android.content.ContentValues.TAG
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.smartpick.core.model.Post
+import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.model.ReactionType
+import com.example.smartpick.core.model.User
+import com.example.smartpick.features.auth.data.AuthRepository
 import com.example.smartpick.features.feed.data.FeedRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,112 +16,121 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
-/**
- * ViewModel quản lý dữ liệu cho màn hình Feed.
- *
- * Nhiệm vụ chính:
- * - Gọi Repository để lấy dữ liệu feed
- * - Quản lý trạng thái UI bằng StateFlow
- * - Xử lý loading / success / error
- *
- * @property feedRepository Repository dùng để lấy dữ liệu feed
- */
 @HiltViewModel
 class FeedViewModel @Inject constructor(
-    private val feedRepository: FeedRepository
+    private val feedRepository: FeedRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    /**
-     * StateFlow nội bộ có thể thay đổi dữ liệu.
-     * Ban đầu sẽ là trạng thái Loading.
-     */
-    private val _uiState =
-        MutableStateFlow<FeedUiState>(FeedUiState.Loading)
+    private val _uiState = MutableStateFlow<FeedUiState>(FeedUiState.Loading)
+    val uiState: StateFlow<FeedUiState> = _uiState.asStateFlow()
 
-    /**
-     * StateFlow public chỉ cho phép đọc.
-     * UI sẽ observe biến này để cập nhật giao diện.
-     */
-    val uiState: StateFlow<FeedUiState> =
-        _uiState.asStateFlow()
+    private val _reactedPosts = MutableStateFlow<List<Triple<Post, User, Product?>>>(emptyList())
+    val reactedPosts: StateFlow<List<Triple<Post, User, Product?>>> = _reactedPosts.asStateFlow()
 
-    /**
-     * init block sẽ tự động chạy khi ViewModel được tạo.
-     * Dùng để tải dữ liệu feed lần đầu.
-     */
-    init {
-        loadFeed()
+    private val _isReactedLoading = MutableStateFlow(false)
+    val isReactedLoading: StateFlow<Boolean> = _isReactedLoading.asStateFlow()
+
+    init { loadFeed() }
+
+    fun loadFeed() {
+        viewModelScope.launch {
+            _uiState.value = FeedUiState.Loading
+            try {
+                val currentUserId = authRepository.getCurrentUser()?.id ?: ""
+                val posts = feedRepository.getPostsWithUsers(currentUserId)
+                _uiState.value = FeedUiState.Success(posts.filter { it.first.sharedPostId == null })
+            } catch (e: Exception) {
+                _uiState.value = FeedUiState.Error(e.message ?: "Lỗi")
+            }
+        }
     }
 
-    /**
-     * Hàm tải dữ liệu feed từ Repository.
-     *
-     * Flow xử lý:
-     * 1. Chuyển UI sang trạng thái Loading
-     * 2. Gọi Repository lấy dữ liệu
-     * 3. Nếu thành công -> cập nhật Success
-     * 4. Nếu lỗi -> cập nhật Error
-     *
-     * Sử dụng viewModelScope.launch để chạy coroutine
-     * an toàn theo vòng đời ViewModel.
-     */
-    fun loadFeed() {
-
-        /**
-         * viewModelScope: Coroutine sẽ tự hủy khi ViewModel bị destroy.
-         */
+    fun refreshFeedSilently() {
         viewModelScope.launch {
-
-            /* Ghi log để debug quá trình tải dữ liệu.*/
-            Log.d(TAG, "Bắt đầu tải dữ liệu Feed...")
-
-            /**
-             * Chuyển UI sang trạng thái Loading.
-             * UI có thể hiển thị progress bar tại đây.
-             */
-            _uiState.value = FeedUiState.Loading
-
             try {
-                /**
-                 * Gọi Repository để lấy danh sách bài viết
-                 * kèm thông tin User và Product.
-                 */
-                val posts = feedRepository.getPostsWithUsers()
+                val currentUserId = authRepository.getCurrentUser()?.id ?: ""
+                val posts = feedRepository.getPostsWithUsers(currentUserId)
+                _uiState.value = FeedUiState.Success(posts.filter { it.first.sharedPostId == null })
+                _reactedPosts.value = feedRepository.getReactedPosts(currentUserId)
+            } catch (e: Exception) { }
+        }
+    }
 
-                /* Log số lượng bài viết tải được. */
-                Log.d(TAG, "Tải thành công: ${posts.size} bài viết.")
-
-                /* In chi tiết từng bài viết để debug. */
-                posts.forEachIndexed { index, item ->
-                    Log.d(
-                        TAG,
-                        "Post[$index]: " +
-                                "ID=${item.first.id}, " +
-                                "User=${item.second.fullName}, " +
-                                "HasProduct=${item.third != null}"
-                    )
+    fun loadReactedPosts() {
+        viewModelScope.launch {
+            _isReactedLoading.value = true
+            try {
+                val user = authRepository.getCurrentUser()
+                if (user?.id?.isNotEmpty() == true) {
+                    _reactedPosts.value = feedRepository.getReactedPosts(user.id)
                 }
+            } catch (e: Exception) { }
+            finally { _isReactedLoading.value = false }
+        }
+    }
 
-                /**
-                 * Cập nhật UI sang trạng thái Success
-                 * và truyền dữ liệu cho giao diện.
-                 */
-                _uiState.value = FeedUiState.Success(posts)
+    // TÍNH TOÁN NGẦM ĐỂ TĂNG/GIẢM CẢM XÚC
+    private fun updatePostReaction(post: Post, newReaction: ReactionType): Post {
+        val oldReaction = post.currentUserReaction
+        val breakdown = post.reactionBreakdown.toMutableMap()
+        var count = post.reactionCount
 
-            } catch (e: Exception) {
+        if (oldReaction == newReaction) {
+            breakdown[oldReaction] = maxOf(0, (breakdown[oldReaction] ?: 0) - 1)
+            if (breakdown[oldReaction] == 0) breakdown.remove(oldReaction)
+            count = maxOf(0, count - 1)
+            return post.copy(currentUserReaction = null, reactionCount = count, reactionBreakdown = breakdown)
+        } else {
+            if (oldReaction != null) {
+                breakdown[oldReaction] = maxOf(0, (breakdown[oldReaction] ?: 0) - 1)
+                if (breakdown[oldReaction] == 0) breakdown.remove(oldReaction)
+            } else count += 1
+            breakdown[newReaction] = (breakdown[newReaction] ?: 0) + 1
+            return post.copy(currentUserReaction = newReaction, reactionCount = count, reactionBreakdown = breakdown)
+        }
+    }
 
-                /**
-                 * Nếu có lỗi:
-                 * - Ghi log lỗi
-                 * - Chuyển UI sang trạng thái Error
-                 */
-                Log.e(TAG, "Lỗi khi tải Feed: ${e.message}", e)
-
-                _uiState.value =
-                    FeedUiState.Error(
-                        e.message ?: "Lỗi hệ thống không xác định"
-                    )
+    fun toggleReaction(postId: String, reactionType: ReactionType) {
+        val currentState = _uiState.value
+        if (currentState is FeedUiState.Success) {
+            val updatedPosts = currentState.posts.map { (post, user, product) ->
+                var updatedPost = post
+                if (updatedPost.id == postId) updatedPost = updatePostReaction(updatedPost, reactionType)
+                if (updatedPost.sharedPost?.id == postId) updatedPost = updatedPost.copy(sharedPost = updatePostReaction(updatedPost.sharedPost, reactionType))
+                Triple(updatedPost, user, product)
             }
+            _uiState.value = FeedUiState.Success(updatedPosts)
+        }
+
+        val updatedReacted = _reactedPosts.value.mapNotNull { (post, user, product) ->
+            var updatedPost = post
+            if (updatedPost.id == postId) {
+                if (updatedPost.currentUserReaction == reactionType) return@mapNotNull null
+                updatedPost = updatePostReaction(updatedPost, reactionType)
+            }
+            if (updatedPost.sharedPost?.id == postId) updatedPost = updatedPost.copy(sharedPost = updatePostReaction(updatedPost.sharedPost, reactionType))
+            Triple(updatedPost, user, product)
+        }
+        _reactedPosts.value = updatedReacted
+
+        viewModelScope.launch {
+            try {
+                val currentUserId = authRepository.getCurrentUser()?.id
+                if (currentUserId != null) feedRepository.toggleReaction(postId, currentUserId, reactionType)
+            } catch (e: Exception) { }
+        }
+    }
+
+    fun sharePost(postId: String, caption: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                val currentUserId = authRepository.getCurrentUser()?.id
+                if (currentUserId != null) {
+                    val result = feedRepository.sharePost(postId, currentUserId, caption)
+                    if (result.isSuccess) { onSuccess(); refreshFeedSilently() }
+                }
+            } catch (e: Exception) { }
         }
     }
 }

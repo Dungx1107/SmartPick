@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/home/viewmodel/HomeViewModel.kt
 package com.example.smartpick.features.home.viewmodel
 
 import android.util.Log
@@ -118,7 +117,7 @@ class HomeViewModel @Inject constructor(
 
             val request = ReviewRequest(
                 userId = user.id,
-                productId = productId, // FIX: Đã sửa lại product_id thành productId
+                productId = productId,
                 rating = rating,
                 content = content
             )
@@ -211,6 +210,7 @@ class HomeViewModel @Inject constructor(
                 if (result.isSuccess) {
                     fetchCartItems()
                     fetchOrderHistory()
+                    fetchProducts()
                     onSuccess()
                 } else {
                     val errorMsg = result.exceptionOrNull()?.message ?: "Lỗi thanh toán từ Database"

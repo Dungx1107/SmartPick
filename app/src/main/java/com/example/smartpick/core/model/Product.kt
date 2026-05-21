@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/core/model/Product.kt
 package com.example.smartpick.core.model
 
 import android.os.Parcelable
@@ -18,7 +17,7 @@ data class Product(
     @SerialName("image_urls") val imageUrls: List<String> = emptyList(),
     @SerialName("video_url") val videoUrl: String? = null,
     val status: String = "available",
-    @SerialName("stock") val stock: Int = 1000,
-    @SerialName("sold_count") val soldCount: Int = 0,
-    @SerialName("created_at") val createdAt: String? = null
+    val stock: Int = 0,
+    val soldCount: Int = 0,
+    val createdAt: String? = null
 ) : Parcelable

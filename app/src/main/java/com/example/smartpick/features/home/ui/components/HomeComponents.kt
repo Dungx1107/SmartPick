@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/home/ui/components/HomeComponents.kt
 package com.example.smartpick.features.home.ui.components
 
 import androidx.compose.foundation.BorderStroke
@@ -8,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -113,12 +114,12 @@ fun ProductGridCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                // Thêm thông tin "Đã bán"
+                // Hiển thị cả Đã bán và Kho trên thẻ sản phẩm
                 Text(
-                    text = "Đã bán ${product.soldCount}",
+                    text = "Đã bán: ${product.soldCount} | Kho: ${product.stock}",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMuted,
-                    modifier = Modifier.padding(top = 2.dp)
+                    modifier = Modifier.padding(top = 4.dp)
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -261,17 +262,16 @@ fun ProductDetailContent(
     onBuyNow: () -> Unit,
     onSubmitReview: (Int, String) -> Unit
 ) {
-    var reviewRating by remember { mutableIntStateOf(5) }
-    var reviewContent by remember { mutableStateOf("") }
+    var reviewRating by rememberSaveable { mutableIntStateOf(5) }
+    var reviewContent by rememberSaveable { mutableStateOf("") }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        // --- 1. Ảnh và Thông tin sản phẩm ---
         item {
-            Column { // Bọc trong Column để quản lý bố cục an toàn hơn
+            Column {
                 AsyncImage(
                     model = product.imageUrls.firstOrNull(),
                     contentDescription = null,
@@ -292,7 +292,12 @@ fun ProductDetailContent(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "${product.price}đ", style = MaterialTheme.typography.titleLarge, color = ErrorRed, fontWeight = FontWeight.Bold)
-                    Text(text = "Đã bán ${product.soldCount}", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+
+                    // Hiển thị Đã bán và Kho theo chiều dọc cho đẹp mắt
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(text = "Kho: ${product.stock}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                        Text(text = "Đã bán: ${product.soldCount}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -330,14 +335,12 @@ fun ProductDetailContent(
             }
         }
 
-        // --- 2. Form viết Đánh giá (Chỉ hiện nếu User đã mua hàng) ---
         if (canReview) {
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(text = "Viết đánh giá của bạn", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Chọn sao
                     Row {
                         repeat(5) { index ->
                             IconButton(onClick = { reviewRating = index + 1 }, modifier = Modifier.size(32.dp)) {
@@ -362,10 +365,10 @@ fun ProductDetailContent(
                         onClick = {
                             if (reviewContent.isNotBlank()) {
                                 onSubmitReview(reviewRating, reviewContent)
-                                reviewContent = "" // Reset ô nhập sau khi gửi
+                                reviewContent = ""
                             }
                         },
-                        modifier = Modifier.padding(top = 8.dp).align(Alignment.End), // Lệnh align này giờ đã an toàn vì nằm trong Column
+                        modifier = Modifier.padding(top = 8.dp).align(Alignment.End),
                         colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
                     ) {
                         Text("Gửi đánh giá", color = White)
@@ -375,7 +378,6 @@ fun ProductDetailContent(
             }
         }
 
-        // --- 3. Danh sách Đánh giá từ khách hàng ---
         item {
             Text(text = "Đánh giá từ khách hàng (${reviews.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
@@ -408,8 +410,31 @@ fun ReviewCard(review: ReviewResponse) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Hiển thị sao
-                Row(modifier = Modifier.weight(1f)) {
+                AsyncImage(
+                    model = review.user?.avatarUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(SurfaceCard),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = review.user?.fullName ?: "Người dùng SmartPick",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = review.createdAt.split("T").firstOrNull() ?: "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextMuted
+                    )
+                }
+
+                Row {
                     repeat(5) { index ->
                         Icon(
                             imageVector = Icons.Default.Star,
@@ -419,13 +444,8 @@ fun ReviewCard(review: ReviewResponse) {
                         )
                     }
                 }
-                Text(
-                    text = review.createdAt.split("T").firstOrNull() ?: "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted
-                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
             Text(text = review.content, style = MaterialTheme.typography.bodyMedium)
         }
     }

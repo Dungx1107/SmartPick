@@ -54,19 +54,14 @@ import com.example.smartpick.features.auth.data.performGoogleSignIn
 import com.example.smartpick.features.auth.viewmodel.AuthState
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 
-
-// 1. Stateful Composable (Được gọi từ AppNavigation)
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToSignUp: () -> Unit,
-    authViewModel: AuthViewModel = hiltViewModel() // Hilt chỉ chạy ở đây
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val authState by authViewModel.authState.collectAsState()
-
-    /* Lấy User tổng thể từ ViewModel.*/
     val currentUser by authViewModel.currentUser.collectAsState()
-
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
@@ -75,36 +70,30 @@ fun LoginScreen(
             onNavigateToHome()
             return@LaunchedEffect
         }
-            when (authState) {
-                is AuthState.Success -> {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT
-                    ).show()
-                    onNavigateToHome()
-                }
-
-                is AuthState.Error -> {
-                    val errorMessage = (authState as AuthState.Error).message
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG
-                    ).show()
-                }
-
-                else -> {}
+        when (authState) {
+            is AuthState.Success -> {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.dangNhapThanhCong), Toast.LENGTH_SHORT
+                ).show()
+                onNavigateToHome()
             }
-
+            is AuthState.Error -> {
+                val errorMessage = (authState as AuthState.Error).message
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.loi, errorMessage), Toast.LENGTH_LONG
+                ).show()
+            }
+            else -> {}
+        }
     }
 
-    // Truyền event xuống Stateless Composable
-    // Quản lý hiệu ứng chuyển cảnh
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. UI Chính
         LoginContent(
             onSignIn = { email, password -> authViewModel.signInManual(email, password) },
             onNavigateToSignUp = onNavigateToSignUp,
-            isLoading = authState is AuthState.Loading, //disable nút
+            isLoading = authState is AuthState.Loading,
             onGoogleSignInClick = {
                 performGoogleSignIn(
                     context = context,
@@ -116,24 +105,23 @@ fun LoginScreen(
             }
         )
 
-        // 2. Lớp phủ Loading xuất hiện đè lên trên khi đang xử lý
         if (authState is AuthState.Loading) {
             FullScreenLoadingOverlay()
         }
     }
 }
 
-// 2. Stateless Composable (Chỉ vẽ UI, không phụ thuộc thư viện ngoài)
 @Composable
 fun LoginContent(
     onSignIn: (String, String) -> Unit,
     onNavigateToSignUp: () -> Unit,
-    onGoogleSignInClick: () -> Unit, // Bắt event click
+    onGoogleSignInClick: () -> Unit,
     isLoading: Boolean,
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
+    // Sử dụng rememberSaveable để giữ thông tin nhập liệu khi xoay màn hình
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var passwordVisible by rememberSaveable { mutableStateOf(false) }
 
     var emailError by rememberSaveable { mutableStateOf<String?>(null) }
     var passwordError by rememberSaveable { mutableStateOf<String?>(null) }
@@ -141,7 +129,6 @@ fun LoginContent(
     fun validateAndSubmit() {
         emailError = null
         passwordError = null
-
         var isValid = true
 
         if (email.isBlank()) {
@@ -242,9 +229,9 @@ fun LoginContent(
 
         AuthPrimaryButton(
             text = stringResource(R.string.login),
-            showArrow = !isLoading, // Ẩn mũi tên khi đang load để hiện vòng xoay
+            showArrow = !isLoading,
             onClick = { validateAndSubmit() },
-            enabled = !isLoading //Khi isLoading = true, enabled sẽ là false -> Nút bị khóa
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(48.dp))
@@ -252,15 +239,13 @@ fun LoginContent(
         AuthDivider()
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Nút Đăng nhập Google
         SocialAuthButton(
             text = stringResource(R.string.continue_with_google),
             brand = PROVIDER_GOOGLE,
             onClick = onGoogleSignInClick,
-            loading = isLoading, // Tự động xoay khi authState là Loading
-            enabled = !isLoading  // Khóa nút khi đang xử lý bất kỳ tác vụ auth nào
+            loading = isLoading,
+            enabled = !isLoading
         )
-
 
         Spacer(modifier = Modifier.height(48.dp))
 
@@ -286,8 +271,6 @@ fun LoginContent(
     }
 }
 
-
-// 3. Cập nhật hàm Preview
 @Preview(
     name = "Login Screen - White Blue Theme",
     showBackground = true,

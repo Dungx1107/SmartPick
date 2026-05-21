@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/home/ui/HomeScreen.kt
 package com.example.smartpick.features.home.ui
 
 import android.Manifest
@@ -18,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,19 +46,25 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val cartItems by viewModel.cartItems.collectAsState()
-
-    // Thu thập state của Review
     val productReviews by viewModel.productReviews.collectAsState()
     val canReview by viewModel.canReview.collectAsState()
 
-    var showCart by remember { mutableStateOf(false) }
-    var selectedProduct by remember { mutableStateOf<Product?>(null) }
-    var searchQuery by remember { mutableStateOf("") }
+    var showCart by rememberSaveable { mutableStateOf(false) }
+    var selectedProduct by rememberSaveable { mutableStateOf<Product?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
 
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Đảm bảo lấy dữ liệu sản phẩm mới nhất từ danh sách để hiển thị Stock/SoldCount chính xác
+    val freshSelectedProduct = remember(selectedProduct, uiState) {
+        if (uiState is HomeUiState.Success && selectedProduct != null) {
+            (uiState as HomeUiState.Success).products.find { it.id == selectedProduct?.id } ?: selectedProduct
+        } else {
+            selectedProduct
+        }
+    }
     // --- BẮT ĐẦU PHẦN XIN QUYỀN THÔNG BÁO (ANDROID 13+) ---
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val permissionLauncher = rememberLauncherForActivityResult(
@@ -96,7 +102,6 @@ fun HomeScreen(
         }
     }
 
-    // Tự động load danh sách đánh giá khi người dùng click xem chi tiết 1 sản phẩm
     LaunchedEffect(selectedProduct) {
         selectedProduct?.id?.let { productId ->
             viewModel.fetchReviewsAndCheckEligibility(productId)
@@ -133,7 +138,6 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-
             SearchBar(
                 query = searchQuery,
                 onQueryChange = {
@@ -177,7 +181,7 @@ fun HomeScreen(
         }
     }
 
-    if (selectedProduct != null) {
+    if (freshSelectedProduct != null) {
         ModalBottomSheet(
             onDismissRequest = { selectedProduct = null },
             sheetState = sheetState,
@@ -185,12 +189,12 @@ fun HomeScreen(
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             ProductDetailContent(
-                product = selectedProduct!!,
+                product = freshSelectedProduct!!,
                 reviews = productReviews,
                 canReview = canReview,
                 onViewFeed = {
                     scope.launch {
-                        val postId = viewModel.getPostId(selectedProduct!!.id ?: "")
+                        val postId = viewModel.getPostId(freshSelectedProduct!!.id ?: "")
                         if (postId != null) {
                             selectedProduct = null
                             navController.navigate(Routes.PostDetail.createRoute(postId))
@@ -201,18 +205,27 @@ fun HomeScreen(
                 },
                 onAddToCart = {
                     viewModel.addToCart(
-                        product = selectedProduct!!,
+                        product = freshSelectedProduct!!,
                         onSuccess = { Toast.makeText(context, "Đã thêm vào giỏ hàng", Toast.LENGTH_SHORT).show() },
                         onError = { errorMsg -> Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show() }
                     )
                 },
                 onBuyNow = {
-                    selectedProduct = null
-                    showCart = true
+                    // Logic Mua ngay: Thêm vào giỏ -> Ẩn Sheet -> Đi tới Thanh toán
+                    viewModel.addToCart(
+                        product = freshSelectedProduct!!,
+                        onSuccess = {
+                            selectedProduct = null
+                            navController.navigate(Routes.Checkout.route)
+                        },
+                        onError = { errorMsg ->
+                            Toast.makeText(context, errorMsg, Toast.LENGTH_LONG).show()
+                        }
+                    )
                 },
                 onSubmitReview = { rating, content ->
                     viewModel.submitProductReview(
-                        productId = selectedProduct!!.id!!,
+                        productId = freshSelectedProduct!!.id!!,
                         rating = rating,
                         content = content,
                         onSuccess = { Toast.makeText(context, "Cảm ơn bạn đã đánh giá!", Toast.LENGTH_SHORT).show() },

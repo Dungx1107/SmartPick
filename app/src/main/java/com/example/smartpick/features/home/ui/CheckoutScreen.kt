@@ -16,27 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -61,9 +44,10 @@ fun CheckoutScreen(
     val cartItems by viewModel.cartItems.collectAsState()
     val context = LocalContext.current
 
-    var phone by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var paymentMethod by remember { mutableStateOf("COD") }
+    // Đảm bảo dữ liệu thanh toán không bị mất khi thay đổi cấu hình
+    var phone by rememberSaveable { mutableStateOf("") }
+    var address by rememberSaveable { mutableStateOf("") }
+    var paymentMethod by rememberSaveable { mutableStateOf("COD") }
 
     Scaffold(
         topBar = {
@@ -119,7 +103,6 @@ fun CheckoutScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Khối 1: Thông tin nhận hàng
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = White)) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -142,7 +125,6 @@ fun CheckoutScreen(
                 }
             }
 
-            // Khối 2: Phương thức thanh toán
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = White)) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -159,7 +141,6 @@ fun CheckoutScreen(
                 }
             }
 
-            // Khối 3: Tóm tắt đơn hàng
             item {
                 Card(colors = CardDefaults.cardColors(containerColor = White)) {
                     Column(modifier = Modifier.padding(16.dp)) {

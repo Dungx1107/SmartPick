@@ -15,5 +15,8 @@ data class PostDetailResponse(
     @SerialName("products") val product: ProductDto?, // Chuyển từ Product sang ProductDto
     @SerialName("likes_count") val likesCount: Int = 0,
     @SerialName("comments_count") val commentsCount: Int = 0,
-    @SerialName("is_liked") val isLiked: Boolean = false
+    @SerialName("is_liked") val isLiked: Boolean = false,
+    @SerialName("shared_post_id") val sharedPostId: String? = null,
+    @SerialName("shared_post") val sharedPost: PostDetailResponse? = null
+
 )

@@ -28,9 +28,8 @@ fun User.toDto(): UserDto = UserDto(
     updatedAt = updatedAt
 )
 
-// --- Product Mappers ---
-fun ProductDto.toDomain(): Product = Product(
-    id = id,
+// --- Cập nhật đoạn mapping cho Product ---
+fun ProductDto.toDomain(): Product = Product(    id = id,
     ownerId = ownerId,
     name = name,
     brand = brand,
@@ -39,6 +38,8 @@ fun ProductDto.toDomain(): Product = Product(
     imageUrls = imageUrls,
     videoUrl = videoUrl,
     status = status,
+    stock = stock,           // Đã bổ sung mapping
+    soldCount = soldCount,   // Đã bổ sung mapping
     createdAt = createdAt
 )
 
@@ -52,6 +53,8 @@ fun Product.toDto(): ProductDto = ProductDto(
     imageUrls = imageUrls,
     videoUrl = videoUrl,
     status = status,
+    stock = stock,
+    soldCount = soldCount,
     createdAt = createdAt
 )
 

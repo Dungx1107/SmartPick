@@ -42,7 +42,6 @@ import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
-// IMPORT MỚI:
 import com.example.smartpick.features.review.ui.ReviewHubScreen
 import com.example.smartpick.features.review.ui.WriteReviewScreen
 
@@ -166,7 +165,6 @@ fun AppNavigation(
                     HomeScreen(navController = navController, paddingValues = PaddingValues(0.dp))
                 }
 
-                // FIX: Thay thế ChatBotScreen bằng ReviewHubScreen
                 composable(route = Routes.ReviewHub.route) {
                     ReviewHubScreen(
                         onNavigateToWriteReview = { productId ->
@@ -184,7 +182,6 @@ fun AppNavigation(
                         productId = productId,
                         onBack = { navController.popBackStack() },
                         onReviewSubmitted = {
-                            // Quay lại màn hình trước đó sau khi gửi thành công
                             navController.popBackStack()
                         }
                     )
@@ -216,15 +213,11 @@ fun AppNavigation(
                     })
                 ) {
                     PostDetailScreen(
-                        onBackClick = { navController.popBackStack() },
-                        onCommentClick = { postId, ownerId ->
-                            currentUser?.id?.let {
-                                navController.navigate(Routes.Comments.createRoute(postId, ownerId))
-                            }
-                        }
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
 
+                // Route dành cho màn hình comments riêng (nếu bạn vẫn gọi từ thông báo)
                 composable(
                     route = "${Routes.Comments.route}?commentId={commentId}",
                     arguments = listOf(
@@ -250,11 +243,7 @@ fun AppNavigation(
                     FeedScreen(
                         paddingValues = PaddingValues(0.dp),
                         onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
-                        onCommentClick = { postId, ownerId ->
-                            currentUser?.id?.let {
-                                navController.navigate(Routes.Comments.createRoute(postId, ownerId))
-                            }
-                        },
+                        // ĐÃ XÓA onCommentClick Ở ĐÂY ĐỂ FIX LỖI
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
                 }
