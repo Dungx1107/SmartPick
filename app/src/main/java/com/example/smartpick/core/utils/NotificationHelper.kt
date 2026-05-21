@@ -53,6 +53,7 @@ object NotificationHelper {
             // QUAN TRỌNG: Thay R.drawable.ic_launcher_foreground bằng icon app của bạn.
             // Nếu dùng icon mặc định của Android, giao diện sẽ bị lỗi màu trắng hoặc hiển thị sai.
             .setSmallIcon(R.drawable.ic_dialog_info)
+//            .setSmallIcon(R.mipmap.ic_launcher.)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body)) // Hỗ trợ hiển thị text dài

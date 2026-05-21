@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -74,7 +73,11 @@ fun SearchBar(
             onClick = onMicClick,
             modifier = Modifier.size(24.dp)
         ) {
-            Icon(Icons.Default.Mic, contentDescription = "Tìm kiếm bằng giọng nói", tint = TextSecondary)
+            Icon(
+                Icons.Default.Mic,
+                contentDescription = "Tìm kiếm bằng giọng nói",
+                tint = TextSecondary
+            )
         }
     }
 }
@@ -157,8 +160,8 @@ fun ProductGridCard(
 @Composable
 fun CartBottomSheet(
     cartItems: List<CartItem>,
-    onIncrease: (CartItem) -> Unit,
-    onDecrease: (CartItem) -> Unit,
+    onIncrease: (String) -> Unit,
+    onDecrease: (String) -> Unit,
     onDismiss: () -> Unit,
     onCheckout: () -> Unit
 ) {
@@ -178,20 +181,38 @@ fun CartBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (cartItems.isEmpty()) {
-                Text("Giỏ hàng trống", color = TextMuted, modifier = Modifier.align(Alignment.CenterHorizontally))
+                Text(
+                    "Giỏ hàng trống",
+                    color = TextMuted,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             } else {
                 cartItems.forEach { item ->
                     val product = item.product
                     if (product != null) {
                         ListItem(
                             colors = ListItemDefaults.colors(containerColor = White),
-                            headlineContent = { Text(product.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            supportingContent = { Text("${product.price}đ", color = ErrorRed, fontWeight = FontWeight.Bold) },
+                            headlineContent = {
+                                Text(
+                                    product.name,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    "${product.price}đ",
+                                    color = ErrorRed,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            },
                             leadingContent = {
                                 AsyncImage(
                                     model = product.imageUrls.firstOrNull(),
                                     contentDescription = null,
-                                    modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)),
+                                    modifier = Modifier
+                                        .size(50.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop
                                 )
                             },
@@ -202,9 +223,15 @@ fun CartBottomSheet(
                                 ) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        modifier = Modifier.padding(
+                                            horizontal = 4.dp,
+                                            vertical = 2.dp
+                                        )
                                     ) {
-                                        IconButton(onClick = { onDecrease(item) }, modifier = Modifier.size(30.dp)) {
+                                        IconButton(
+                                            onClick = { item.id?.let { onDecrease(it) } },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
                                             Icon(
                                                 imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
                                                 contentDescription = null,
@@ -218,8 +245,16 @@ fun CartBottomSheet(
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp
                                         )
-                                        IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(30.dp)) {
-                                            Icon(Icons.Default.Add, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                        IconButton(
+                                            onClick = { item.id?.let { onIncrease(it) } },
+                                            modifier = Modifier.size(30.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Add,
+                                                contentDescription = null,
+                                                tint = TextSecondary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
                                         }
                                     }
                                 }
@@ -236,13 +271,20 @@ fun CartBottomSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Tổng cộng:", fontWeight = FontWeight.Bold, color = TextSecondary)
-                    Text("${total}đ", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = ErrorRed)
+                    Text(
+                        "${total}đ",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = ErrorRed
+                    )
                 }
             }
 
             Button(
                 onClick = onCheckout,
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
                 enabled = cartItems.isNotEmpty(),
                 colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
             ) {
@@ -284,19 +326,36 @@ fun ProductDetailContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(text = product.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold)
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold
+                )
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "${product.price}đ", style = MaterialTheme.typography.titleLarge, color = ErrorRed, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "${product.price}đ",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = ErrorRed,
+                        fontWeight = FontWeight.Bold
+                    )
 
                     // Hiển thị Đã bán và Kho theo chiều dọc cho đẹp mắt
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(text = "Kho: ${product.stock}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
-                        Text(text = "Đã bán: ${product.soldCount}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                        Text(
+                            text = "Kho: ${product.stock}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextMuted
+                        )
+                        Text(
+                            text = "Đã bán: ${product.soldCount}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextMuted
+                        )
                     }
                 }
 
@@ -312,10 +371,15 @@ fun ProductDetailContent(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Button(
                         onClick = onAddToCart,
-                        modifier = Modifier.weight(1f).height(50.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -323,7 +387,9 @@ fun ProductDetailContent(
                     }
                     Button(
                         onClick = onBuyNow,
-                        modifier = Modifier.weight(1f).height(50.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = ErrorRed),
                         shape = RoundedCornerShape(12.dp)
                     ) {
@@ -331,19 +397,29 @@ fun ProductDetailContent(
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = SurfaceCard)
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 24.dp),
+                    color = SurfaceCard
+                )
             }
         }
 
         if (canReview) {
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(text = "Viết đánh giá của bạn", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Viết đánh giá của bạn",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row {
                         repeat(5) { index ->
-                            IconButton(onClick = { reviewRating = index + 1 }, modifier = Modifier.size(32.dp)) {
+                            IconButton(
+                                onClick = { reviewRating = index + 1 },
+                                modifier = Modifier.size(32.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Star,
                                     contentDescription = null,
@@ -368,7 +444,9 @@ fun ProductDetailContent(
                                 reviewContent = ""
                             }
                         },
-                        modifier = Modifier.padding(top = 8.dp).align(Alignment.End),
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .align(Alignment.End),
                         colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
                     ) {
                         Text("Gửi đánh giá", color = White)
@@ -379,13 +457,21 @@ fun ProductDetailContent(
         }
 
         item {
-            Text(text = "Đánh giá từ khách hàng (${reviews.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                text = "Đánh giá từ khách hàng (${reviews.size})",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (reviews.isEmpty()) {
             item {
-                Text(text = "Chưa có đánh giá nào cho sản phẩm này.", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+                Text(
+                    text = "Chưa có đánh giá nào cho sản phẩm này.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextMuted
+                )
             }
         } else {
             items(reviews) { review ->

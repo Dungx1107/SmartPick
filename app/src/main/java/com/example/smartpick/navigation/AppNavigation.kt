@@ -175,9 +175,12 @@ fun AppNavigation(
 
                 composable(
                     route = Routes.WriteReview.route,
-                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType })
+                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) {
+                        type = NavType.StringType
+                    })
                 ) { backStackEntry ->
-                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    val productId =
+                        backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
                     WriteReviewScreen(
                         productId = productId,
                         onBack = { navController.popBackStack() },
@@ -222,8 +225,12 @@ fun AppNavigation(
                     route = "${Routes.Comments.route}?commentId={commentId}",
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
-                        navArgument("postOwnerId") { type = NavType.StringType; nullable = true; defaultValue = null },
-                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                        navArgument("postOwnerId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        },
+                        navArgument("commentId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        }
                     )
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
@@ -242,14 +249,22 @@ fun AppNavigation(
                 composable(route = Routes.Feed.route) {
                     FeedScreen(
                         paddingValues = PaddingValues(0.dp),
-                        onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
+                        onPostClick = { postId ->
+                            navController.navigate(
+                                Routes.PostDetail.createRoute(
+                                    postId
+                                )
+                            )
+                        },
                         // ĐÃ XÓA onCommentClick Ở ĐÂY ĐỂ FIX LỖI
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
                 }
 
                 composable(route = Routes.CreatePost.route) {
-                    CreatePostScreen(currentUser = currentUser, onClose = { navController.popBackStack() })
+                    CreatePostScreen(
+                        currentUser = currentUser,
+                        onClose = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.Notifications.route) {
@@ -263,7 +278,12 @@ fun AppNavigation(
 
                                 if (postId.isNotEmpty()) {
                                     if (!commentId.isNullOrEmpty()) {
-                                        navController.navigate(Routes.CommentsFromNotification.createRoute(postId, commentId))
+                                        navController.navigate(
+                                            Routes.CommentsFromNotification.createRoute(
+                                                postId,
+                                                commentId
+                                            )
+                                        )
                                     } else {
                                         navController.navigate("comments_notification/$postId")
                                     }
@@ -301,7 +321,9 @@ fun AppNavigation(
                     route = Routes.CommentsFromNotification.route,
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
-                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                        navArgument("commentId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        }
                     )
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
@@ -322,7 +344,9 @@ fun AppNavigation(
                     route = Routes.CommentsFromNotification.route,
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
-                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                        navArgument("commentId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        }
                     )
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
@@ -342,11 +366,18 @@ fun AppNavigation(
                     route = Routes.SystemPushDeepLink.route,
                     arguments = listOf(
                         navArgument("type") { type = NavType.StringType },
-                        navArgument("postId") { type = NavType.StringType; nullable = true; defaultValue = null },
-                        navArgument("targetId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                        navArgument("postId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        },
+                        navArgument("targetId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        }
                     ),
                     deepLinks = listOf(
-                        navDeepLink { uriPattern = "smartpick://notification/{type}?post_id={postId}&target_id={targetId}" }
+                        navDeepLink {
+                            uriPattern =
+                                "smartpick://notification/{type}?post_id={postId}&target_id={targetId}"
+                        }
                     )
                 ) { backStackEntry ->
                     val type = backStackEntry.arguments?.getString("type") ?: ""
@@ -369,6 +400,7 @@ fun AppNavigation(
                                 }
                             )
                         }
+
                         "like" -> {
                             PostDetailScreen(
                                 onBackClick = {
@@ -378,11 +410,17 @@ fun AppNavigation(
                                 },
                                 onCommentClick = { pId, ownerId ->
                                     currentUser?.id?.let {
-                                        navController.navigate(Routes.Comments.createRoute(pId, ownerId))
+                                        navController.navigate(
+                                            Routes.Comments.createRoute(
+                                                pId,
+                                                ownerId ?: ""
+                                            )
+                                        )
                                     }
                                 }
                             )
                         }
+
                         else -> {
                             // System notification hoặc các type khác -> Mở trang chủ
                             LaunchedEffect(Unit) {
