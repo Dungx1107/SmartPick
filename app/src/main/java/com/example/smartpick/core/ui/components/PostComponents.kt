@@ -1,6 +1,5 @@
 package com.example.smartpick.core.ui.components
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,7 +22,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,6 +80,68 @@ fun PostHeader(
 }
 
 @Composable
+fun MediaGrid(
+    mediaUrls: List<String>,
+    modifier: Modifier = Modifier,
+    onMediaClick: (Int) -> Unit
+) {
+    val imageHeight = 220.dp
+    val imageShape = RoundedCornerShape(8.dp)
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        when (mediaUrls.size) {
+            1 -> {
+                AsyncImage(
+                    model = mediaUrls[0],
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(imageHeight)
+                        .clip(imageShape)
+                        .clickable { onMediaClick(0) },
+                    contentScale = ContentScale.Crop
+                )
+            }
+            2 -> {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    AsyncImage(
+                        model = mediaUrls[0], contentDescription = null,
+                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(0) },
+                        contentScale = ContentScale.Crop
+                    )
+                    AsyncImage(
+                        model = mediaUrls[1], contentDescription = null,
+                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(1) },
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+            else -> {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    AsyncImage(
+                        model = mediaUrls[0], contentDescription = null,
+                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(0) },
+                        contentScale = ContentScale.Crop
+                    )
+                    Box(modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(1) }) {
+                        AsyncImage(
+                            model = mediaUrls[1], contentDescription = null,
+                            modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop
+                        )
+                        Box(
+                            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "+${mediaUrls.size - 2}", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun PostMainContent(
     modifier: Modifier = Modifier,
     content: String?,
@@ -101,7 +161,6 @@ fun PostMainContent(
             )
         }
 
-        // Gọi component MediaGrid xịn xò để hiển thị ảnh
         if (mediaUrls.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             MediaGrid(
@@ -126,9 +185,7 @@ fun PostMainContent(
                     AsyncImage(
                         model = it.imageUrls.firstOrNull(),
                         contentDescription = null,
-                        modifier = Modifier
-                            .size(50.dp)
-                            .clip(RoundedCornerShape(8.dp)),
+                        modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -138,125 +195,6 @@ fun PostMainContent(
                     }
                 }
             }
-        }
-    }
-}
-
-// COMPONENT MỚI: Xử lý lưới ảnh thông minh
-@Composable
-fun MediaGrid(
-    mediaUrls: List<String>,
-    modifier: Modifier = Modifier,
-    onMediaClick: (Int) -> Unit
-) {
-    val imageHeight = 220.dp
-    val imageShape = RoundedCornerShape(8.dp)
-
-    Box(modifier = modifier.fillMaxWidth()) {
-        when (mediaUrls.size) {
-            1 -> {
-                // Trường hợp 1 ảnh: Hiển thị full
-                AsyncImage(
-                    model = mediaUrls[0],
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(imageHeight)
-                        .clip(imageShape)
-                        .clickable { onMediaClick(0) },
-                    contentScale = ContentScale.Crop
-                )
-            }
-            2 -> {
-                // Trường hợp 2 ảnh: Chia đôi đều nhau
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    AsyncImage(
-                        model = mediaUrls[0],
-                        contentDescription = null,
-                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(0) },
-                        contentScale = ContentScale.Crop
-                    )
-                    AsyncImage(
-                        model = mediaUrls[1],
-                        contentDescription = null,
-                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(1) },
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-            else -> {
-                // Trường hợp 3 ảnh trở lên: Chia đôi, ảnh 2 có Overlay số đếm
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    AsyncImage(
-                        model = mediaUrls[0],
-                        contentDescription = null,
-                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(0) },
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(imageHeight)
-                            .clip(imageShape)
-                            .clickable { onMediaClick(1) } // Click vào ảnh overlay vẫn mở được Gallery
-                    ) {
-                        AsyncImage(
-                            model = mediaUrls[1],
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-
-                        // Lớp phủ màu đen mờ (Alpha 40%)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color.Black.copy(alpha = 0.4f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "+${mediaUrls.size - 2}",
-                                color = Color.White,
-                                fontSize = 28.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SharedPostCard(sharedPost: Post) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = "Bài đăng được chia sẻ",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = SmartPickColor,
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
-            Text(
-                text = sharedPost.content ?: "",
-                fontSize = 14.sp,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
         }
     }
 }
@@ -283,9 +221,7 @@ fun ReactionButton(
     onLongPress: () -> Unit,
     onClick: () -> Unit
 ) {
-    val isReacted = currentReaction != null
-    val buttonColor = if (isReacted) SmartPickColor else TextMuted
-
+    val buttonColor = if (currentReaction != null) SmartPickColor else TextMuted
     val text = when (currentReaction) {
         ReactionType.LIKE -> "Thích"
         ReactionType.LOVE -> "Yêu thích"
@@ -302,15 +238,13 @@ fun ReactionButton(
         modifier = Modifier
             .fillMaxWidth()
             .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { onLongPress() },
-                    onTap = { onClick() }
-                )
+                detectTapGestures(onLongPress = { onLongPress() }, onTap = { onClick() })
             }
             .padding(vertical = 12.dp)
     ) {
-        if (isReacted) {
-            Text(currentReaction!!.getIcon(), fontSize = 18.sp)
+        // Đã sửa lỗi !! không cần thiết ở đây
+        if (currentReaction != null) {
+            Text(currentReaction.getIcon(), fontSize = 18.sp)
         } else {
             Icon(Icons.Outlined.ThumbUp, null, modifier = Modifier.size(20.dp), tint = TextMuted)
         }
@@ -324,8 +258,6 @@ fun ReactionPopup(
     onDismiss: () -> Unit,
     onReactionSelected: (ReactionType) -> Unit
 ) {
-    // FIX 2: Thay vì dùng Modifier.offset ở thẻ Card làm lệch vùng cảm ứng,
-    // ta di chuyển nguyên cái Window của Popup bằng IntOffset
     val density = LocalDensity.current
     val yOffset = with(density) { -55.dp.roundToPx() }
 
@@ -333,11 +265,7 @@ fun ReactionPopup(
         onDismissRequest = onDismiss,
         alignment = Alignment.TopCenter,
         offset = IntOffset(0, yOffset),
-        properties = PopupProperties(
-            focusable = true,
-            dismissOnClickOutside = true,
-            clippingEnabled = false
-        )
+        properties = PopupProperties(focusable = true, dismissOnClickOutside = true, clippingEnabled = false)
     ) {
         Card(
             shape = RoundedCornerShape(30.dp),
@@ -367,13 +295,10 @@ fun PostItem(
     onPostClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
     onProductClick: (Product) -> Unit = {},
-    onViewImagesGalleryRequest: (List<String>, Int) -> Unit = { _, _ -> },
     onReactionClick: (ReactionType) -> Unit = {},
-    onShareClick: () -> Unit = {},
     isDetailView: Boolean = false,
 ) {
     var showReactionPopup by remember { mutableStateOf(false) }
-
     var localReaction by remember(post.currentUserReaction) { mutableStateOf(post.currentUserReaction) }
     var localReactionCount by remember(post.reactionCount, post.currentUserReaction) { mutableIntStateOf(post.reactionCount) }
 
@@ -393,12 +318,10 @@ fun PostItem(
                 content = post.content,
                 mediaUrls = post.mediaUrls,
                 product = product,
-                onMediaClick = { clickedIndex ->
-                    onViewImagesGalleryRequest(post.mediaUrls, clickedIndex)
-                },
+                // ĐÃ FIX: Khi nhấn vào bức ảnh bất kỳ trong Grid, tự động mở màn hình chi tiết
+                onMediaClick = { _ -> onPostClick() },
                 onProductClick = onProductClick
             )
-
 
             if (localReactionCount > 0) {
                 Row(
@@ -421,7 +344,6 @@ fun PostItem(
                         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                     )
                     Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
-
                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                             ReactionButton(
                                 currentReaction = localReaction,
@@ -444,13 +366,15 @@ fun PostItem(
                         PostActionButton(
                             icon = Icons.Outlined.ChatBubbleOutline,
                             text = stringResource(R.string.BinhLuan),
-                            onClick = onCommentClick,
+                            // Đổi onCommentClick thành click toàn bài để dễ điều hướng
+                            // (hoặc bạn có thể giữ nguyên nếu muốn mở luôn bàn phím)
+                            onClick = { onPostClick() },
                             modifier = Modifier.weight(1f)
                         )
                         PostActionButton(
                             icon = Icons.Outlined.Share,
                             text = stringResource(R.string.ChiaSe),
-                            onClick = onShareClick,
+                            onClick = { /* Tính năng Share tạm ẩn */ },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -460,9 +384,7 @@ fun PostItem(
                     ReactionPopup(
                         onDismiss = { showReactionPopup = false },
                         onReactionSelected = { selectedReaction ->
-                            if (localReaction == null) {
-                                localReactionCount += 1
-                            }
+                            if (localReaction == null) localReactionCount += 1
                             localReaction = selectedReaction
                             showReactionPopup = false
                             onReactionClick(selectedReaction)

@@ -55,7 +55,6 @@ fun FeedScreen(
         onPostClick = onPostClick,
         onCommentClick = onCommentClick,
         onCreatePostClick = onCreatePostClick,
-        // FIX 3: Chuyền sự kiện Reaction xuống ViewModel để lưu DB
         onReactionClick = { postId, type ->
             viewModel.toggleReaction(postId, type)
         }
@@ -131,8 +130,7 @@ fun FeedContent(
                             onPostClick = { onPostClick(post.id.toString()) },
                             onCommentClick = { onCommentClick(post.id.toString(), user.id) },
                             onProductClick = { },
-                            onViewImagesGalleryRequest = { imageUrls, index -> },
-                            // GỌI HÀM LƯU LÊN DB
+                            // ĐÃ XÓA onViewImagesGalleryRequest Ở ĐÂY ĐỂ FIX LỖI
                             onReactionClick = { reactionType ->
                                 onReactionClick(post.id.toString(), reactionType)
                             }

@@ -1,17 +1,25 @@
 package com.example.smartpick.features.post_detail.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,15 +33,11 @@ import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.ui.components.PostActionButton
-import com.example.smartpick.core.ui.components.PostHeader
-import com.example.smartpick.core.ui.components.ProductAttachmentCard
-import com.example.smartpick.core.ui.components.ReactionButton
-import com.example.smartpick.core.ui.components.ReactionPopup
-import com.example.smartpick.core.ui.components.VideoPlayer
+import com.example.smartpick.core.ui.components.*
+import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.utils.FileUtils
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailUiState
 import com.example.smartpick.features.post_detail.viewmodel.PostDetailViewModel
 
@@ -50,10 +54,7 @@ fun PostDetailScreen(
         onBackClick = onBackClick,
         onCommentClick = onCommentClick,
         onReactionClick = { postId, reactionType ->
-            // viewModel.toggleReaction(postId, reactionType) // Bạn có thể thêm logic thả cảm xúc vào PostDetailViewModel sau
-        },
-        onShareClick = { postId ->
-            // viewModel.sharePost(postId) // Bạn có thể thêm logic chia sẻ vào PostDetailViewModel sau
+            // Thêm hàm vào ViewModel sau
         },
         onRetry = {
             uiState.post?.id?.let { viewModel.loadPostDetail(it) }
@@ -68,135 +69,130 @@ fun PostDetailContent(
     onBackClick: () -> Unit,
     onCommentClick: (String, String) -> Unit,
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
-    onShareClick: (String) -> Unit = {},
     onRetry: () -> Unit
 ) {
-    // Thêm State để quản lý popup cảm xúc
+    var commentText by remember { mutableStateOf("") }
     var showReactionPopup by remember { mutableStateOf(false) }
+
+    val post = uiState.post
+    // Optimistic UI states
+    var localReaction by remember(post?.currentUserReaction) { mutableStateOf(post?.currentUserReaction) }
+    var localReactionCount by remember(post?.reactionCount, post?.currentUserReaction) { mutableIntStateOf(post?.reactionCount ?: 0) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.BaiViet),
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                },
+                title = { Text(stringResource(R.string.BaiViet), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, contentDescription = null) }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            )
+        },
+        bottomBar = {
+            CommentInputBar(
+                value = commentText,
+                onValueChange = { commentText = it },
+                onSendClick = { commentText = "" }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues).background(MaterialTheme.colorScheme.surface)) {
             when {
                 uiState.isLoading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
                 }
-
                 uiState.error != null -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                    Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = uiState.error, color = MaterialTheme.colorScheme.error)
                         Button(onClick = onRetry) { Text("Thử lại") }
                     }
                 }
-
-                uiState.post != null -> {
-                    val post = uiState.post
-                    val user = uiState.user!!
-
+                post != null && uiState.user != null -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        item { PostHeader(user = user, createdAt = post.createdAt ?: "") }
+                        item { PostHeader(user = uiState.user, createdAt = post.createdAt ?: "") }
 
                         item {
                             if (!post.content.isNullOrBlank()) {
                                 Text(
                                     text = post.content,
-                                    modifier = Modifier.padding(16.dp),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                    fontSize = 16.sp,
+                                    lineHeight = 24.sp
                                 )
                             }
                         }
 
-                        uiState.product?.let { product ->
+                        // HIỂN THỊ ẢNH DẠNG VUỐT (PAGER) THAY VÌ LƯỚI
+                        if (post.mediaUrls.isNotEmpty()) {
                             item {
-                                ProductAttachmentCard(
-                                    product = product,
-                                    onClick = { /* Điều hướng sang chi tiết SP */ }
-                                )
+                                val pagerState = rememberPagerState(pageCount = { post.mediaUrls.size })
+                                Column {
+                                    HorizontalPager(
+                                        state = pagerState,
+                                        modifier = Modifier.fillMaxWidth().height(350.dp)
+                                    ) { page ->
+                                        AsyncImage(
+                                            model = post.mediaUrls[page],
+                                            contentDescription = null,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
+                                    if (post.mediaUrls.size > 1) {
+                                        Row(
+                                            Modifier.fillMaxWidth().padding(top = 8.dp),
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            repeat(post.mediaUrls.size) { iteration ->
+                                                val color = if (pagerState.currentPage == iteration) SmartPickColor else Color.LightGray
+                                                Box(modifier = Modifier.padding(2.dp).clip(CircleShape).background(color).size(6.dp))
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
 
-                        items(post.mediaUrls) { url ->
-                            if (FileUtils.isVideoUrl(url)) {
-                                VideoPlayer(
-                                    videoUrl = url,
-                                    modifier = Modifier.padding(vertical = 4.dp)
-                                )
-                            } else {
-                                AsyncImage(
-                                    model = url,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    contentScale = ContentScale.FillWidth
-                                )
-                            }
+                        // SẢN PHẨM NỔI BẬT ĐÍNH KÈM
+                        uiState.product?.let { product ->
+                            item { ProductHighlightCard(product = product, onClick = { /* Mở chi tiết SP */ }) }
                         }
+
+                        // Đã xóa phần gọi SharedPostCard bị lỗi
 
                         item {
-                            // 1. Hiển thị số lượng cảm xúc
-                            if (post.reactionCount > 0) {
+                            if (localReactionCount > 0) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(text = "👍 ❤️ 😂", fontSize = 12.sp)
                                     Spacer(Modifier.width(4.dp))
-                                    Text(text = "${post.reactionCount}", fontSize = 13.sp, color = TextMuted)
+                                    Text(text = "$localReactionCount", fontSize = 13.sp, color = TextMuted)
                                 }
                             }
 
-                            // 2. Cụm nút tương tác (Thay thế cho PostFooterActions cũ)
                             Box(modifier = Modifier.padding(bottom = 16.dp)) {
                                 Column {
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(horizontal = 16.dp),
-                                        thickness = 0.5.dp,
-                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                                    )
+                                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                                         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                                             ReactionButton(
-                                                currentReaction = post.currentUserReaction,
+                                                currentReaction = localReaction,
                                                 onLongPress = { showReactionPopup = true },
                                                 onClick = {
-                                                    val reactionToToggle = if (post.currentUserReaction == null) ReactionType.LIKE else post.currentUserReaction
-                                                    onReactionClick(post.id.toString(), reactionToToggle)
+                                                    if (localReaction == null) {
+                                                        localReaction = ReactionType.LIKE
+                                                        localReactionCount += 1
+                                                        onReactionClick(post.id.toString(), ReactionType.LIKE)
+                                                    } else {
+                                                        val old = localReaction!!
+                                                        localReaction = null
+                                                        localReactionCount = maxOf(0, localReactionCount - 1)
+                                                        onReactionClick(post.id.toString(), old)
+                                                    }
                                                 }
                                             )
                                         }
@@ -204,33 +200,39 @@ fun PostDetailContent(
                                         PostActionButton(
                                             icon = Icons.Outlined.ChatBubbleOutline,
                                             text = stringResource(R.string.BinhLuan),
-                                            onClick = {
-                                                val postId = post.id ?: return@PostActionButton
-                                                onCommentClick(postId, post.userId)
-                                            },
+                                            onClick = { onCommentClick(post.id.toString(), post.userId) },
                                             modifier = Modifier.weight(1f)
                                         )
                                         PostActionButton(
                                             icon = Icons.Outlined.Share,
                                             text = stringResource(R.string.ChiaSe),
-                                            onClick = { onShareClick(post.id.toString()) },
+                                            onClick = { /* Share tính sau */ },
                                             modifier = Modifier.weight(1f)
                                         )
                                     }
                                 }
 
-                                // 3. Popup Cảm xúc
                                 if (showReactionPopup) {
                                     ReactionPopup(
                                         onDismiss = { showReactionPopup = false },
                                         onReactionSelected = { reaction ->
-                                            onReactionClick(post.id.toString(), reaction)
+                                            if (localReaction == null) localReactionCount += 1
+                                            localReaction = reaction
                                             showReactionPopup = false
+                                            onReactionClick(post.id.toString(), reaction)
                                         }
                                     )
                                 }
                             }
                         }
+
+                        // DANH SÁCH BÌNH LUẬN
+                        item {
+                            HorizontalDivider(thickness = 8.dp, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                            Text("Bình luận", modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        }
+
+                        items(5) { CommentItem() }
                     }
                 }
             }
@@ -238,64 +240,83 @@ fun PostDetailContent(
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+// ---------------- CÁC COMPONENT PHỤ CỦA MÀN CHI TIẾT ----------------
+
 @Composable
-private fun PostDetailContentPreview() {
-    SmartPickTheme {
-        val fakeUser = User(
-            id = "user_1",
-            email = "user1@gmail.com",
-            username = "nguyenvana",
-            fullName = "Nguyễn Văn A",
-            avatarUrl = "https://i.pravatar.cc/300?img=12",
-            phoneNumber = "0123456789",
-            createdAt = "2026-05-11T10:00:00",
-            updatedAt = "2026-05-11T10:00:00"
-        )
+fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = SmartPickColor.copy(alpha = 0.05f)),
+        border = BorderStroke(1.dp, SmartPickColor.copy(alpha = 0.2f))
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = product.imageUrls.firstOrNull(),
+                contentDescription = null,
+                modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
+            )
+            Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
+                Text("${product.price}đ", color = SmartPickColor, fontWeight = FontWeight.Bold)
+            }
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Mua ngay", fontSize = 12.sp)
+            }
+        }
+    }
+}
 
-        val fakeProduct = Product(
-            id = "product_1",
-            ownerId = "user_1",
-            name = "Sony WH-1000XM5",
-            brand = "Sony",
-            category = "Tai nghe",
-            price = 8990000.0,
-            imageUrls = listOf(
-                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
-            ),
-            status = "available",
-            createdAt = "2026-05-11T10:00:00"
-        )
+@Composable
+fun CommentItem() {
+    Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).fillMaxWidth()) {
+        Box(modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.LightGray))
+        Column(modifier = Modifier.padding(start = 12.dp)) {
+            Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = SurfaceCard)) {
+                Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Text("Người dùng", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("Bài viết rất hay, sản phẩm có vẻ chất lượng!", fontSize = 14.sp)
+                }
+            }
+            Text("2 giờ trước", modifier = Modifier.padding(start = 8.dp, top = 4.dp), fontSize = 12.sp, color = TextMuted)
+        }
+    }
+}
 
-        val fakePost = Post(
-            id = "post_1",
-            userId = "user_1",
-            productId = "product_1",
-            content = "Tai nghe Sony WH-1000XM5 chống ồn cực kỳ tốt. Pin rất trâu và đeo lâu không đau tai 🔥",
-            mediaUrls = listOf(
-                "https://images.unsplash.com/photo-1505740420928-5e560c06d30e",
-                "https://images.unsplash.com/photo-1519677100203-a0e668c92439",
-                "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
-            ),
-            reactionCount = 10,
-            currentUserReaction = ReactionType.LOVE,
-            createdAt = "2 giờ trước"
-        )
-
-        val fakeUiState = PostDetailUiState(
-            isLoading = false,
-            post = fakePost,
-            user = fakeUser,
-            product = fakeProduct,
-            error = null
-        )
-
-        PostDetailContent(
-            uiState = fakeUiState,
-            onBackClick = {},
-            onCommentClick = { _, _ -> },
-            onRetry = {}
-        )
+@Composable
+fun CommentInputBar(value: String, onValueChange: (String) -> Unit, onSendClick: () -> Unit) {
+    Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).imePadding(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                placeholder = { Text("Viết bình luận...") },
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = SurfaceCard,
+                    unfocusedContainerColor = SurfaceCard,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                shape = RoundedCornerShape(24.dp)
+            )
+            IconButton(
+                onClick = onSendClick,
+                enabled = value.isNotBlank(),
+                colors = IconButtonDefaults.iconButtonColors(contentColor = SmartPickColor)
+            ) {
+                Icon(Icons.Default.Send, contentDescription = null)
+            }
+        }
     }
 }
 
@@ -304,13 +325,8 @@ private fun PostDetailContentPreview() {
 private fun PostDetailErrorPreview() {
     SmartPickTheme {
         PostDetailContent(
-            uiState = PostDetailUiState(
-                isLoading = false,
-                error = "Không thể tải bài viết"
-            ),
-            onBackClick = {},
-            onCommentClick = { _, _ -> },
-            onRetry = {}
+            uiState = PostDetailUiState(isLoading = false, error = "Không thể tải bài viết"),
+            onBackClick = {}, onCommentClick = { _, _ -> }, onRetry = {}
         )
     }
 }

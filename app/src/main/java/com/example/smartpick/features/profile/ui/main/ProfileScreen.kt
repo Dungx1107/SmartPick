@@ -181,9 +181,7 @@ fun ProfileContent(
                     onProductClick = { product ->
                         // Xử lý khi nhấn vào sản phẩm đính kèm (nếu có)
                     },
-                    onViewImagesGalleryRequest = { imageUrls, index ->
-                        // Xử lý yêu cầu xem ảnh gallery tại đây
-                    },
+
                     isDetailView = false
                 )
             }
