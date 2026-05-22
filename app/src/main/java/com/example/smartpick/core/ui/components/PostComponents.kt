@@ -101,7 +101,12 @@ fun PostMainContent(modifier: Modifier = Modifier, content: String?, mediaUrls: 
                 Row(modifier = Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(model = it.imageUrls.firstOrNull(), contentDescription = null, modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Column { Text(text = it.name, fontWeight = FontWeight.Bold, fontSize = 14.sp); Text(text = "${it.price}đ", color = AccentBlue, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+                    Column {
+                        Text(text = it.name, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        // FIX: Format tiền tệ cho khung sản phẩm đính kèm ở bài viết
+                        val priceFormatted = String.format("%,.0f đ", it.price).replace(",", ".")
+                        Text(text = priceFormatted, color = AccentBlue, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                    }
                 }
             }
         }
@@ -151,7 +156,6 @@ fun SharedPostCard(
             PostHeader(user = sharedUser, createdAt = sharedPost.createdAt ?: "Vừa xong")
             PostMainContent(content = sharedPost.content, mediaUrls = sharedPost.mediaUrls, product = null, onMediaClick = { _ -> onPostClick() })
 
-            // XUẤT TOP 3 CẢM XÚC NHIỀU NHẤT
             if (localReactionCount > 0) {
                 Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     val topIcons = localBreakdown.entries.sortedByDescending { it.value }.take(3).joinToString(" ") { it.key.getIcon() }
@@ -299,7 +303,6 @@ fun PostItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // XUẤT TOP 3 CẢM XÚC NHIỀU NHẤT CHO BÀI CHIA SẺ BÊN NGOÀI CÙNG
             if (localReactionCount > 0) {
                 Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     val topIcons = localBreakdown.entries.sortedByDescending { it.value }.take(3).joinToString(" ") { it.key.getIcon() }
@@ -338,5 +341,30 @@ fun PostItem(
                 onShareClick(caption)
             }
         )
+    }
+}
+
+// FIX: Cập nhật Format Tiền tệ VNĐ cho phần ProductHighlightCard ở màn Chi Tiết (PostDetail)
+@Composable
+fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = SmartPickColor.copy(alpha = 0.05f)),
+        border = BorderStroke(1.dp, SmartPickColor.copy(alpha = 0.2f))
+    ) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(model = product.imageUrls.firstOrNull(), contentDescription = null, modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)), contentScale = ContentScale.Crop)
+            Column(Modifier.padding(start = 12.dp).weight(1f)) {
+                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
+
+                // Format Giá tiền Việt Nam
+                val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
+                Text(priceFormatted, color = SmartPickColor, fontWeight = FontWeight.Bold)
+            }
+            Button(onClick = onClick, colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), shape = RoundedCornerShape(8.dp)) {
+                Text("Mua ngay", fontSize = 12.sp)
+            }
+        }
     }
 }

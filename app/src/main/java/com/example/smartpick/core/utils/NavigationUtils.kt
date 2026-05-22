@@ -3,17 +3,40 @@ package com.example.smartpick.core.utils
 import com.example.smartpick.navigation.Routes
 
 object NavigationUtils {
-    private val hiddenRoutes = setOf(
+    // Danh sách ẩn thanh Menu dưới cùng (BottomBar)
+    private val hiddenBottomBarRoutes = setOf(
         Routes.Login.route,
         Routes.EditProfile.route,
         Routes.SignUp.route,
         Routes.CreatePost.route,
         Routes.PostDetail.route,
         Routes.Comments.route,
-        Routes.Settings.route
+        Routes.Settings.route,
+        Routes.Checkout.route,
+        Routes.WriteReview.route
+    )
+
+    // Danh sách ẩn thanh Tiêu đề trên cùng (TopAppBar)
+    private val hiddenTopBarRoutes = setOf(
+        Routes.Login.route,
+        Routes.EditProfile.route,
+        Routes.SignUp.route,
+        Routes.CreatePost.route,
+        Routes.PostDetail.route,
+        Routes.Comments.route,
+        Routes.Settings.route,
+        Routes.Checkout.route, // FIX: Đã ẩn TopBar trên màn Thanh toán
+        Routes.WriteReview.route
     )
 
     fun shouldShowBottomBar(currentRoute: String?): Boolean {
-        return currentRoute !in hiddenRoutes
+        // Lọc bỏ phần tham số (?) và phần path động (/) để so sánh gốc
+        val baseRoute = currentRoute?.substringBefore("?")?.substringBefore("/")
+        return hiddenBottomBarRoutes.none { baseRoute == it.substringBefore("/") }
+    }
+
+    fun shouldShowTopBar(currentRoute: String?): Boolean {
+        val baseRoute = currentRoute?.substringBefore("?")?.substringBefore("/")
+        return hiddenTopBarRoutes.none { baseRoute == it.substringBefore("/") }
     }
 }

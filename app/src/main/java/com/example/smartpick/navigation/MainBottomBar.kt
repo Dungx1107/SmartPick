@@ -2,11 +2,16 @@ package com.example.smartpick.navigation
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.DynamicFeed
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.DynamicFeed
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -46,37 +51,34 @@ fun MainBottomBarContent(
     currentRoute: String?,
     onNavigate: (String) -> Unit
 ) {
+    // FIX: Bổ sung thêm selectedIcon và unselectedIcon để đồng bộ mỹ thuật
     data class NavItem(
-        val icon: ImageVector,
+        val selectedIcon: ImageVector,
+        val unselectedIcon: ImageVector,
         val label: String,
         val route: String
     )
 
     val items = listOf(
         NavItem(
-            Icons.Outlined.Home,
-            stringResource(R.string.home),
-            Routes.Home.route
+            Icons.Filled.Home, Icons.Outlined.Home,
+            stringResource(R.string.home), Routes.Home.route
         ),
         NavItem(
-            Icons.Outlined.DynamicFeed,
-            stringResource(R.string.feeds),
-            Routes.Feed.route
+            Icons.Filled.DynamicFeed, Icons.Outlined.DynamicFeed,
+            stringResource(R.string.feeds), Routes.Feed.route
         ),
         NavItem(
-            Icons.Outlined.AutoAwesome,
-            stringResource(R.string.reviews),
-            Routes.ReviewHub.route
+            Icons.Filled.Star, Icons.Outlined.StarOutline,
+            stringResource(R.string.reviews), Routes.ReviewHub.route
         ),
         NavItem(
-            Icons.Outlined.BookmarkBorder,
-            stringResource(R.string.saved),
-            Routes.Saved.route
+            Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder,
+            stringResource(R.string.saved), Routes.Saved.route
         ),
         NavItem(
-            Icons.Outlined.Person,
-            stringResource(R.string.profile),
-            Routes.Profile.route
+            Icons.Filled.Person, Icons.Outlined.Person,
+            stringResource(R.string.profile), Routes.Profile.route
         ),
     )
 
@@ -90,7 +92,8 @@ fun MainBottomBarContent(
             NavigationBarItem(
                 icon = {
                     Icon(
-                        item.icon,
+                        // FIX: Logic đổi Icon dựa trên trạng thái
+                        if (selected) item.selectedIcon else item.unselectedIcon,
                         contentDescription = item.label,
                         modifier = Modifier.size(24.dp)
                     )
@@ -113,8 +116,5 @@ fun MainBottomBarContent(
 @Preview(showBackground = true)
 @Composable
 fun MainBottomBarPreview() {
-    MainBottomBarContent(
-        currentRoute = Routes.Home.route,
-        onNavigate = {}
-    )
+    MainBottomBarContent(currentRoute = Routes.Home.route, onNavigate = {})
 }

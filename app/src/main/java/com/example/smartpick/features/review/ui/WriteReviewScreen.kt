@@ -1,8 +1,7 @@
-// File: app/src/main/java/com/example/smartpick/features/review/ui/WriteReviewScreen.kt
 package com.example.smartpick.features.review.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -12,13 +11,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.smartpick.core.ui.theme.*
+import com.example.smartpick.features.home.viewmodel.HomeUiState
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +36,14 @@ fun WriteReviewScreen(
     var rating by remember { mutableIntStateOf(5) }
     var content by remember { mutableStateOf("") }
     val context = LocalContext.current
+
+    // Lấy dữ liệu sản phẩm từ ViewModel để hiển thị UI
+    val uiState by viewModel.uiState.collectAsState()
+    val product = remember(uiState, productId) {
+        if (uiState is HomeUiState.Success) {
+            (uiState as HomeUiState.Success).products.find { it.id == productId }
+        } else null
+    }
 
     Scaffold(
         containerColor = PageBg,
@@ -51,6 +63,32 @@ fun WriteReviewScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+            // FIX: THẺ TÓM TẮT SẢN PHẨM TRƯỚC KHI ĐÁNH GIÁ (CHUẨN SHOPEE)
+            if (product != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = White),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, SurfaceCard),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        AsyncImage(
+                            model = product.imageUrls.firstOrNull(),
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(product.name, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
+                            Text(priceFormatted, color = ErrorRed, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+
             Card(
                 colors = CardDefaults.cardColors(containerColor = White),
                 shape = RoundedCornerShape(12.dp)
@@ -64,7 +102,6 @@ fun WriteReviewScreen(
                     Text("Chất lượng sản phẩm", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Khung chọn Sao (Rating)
                     Row {
                         repeat(5) { index ->
                             IconButton(
@@ -85,7 +122,6 @@ fun WriteReviewScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Khung nhập nội dung
             OutlinedTextField(
                 value = content,
                 onValueChange = { content = it },
@@ -105,7 +141,6 @@ fun WriteReviewScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Nút Gửi Đánh Giá
             Button(
                 onClick = {
                     if (content.isBlank()) {

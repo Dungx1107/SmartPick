@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.smartpick.R
 import com.example.smartpick.core.utils.NavigationUtils.shouldShowBottomBar
+import com.example.smartpick.core.utils.NavigationUtils.shouldShowTopBar
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
@@ -60,7 +61,10 @@ fun AppNavigation(
     val currentUser by authViewModel.currentUser.collectAsState()
     val isInitializing by authViewModel.isInitializing.collectAsState()
 
-    val isMainScreen = shouldShowBottomBar(currentRoute)
+    // FIX: Tách riêng logic hiển thị TopBar và BottomBar
+    val showBottomBar = shouldShowBottomBar(currentRoute)
+    val showTopBar = shouldShowTopBar(currentRoute)
+
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
     var feedScrollToTopTrigger by remember { mutableLongStateOf(0L) }
@@ -95,7 +99,7 @@ fun AppNavigation(
     } else {
         Scaffold(
             topBar = {
-                if (isMainScreen) {
+                if (showTopBar) {
                     MainTopBar(
                         onMenuClick = { navController.navigate(Routes.Settings.route) },
                         onNotificationClick = { navController.navigate(Routes.Notifications.route) },
@@ -119,7 +123,7 @@ fun AppNavigation(
                 }
             },
             bottomBar = {
-                if (isMainScreen) {
+                if (showBottomBar) {
                     MainBottomBar(
                         navController = navController,
                         onNavigate = { route ->
@@ -137,7 +141,8 @@ fun AppNavigation(
             NavHost(
                 navController = navController,
                 startDestination = Routes.Login.route,
-                modifier = if (isMainScreen) Modifier.padding(padding) else Modifier.fillMaxSize()
+                // FIX: Áp dụng insets an toàn
+                modifier = Modifier.padding(padding)
             ) {
                 composable(route = Routes.SignUp.route) {
                     SignUpScreen(
