@@ -9,6 +9,7 @@ import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,6 +35,8 @@ import com.example.smartpick.features.home.ui.components.*
 import com.example.smartpick.features.home.viewmodel.HomeUiState
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
+import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.White
 import kotlinx.coroutines.launch
 
 @Composable
@@ -127,12 +131,9 @@ fun HomeScreen(
                 val postId = viewModel.getPostId(freshSelectedProduct?.id ?: "")
                 if (postId != null) {
                     selectedProduct = null; navController.navigate(
-                        Routes.PostDetail.createRoute(
-                            postId
-                        )
+                        Routes.PostDetail.createRoute(postId)
                     )
-                } else Toast.makeText(context, "Chưa có bài đăng thảo luận!", Toast.LENGTH_SHORT)
-                    .show()
+                } else Toast.makeText(context, "Chưa có bài đăng thảo luận!", Toast.LENGTH_SHORT).show()
             }
         },
         onBuyNow = {
@@ -173,49 +174,60 @@ fun HomeContent(
     onBuyNow: () -> Unit, onSubmitReview: (Int, String) -> Unit, onDismissCart: () -> Unit,
     onIncrease: (CartItem) -> Unit,
     onDecrease: (CartItem) -> Unit,
-    onCheckout: () -> Unit) {
+    onCheckout: () -> Unit
+) {
     Scaffold(
-        modifier = Modifier.padding(paddingValues),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Giữ lệnh này để khử khoảng trắng đáy
+        containerColor = MaterialTheme.colorScheme.background, // Khôi phục màu nền gốc
         floatingActionButton = {
-            FloatingActionButton(onClick = onCartClick) {
+            FloatingActionButton(
+                onClick = onCartClick,
+                containerColor = SmartPickColor, // Khôi phục nút bấm thành màu SmartPick
+                contentColor = White
+            ) {
                 val total = cartItems.sumOf { it.quantity }
                 if (total > 0) BadgedBox(badge = { Badge { Text(total.toString()) } }) {
-                    Icon(
-                        Icons.Default.ShoppingCart,
-                        null
-                    )
+                    Icon(Icons.Default.ShoppingCart, null)
                 }
                 else Icon(Icons.Default.ShoppingCart, null)
             }
         }
     ) { innerPadding ->
-        Column(modifier = Modifier
-            .padding(innerPadding)
-            .fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             SearchBar(
                 query = searchQuery,
                 onQueryChange = onSearchQueryChange,
-                onMicClick = onMicClick
+                onMicClick = onMicClick,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .fillMaxWidth()
             )
-            Box(modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()) {
+
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(
-                        modifier = Modifier.align(
-                            Alignment.Center
-                        )
+                        modifier = Modifier.align(Alignment.Center)
                     )
 
                     is HomeUiState.Success -> LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(8.dp)
+                        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 0.dp, bottom = 80.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(state.products) {
+                        items(state.products) { product ->
                             ProductGridCard(
-                                product = it,
-                                onProductClick = { onProductClick(it) },
-                                onAddToCart = { onAddToCart(it) })
+                                product = product,
+                                onProductClick = { onProductClick(product) },
+                                onAddToCart = { onAddToCart(product) }
+                            )
                         }
                     }
 
@@ -224,6 +236,7 @@ fun HomeContent(
             }
         }
     }
+
     if (selectedProduct != null) {
         ModalBottomSheet(
             onDismissRequest = onDismissSheet,
@@ -240,6 +253,7 @@ fun HomeContent(
             )
         }
     }
+
     if (showCart) {
         CartBottomSheet(
             cartItems = cartItems,

@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/profile/ui/saved/SavedScreen.kt
 package com.example.smartpick.features.profile.ui.saved
 
 import android.widget.Toast
@@ -38,61 +37,50 @@ import com.example.smartpick.core.ui.theme.*
 import com.example.smartpick.features.feed.viewmodel.FeedViewModel
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
-import java.util.Locale
 
 @Composable
 fun SavedCollectionScreen(
     navController: NavController,
     initialCategory: String = "Giỏ hàng",
     homeViewModel: HomeViewModel = hiltViewModel(),
-    feedViewModel: FeedViewModel = hiltViewModel() // Khai báo FeedViewModel để lấy bài viết
+    feedViewModel: FeedViewModel = hiltViewModel()
 ) {
     val cartItems by homeViewModel.cartItems.collectAsState()
     val orders by homeViewModel.orders.collectAsState()
-
-    // State bài viết đã thích
     val reactedPosts by feedViewModel.reactedPosts.collectAsState()
     val isReactedLoading by feedViewModel.isReactedLoading.collectAsState()
 
     var selectedCategory by rememberSaveable { mutableStateOf(initialCategory) }
-    val context = LocalContext.current
 
-    LaunchedEffect(initialCategory) {
-        selectedCategory = initialCategory
-    }
+    LaunchedEffect(initialCategory) { selectedCategory = initialCategory }
 
-    // Tải danh sách bài viết đã thích khi người dùng chọn tab này
     LaunchedEffect(selectedCategory) {
-        if (selectedCategory == "Bài viết đã thích") {
-            feedViewModel.loadReactedPosts()
-        }
+        if (selectedCategory == "Bài viết đã thích") feedViewModel.loadReactedPosts()
     }
 
     Scaffold(
-        containerColor = PageBg,
+        containerColor = MaterialTheme.colorScheme.background, // Chuẩn hóa màu nền hệ thống
         bottomBar = {
             if (selectedCategory == "Giỏ hàng" && cartItems.isNotEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 16.dp,
-                    color = White
+                    color = MaterialTheme.colorScheme.surface
                 ) {
                     Row(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
                         Column {
                             Text("Tổng cộng", style = MaterialTheme.typography.labelMedium, color = TextMuted)
-                            Text("${String.format(Locale.getDefault(), "%,.0f", total)}đ", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = ErrorRed)
+                            // FIX: Đồng bộ format tiền tệ 150.000 đ
+                            val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
+                            Text(totalFormatted, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AccentBlue)
                         }
                         Button(
-                            onClick = {
-                                navController.navigate(Routes.Checkout.route)
-                            },
+                            onClick = { navController.navigate(Routes.Checkout.route) },
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
                         ) {
@@ -109,14 +97,11 @@ fun SavedCollectionScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp), // Chuẩn lưới 12dp
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item(span = { GridItemSpan(2) }) {
-                CategorySection(
-                    selectedCategory = selectedCategory,
-                    onCategorySelected = { selectedCategory = it }
-                )
+                CategorySection(selectedCategory = selectedCategory, onCategorySelected = { selectedCategory = it })
             }
 
             if (selectedCategory == "Giỏ hàng") {
@@ -156,7 +141,6 @@ fun SavedCollectionScreen(
                     }
                 }
             } else if (selectedCategory == "Bài viết đã thích") {
-                // TAB MỚI: BÀI VIẾT ĐÃ THÍCH
                 item(span = { GridItemSpan(2) }) {
                     Text("Bài viết bạn đã thích", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 }
@@ -164,7 +148,7 @@ fun SavedCollectionScreen(
                 if (isReactedLoading) {
                     item(span = { GridItemSpan(2) }) {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = SmartPickColor)
+                            CircularProgressIndicator(color = SmartPickColor, strokeWidth = 3.dp)
                         }
                     }
                 } else if (reactedPosts.isEmpty()) {
@@ -180,17 +164,12 @@ fun SavedCollectionScreen(
                             user = user,
                             product = product,
                             onPostClick = { navController.navigate(Routes.PostDetail.createRoute(post.id.toString())) },
-                            onReactionClick = { id, reactionType ->
-                                feedViewModel.toggleReaction(id, reactionType)
-                            }
+                            onReactionClick = { id, reactionType -> feedViewModel.toggleReaction(id, reactionType) }
                         )
                     }
                 }
             }
-
-            item(span = { GridItemSpan(2) }) {
-                Spacer(modifier = Modifier.height(24.dp))
-            }
+            item(span = { GridItemSpan(2) }) { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
@@ -200,9 +179,9 @@ fun OrderCard(order: OrderResponse) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(0.5.dp, Color(0xFFE5E7EB), RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(12.dp)), // FIX: Bỏ màu fix cứng
+        shape = RoundedCornerShape(12.dp), // FIX: Đồng bộ bo góc 12dp
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -216,11 +195,12 @@ fun OrderCard(order: OrderResponse) {
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-                Surface(color = Color(0xFFE8F5E9), shape = RoundedCornerShape(12.dp)) {
+                // FIX: Dùng màu nền System cho Badge để hỗ trợ Dark Mode
+                Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(12.dp)) {
                     Text(
                         text = "Thành công",
                         style = MaterialTheme.typography.labelSmall,
-                        color = BadgeGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -234,16 +214,13 @@ fun OrderCard(order: OrderResponse) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val date = order.createdAt.split("T").firstOrNull() ?: order.createdAt
+                Text(text = date, style = MaterialTheme.typography.bodySmall, color = TextMuted)
+
                 Text(
-                    text = date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted
-                )
-                Text(
-                    text = "${String.format(Locale.getDefault(), "%,.0f", order.totalAmount)}đ",
+                    text = String.format("%,.0f đ", order.totalAmount).replace(",", "."),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = ErrorRed
+                    color = AccentBlue
                 )
             }
         }
@@ -254,27 +231,33 @@ fun OrderCard(order: OrderResponse) {
 fun CartGridCard(item: CartItem, onIncrease: (CartItem) -> Unit, onDecrease: (CartItem) -> Unit) {
     val product = item.product ?: return
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp), // FIX: Đồng bộ bo góc 12.dp
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), // Tương đương Shopee
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
             AsyncImage(
                 model = product.imageUrls.firstOrNull(),
                 contentDescription = null,
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(product.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text("${String.format(Locale.getDefault(), "%,.0f", product.price)}đ", color = ErrorRed, fontWeight = FontWeight.Bold)
+
+                // FIX: Đồng bộ format tiền tệ
+                Text(
+                    text = String.format("%,.0f đ", product.price).replace(",", "."),
+                    color = AccentBlue,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = SurfaceCard,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -283,15 +266,11 @@ fun CartGridCard(item: CartItem, onIncrease: (CartItem) -> Unit, onDecrease: (Ca
                         modifier = Modifier.padding(horizontal = 4.dp)
                     ) {
                         IconButton(onClick = { onDecrease(item) }, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
-                                null, modifier = Modifier.size(16.dp),
-                                tint = if (item.quantity > 1) TextSecondary else ErrorRed
-                            )
+                            Icon(if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete, null, modifier = Modifier.size(16.dp), tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurfaceVariant else AccentBlue)
                         }
                         Text(item.quantity.toString(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(32.dp)) {
-                            Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = TextSecondary)
+                            Icon(Icons.Default.Add, null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -308,31 +287,12 @@ fun CategorySection(selectedCategory: String, onCategorySelected: (String) -> Un
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Quản lý mua sắm & Yêu thích", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text("Quản lý mua sắm", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            item {
-                CategoryItem(
-                    "Giỏ hàng", Icons.Default.ShoppingCart,
-                    isSelected = selectedCategory == "Giỏ hàng",
-                    onClick = { onCategorySelected("Giỏ hàng") }
-                )
-            }
-            item {
-                CategoryItem(
-                    "Lịch sử mua hàng", Icons.Default.History,
-                    isSelected = selectedCategory == "Lịch sử mua hàng",
-                    onClick = { onCategorySelected("Lịch sử mua hàng") }
-                )
-            }
-            // THÊM TAB MỚI Ở ĐÂY
-            item {
-                CategoryItem(
-                    "Bài viết đã thích", Icons.Default.Favorite,
-                    isSelected = selectedCategory == "Bài viết đã thích",
-                    onClick = { onCategorySelected("Bài viết đã thích") }
-                )
-            }
+            item { CategoryItem("Giỏ hàng", Icons.Default.ShoppingCart, isSelected = selectedCategory == "Giỏ hàng", onClick = { onCategorySelected("Giỏ hàng") }) }
+            item { CategoryItem("Lịch sử mua hàng", Icons.Default.History, isSelected = selectedCategory == "Lịch sử mua hàng", onClick = { onCategorySelected("Lịch sử mua hàng") }) }
+            item { CategoryItem("Bài viết đã thích", Icons.Default.Favorite, isSelected = selectedCategory == "Bài viết đã thích", onClick = { onCategorySelected("Bài viết đã thích") }) }
         }
     }
 }
@@ -343,14 +303,14 @@ fun CategoryItem(title: String, icon: ImageVector, isSelected: Boolean, onClick:
         Box(
             modifier = Modifier
                 .size(width = 100.dp, height = 70.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (isSelected) AccentBlue else SurfaceCard)
+                .clip(RoundedCornerShape(12.dp)) // FIX: Bo góc 12.dp chuẩn hệ thống
+                .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, null, tint = if (isSelected) White else TextSecondary, modifier = Modifier.size(28.dp))
+            Icon(icon, null, tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(title, style = MaterialTheme.typography.labelMedium, color = if (isSelected) SmartPickColor else TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(title, style = MaterialTheme.typography.labelMedium, color = if (isSelected) MaterialTheme.colorScheme.primary else TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/review/ui/ReviewHubScreen.kt
 package com.example.smartpick.features.review.ui
 
 import androidx.compose.foundation.layout.*
@@ -41,30 +40,24 @@ fun ReviewHubScreen(
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     val tabs = listOf("Chưa đánh giá", "Đã đánh giá")
 
-    // Gọi refresh data mỗi khi màn hình này được mở lại
-    LaunchedEffect(Unit) {
-        viewModel.fetchReviewData()
-    }
+    LaunchedEffect(Unit) { viewModel.fetchReviewData() }
 
     Scaffold(
-        containerColor = PageBg,
+        containerColor = MaterialTheme.colorScheme.background, // FIX: Dùng màu nền chuẩn
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Đánh giá sản phẩm", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = White)
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = White,
+                containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = SmartPickColor,
                 indicator = { tabPositions ->
-                    SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                        color = SmartPickColor
-                    )
+                    SecondaryIndicator(Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]), color = SmartPickColor)
                 }
             ) {
                 tabs.forEachIndexed { index, title ->
@@ -84,7 +77,7 @@ fun ReviewHubScreen(
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = SmartPickColor)
+                    CircularProgressIndicator(color = SmartPickColor, strokeWidth = 3.dp)
                 }
             } else {
                 when (selectedTabIndex) {
@@ -109,30 +102,29 @@ fun PendingReviewList(products: List<Product>, onReviewClick: (String) -> Unit) 
             items(products) { product ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(12.dp), // FIX: Chuẩn hóa góc 12dp
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         AsyncImage(
                             model = product.imageUrls.firstOrNull(),
                             contentDescription = null,
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
+                            Text(product.name, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
+
+                            // FIX: Chuẩn hóa format tiền tệ
+                            val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
                             Text(
-                                product.name,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
+                                priceFormatted,
+                                color = AccentBlue, // Đổi sang màu xanh
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
                             )
-                            Text("${product.price}đ", color = ErrorRed, fontSize = 14.sp)
                         }
                         Button(
                             onClick = { onReviewClick(product.id ?: "") },
@@ -158,9 +150,7 @@ fun CompletedReviewList(reviews: List<ReviewResponse>) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(reviews) { review ->
-                CompletedReviewCard(review)
-            }
+            items(reviews) { review -> CompletedReviewCard(review) }
         }
     }
 }
@@ -169,7 +159,7 @@ fun CompletedReviewList(reviews: List<ReviewResponse>) {
 fun CompletedReviewCard(review: ReviewResponse) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
@@ -183,7 +173,7 @@ fun CompletedReviewCard(review: ReviewResponse) {
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(product.name, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(product.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -195,11 +185,7 @@ fun CompletedReviewCard(review: ReviewResponse) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(review.content, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                review.createdAt.split("T").firstOrNull() ?: "",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextMuted
-            )
+            Text(review.createdAt.split("T").firstOrNull() ?: "", style = MaterialTheme.typography.labelSmall, color = TextMuted)
         }
     }
 }
