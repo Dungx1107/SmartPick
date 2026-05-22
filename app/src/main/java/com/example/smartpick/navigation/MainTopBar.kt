@@ -1,5 +1,7 @@
 package com.example.smartpick.navigation
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,8 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,12 +33,14 @@ import com.example.smartpick.core.ui.theme.SmartPickTheme
 fun MainTopBar(
     onMenuClick: () -> Unit = {},
     onNotificationClick: () -> Unit = {},
+    onTitleClick: () -> Unit = {},
     tagText: String? = null,
     showNotificationBadge: Int = 0
 ) {
     MainTopBarContent(
         onMenuClick = onMenuClick,
         onNotificationClick = onNotificationClick,
+        onTitleClick = onTitleClick,
         tagText = tagText,
         showNotificationBadge = showNotificationBadge
     )
@@ -47,15 +51,25 @@ fun MainTopBar(
 fun MainTopBarContent(
     onMenuClick: () -> Unit,
     onNotificationClick: () -> Unit,
+    onTitleClick: () -> Unit = {},
     tagText: String? = null,
     showNotificationBadge: Int
 ) {
+    // FIX: Bọc MutableInteractionSource trong remember để sửa lỗi Compose
+    val interactionSource = remember { MutableInteractionSource() }
+
     TopAppBar(
         title = {
             Text(
                 text = stringResource(R.string.app_name),
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) { onTitleClick() }
+                    .padding(vertical = 8.dp)
             )
         },
         navigationIcon = {
@@ -96,10 +110,7 @@ fun MainTopBarContent(
                             containerColor = MaterialTheme.colorScheme.error,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         ) {
-                            Text(
-                                text = text,
-                                fontSize = 10.sp
-                            )
+                            Text(text = text, fontSize = 10.sp)
                         }
                     }
                 }
@@ -124,34 +135,7 @@ fun MainTopBarContent(
 fun MainTopBarPreview() {
     SmartPickTheme {
         MainTopBarContent(
-            onMenuClick = {},
-            onNotificationClick = {},
-            tagText = "AI Assist",
-            showNotificationBadge = 0
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "TopBar with Cart Badge")
-@Composable
-fun MainTopBarWithBadgePreview() {
-    SmartPickTheme {
-        MainTopBarContent(
-            onMenuClick = {},
-            onNotificationClick = {},
-            showNotificationBadge = 1
-        )
-    }
-}
-
-@Preview(showBackground = true, name = "Custom Title")
-@Composable
-fun MainTopBarCustomTitlePreview() {
-    SmartPickTheme {
-        MainTopBarContent(
-            onMenuClick = {},
-            onNotificationClick = {},
-            showNotificationBadge = 1000
+            onMenuClick = {}, onNotificationClick = {}, tagText = "AI Assist", showNotificationBadge = 0
         )
     }
 }

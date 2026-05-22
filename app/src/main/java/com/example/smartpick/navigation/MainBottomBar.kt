@@ -32,11 +32,9 @@ fun MainBottomBar(
     navController: NavController,
     onNavigate: (String) -> Unit
 ) {
-    // Phần này xử lý Logic lấy Route từ NavController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Gọi phần UI bên dưới
     MainBottomBarContent(
         currentRoute = currentRoute,
         onNavigate = onNavigate
@@ -115,18 +113,8 @@ fun MainBottomBarContent(
 @Preview(showBackground = true)
 @Composable
 fun MainBottomBarPreview() {
-    // Gọi bản Content để Preview, không gọi bản có NavController
     MainBottomBarContent(
-        currentRoute = Routes.Home.route, // Thử giả lập đang ở màn Home
-        onNavigate = {}
-    )
-}
-
-@Preview(showBackground = true, name = "AI Selected")
-@Composable
-fun MainBottomBarAIPreview() {
-    MainBottomBarContent(
-        currentRoute = Routes.ReviewHub.route, // Thử giả lập đang chọn AI Curator
+        currentRoute = Routes.Home.route,
         onNavigate = {}
     )
 }

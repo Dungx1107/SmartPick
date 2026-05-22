@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/navigation/AppNavigation.kt
 package com.example.smartpick.navigation
 
 import androidx.navigation.navDeepLink
@@ -12,6 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -61,6 +63,8 @@ fun AppNavigation(
     val isMainScreen = shouldShowBottomBar(currentRoute)
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
+    var feedScrollToTopTrigger by remember { mutableLongStateOf(0L) }
+
     LaunchedEffect(currentUser) {
         currentUser?.id?.let { userId ->
             notificationViewModel.subscribeToNotifications(userId)
@@ -75,24 +79,17 @@ fun AppNavigation(
 
         if (currentUser != null) {
             if (route == Routes.Login.route || route == Routes.SignUp.route) {
-                navController.navigate(Routes.Home.route) {
-                    popUpTo(Routes.Login.route) { inclusive = true }
-                }
+                navController.navigate(Routes.Home.route) { popUpTo(Routes.Login.route) { inclusive = true } }
             }
         } else {
             if (route != Routes.Login.route && route != Routes.SignUp.route) {
-                navController.navigate(Routes.Login.route) {
-                    popUpTo(0) { inclusive = true }
-                }
+                navController.navigate(Routes.Login.route) { popUpTo(0) { inclusive = true } }
             }
         }
     }
 
     if (isInitializing) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = Color(0xFF1E3A8A))
         }
     } else {
@@ -102,6 +99,11 @@ fun AppNavigation(
                     MainTopBar(
                         onMenuClick = { navController.navigate(Routes.Settings.route) },
                         onNotificationClick = { navController.navigate(Routes.Notifications.route) },
+                        onTitleClick = {
+                            if (currentRoute == Routes.Feed.route) {
+                                feedScrollToTopTrigger = System.currentTimeMillis()
+                            }
+                        },
                         tagText = when (currentRoute) {
                             Routes.Home.route -> stringResource(R.string.app_name)
                             Routes.Feed.route -> stringResource(R.string.feeds)
@@ -122,9 +124,7 @@ fun AppNavigation(
                         navController = navController,
                         onNavigate = { route ->
                             navController.navigate(route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
+                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -142,21 +142,13 @@ fun AppNavigation(
                 composable(route = Routes.SignUp.route) {
                     SignUpScreen(
                         onLoginClick = { navController.navigate(Routes.Login.route) },
-                        onNavigateToHome = {
-                            navController.navigate(Routes.Home.route) {
-                                popUpTo(Routes.SignUp.route) { inclusive = true }
-                            }
-                        }
+                        onNavigateToHome = { navController.navigate(Routes.Home.route) { popUpTo(Routes.SignUp.route) { inclusive = true } } }
                     )
                 }
 
                 composable(route = Routes.Login.route) {
                     LoginScreen(
-                        onNavigateToHome = {
-                            navController.navigate(Routes.Home.route) {
-                                popUpTo(Routes.Login.route) { inclusive = true }
-                            }
-                        },
+                        onNavigateToHome = { navController.navigate(Routes.Home.route) { popUpTo(Routes.Login.route) { inclusive = true } } },
                         onNavigateToSignUp = { navController.navigate(Routes.SignUp.route) }
                     )
                 }
@@ -167,37 +159,22 @@ fun AppNavigation(
 
                 composable(route = Routes.ReviewHub.route) {
                     ReviewHubScreen(
-                        onNavigateToWriteReview = { productId ->
-                            navController.navigate(Routes.WriteReview.createRoute(productId))
-                        }
+                        onNavigateToWriteReview = { productId -> navController.navigate(Routes.WriteReview.createRoute(productId)) }
                     )
                 }
 
                 composable(
                     route = Routes.WriteReview.route,
-                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) {
-                        type = NavType.StringType
-                    })
+                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType })
                 ) { backStackEntry ->
-                    val productId =
-                        backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
-                    WriteReviewScreen(
-                        productId = productId,
-                        onBack = { navController.popBackStack() },
-                        onReviewSubmitted = {
-                            navController.popBackStack()
-                        }
-                    )
+                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    WriteReviewScreen(productId = productId, onBack = { navController.popBackStack() }, onReviewSubmitted = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.Checkout.route) {
                     com.example.smartpick.features.home.ui.CheckoutScreen(
                         onBack = { navController.popBackStack() },
-                        onNavigateToSuccess = {
-                            navController.navigate(Routes.Saved.route) {
-                                popUpTo(Routes.Home.route)
-                            }
-                        }
+                        onNavigateToSuccess = { navController.navigate(Routes.Saved.route) { popUpTo(Routes.Home.route) } }
                     )
                 }
 
@@ -205,66 +182,26 @@ fun AppNavigation(
 
                 composable(route = Routes.Profile.route) { ProfileScreen(navController) }
 
-                composable(route = Routes.EditProfile.route) {
-                    EditProfileScreen(onNavigateBack = { navController.popBackStack() })
-                }
+                composable(route = Routes.EditProfile.route) { EditProfileScreen(onNavigateBack = { navController.popBackStack() }) }
 
                 composable(
                     route = Routes.PostDetail.route,
-                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
-                        type = NavType.StringType
-                    })
+                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) { type = NavType.StringType })
                 ) {
-                    PostDetailScreen(
-                        onBackClick = { navController.popBackStack() }
-                    )
-                }
-
-                // Route dành cho màn hình comments riêng (nếu bạn vẫn gọi từ thông báo)
-                composable(
-                    route = "${Routes.Comments.route}?commentId={commentId}",
-                    arguments = listOf(
-                        navArgument("postId") { type = NavType.StringType },
-                        navArgument("postOwnerId") {
-                            type = NavType.StringType; nullable = true; defaultValue = null
-                        },
-                        navArgument("commentId") {
-                            type = NavType.StringType; nullable = true; defaultValue = null
-                        }
-                    )
-                ) { backStackEntry ->
-                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
-                    val postOwnerId = backStackEntry.arguments?.getString("postOwnerId")
-                    val commentId = backStackEntry.arguments?.getString("commentId")
-
-                    CommentsScreen(
-                        postId = postId,
-                        postOwnerId = postOwnerId,
-                        currentUserId = currentUser?.id ?: "",
-                        targetCommentId = commentId,
-                        onBackClick = { navController.popBackStack() }
-                    )
+                    PostDetailScreen(onBackClick = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.Feed.route) {
                     FeedScreen(
                         paddingValues = PaddingValues(0.dp),
-                        onPostClick = { postId ->
-                            navController.navigate(
-                                Routes.PostDetail.createRoute(
-                                    postId
-                                )
-                            )
-                        },
-                        // ĐÃ XÓA onCommentClick Ở ĐÂY ĐỂ FIX LỖI
+                        scrollToTopTrigger = feedScrollToTopTrigger,
+                        onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
                 }
 
                 composable(route = Routes.CreatePost.route) {
-                    CreatePostScreen(
-                        currentUser = currentUser,
-                        onClose = { navController.popBackStack() })
+                    CreatePostScreen(currentUser = currentUser, onClose = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.Notifications.route) {
@@ -277,16 +214,8 @@ fun AppNavigation(
                                 val commentId = notification.targetId
 
                                 if (postId.isNotEmpty()) {
-                                    if (!commentId.isNullOrEmpty()) {
-                                        navController.navigate(
-                                            Routes.CommentsFromNotification.createRoute(
-                                                postId,
-                                                commentId
-                                            )
-                                        )
-                                    } else {
-                                        navController.navigate("comments_notification/$postId")
-                                    }
+                                    if (!commentId.isNullOrEmpty()) navController.navigate(Routes.CommentsFromNotification.createRoute(postId, commentId))
+                                    else navController.navigate("comments_notification/$postId")
                                 }
                             }
                         }
@@ -296,22 +225,13 @@ fun AppNavigation(
                 composable(Routes.Settings.route) {
                     SettingsScreen(
                         onBackClick = { navController.popBackStack() },
-                        onLogoutSuccess = {
-                            navController.navigate(Routes.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        }
+                        onLogoutSuccess = { navController.navigate(Routes.Login.route) { popUpTo(0) { inclusive = true } } }
                     )
                 }
 
                 composable(
                     route = "${Routes.Saved.route}?category={category}",
-                    arguments = listOf(
-                        navArgument("category") {
-                            type = NavType.StringType
-                            defaultValue = "Giỏ hàng"
-                        }
-                    )
+                    arguments = listOf(navArgument("category") { type = NavType.StringType; defaultValue = "Giỏ hàng" })
                 ) { backStackEntry ->
                     val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
                     SavedCollectionScreen(navController = navController, initialCategory = category)
@@ -321,113 +241,44 @@ fun AppNavigation(
                     route = Routes.CommentsFromNotification.route,
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
-                        navArgument("commentId") {
-                            type = NavType.StringType; nullable = true; defaultValue = null
-                        }
+                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
                     )
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
                     val commentId = backStackEntry.arguments?.getString("commentId")
-
                     CommentsScreen(
-                        postId = postId,
-                        postOwnerId = null,
-                        currentUserId = currentUser?.id ?: "",
+                        postId = postId, postOwnerId = null, currentUserId = currentUser?.id ?: "",
                         currentUserName = currentUser?.fullName ?: "Một người dùng",
                         targetCommentId = commentId,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
 
-                // 1. Luồng IN-APP: Xử lý click từ NotificationsScreen (Giữ nguyên logic của bạn, KHÔNG chứa deepLinks)
-                composable(
-                    route = Routes.CommentsFromNotification.route,
-                    arguments = listOf(
-                        navArgument("postId") { type = NavType.StringType },
-                        navArgument("commentId") {
-                            type = NavType.StringType; nullable = true; defaultValue = null
-                        }
-                    )
-                ) { backStackEntry ->
-                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
-                    val commentId = backStackEntry.arguments?.getString("commentId")
-
-                    CommentsScreen(
-                        postId = postId,
-                        postOwnerId = null,
-                        currentUserId = currentUser?.id ?: "",
-                        targetCommentId = commentId,
-                        onBackClick = { navController.popBackStack() }
-                    )
-                }
-
-                // 2. Luồng SYSTEM PUSH: Hứng Deep Link từ hệ điều hành (khi bấm vào push notification)
                 composable(
                     route = Routes.SystemPushDeepLink.route,
                     arguments = listOf(
                         navArgument("type") { type = NavType.StringType },
-                        navArgument("postId") {
-                            type = NavType.StringType; nullable = true; defaultValue = null
-                        },
-                        navArgument("targetId") {
-                            type = NavType.StringType; nullable = true; defaultValue = null
-                        }
+                        navArgument("postId") { type = NavType.StringType; nullable = true; defaultValue = null },
+                        navArgument("targetId") { type = NavType.StringType; nullable = true; defaultValue = null }
                     ),
-                    deepLinks = listOf(
-                        navDeepLink {
-                            uriPattern =
-                                "smartpick://notification/{type}?post_id={postId}&target_id={targetId}"
-                        }
-                    )
+                    deepLinks = listOf(navDeepLink { uriPattern = "smartpick://notification/{type}?post_id={postId}&target_id={targetId}" })
                 ) { backStackEntry ->
                     val type = backStackEntry.arguments?.getString("type") ?: ""
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
                     val targetId = backStackEntry.arguments?.getString("targetId")
 
-                    // Chuyển hướng tới màn hình tương ứng với loại thông báo
                     when (type) {
                         "comment", "reply" -> {
                             CommentsScreen(
-                                postId = postId,
-                                postOwnerId = null,
-                                currentUserId = currentUser?.id ?: "",
-                                targetCommentId = targetId,
-                                onBackClick = {
-                                    // Khi bấm từ bên ngoài vào, nếu ấn back thì nên đưa về Home thay vì thoát app
-                                    navController.navigate(Routes.Home.route) {
-                                        popUpTo(0) { inclusive = true }
-                                    }
-                                }
+                                postId = postId, postOwnerId = null, currentUserId = currentUser?.id ?: "", targetCommentId = targetId,
+                                onBackClick = { navController.navigate(Routes.Home.route) { popUpTo(0) { inclusive = true } } }
                             )
                         }
-
                         "like" -> {
-                            PostDetailScreen(
-                                onBackClick = {
-                                    navController.navigate(Routes.Home.route) {
-                                        popUpTo(0) { inclusive = true }
-                                    }
-                                },
-                                onCommentClick = { pId, ownerId ->
-                                    currentUser?.id?.let {
-                                        navController.navigate(
-                                            Routes.Comments.createRoute(
-                                                pId,
-                                                ownerId ?: ""
-                                            )
-                                        )
-                                    }
-                                }
-                            )
+                            PostDetailScreen(onBackClick = { navController.navigate(Routes.Home.route) { popUpTo(0) { inclusive = true } } })
                         }
-
                         else -> {
-                            // System notification hoặc các type khác -> Mở trang chủ
-                            LaunchedEffect(Unit) {
-                                navController.navigate(Routes.Home.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            }
+                            LaunchedEffect(Unit) { navController.navigate(Routes.Home.route) { popUpTo(0) { inclusive = true } } }
                         }
                     }
                 }
