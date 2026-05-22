@@ -119,7 +119,12 @@ fun PendingReviewList(products: List<Product>, onReviewClick: (String) -> Unit) 
 
                             // FIX: Chuẩn hóa format tiền tệ
                             val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
-                            Text(priceFormatted, color = ErrorRed, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                priceFormatted,
+                                color = AccentBlue, // Đổi sang màu xanh
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                         Button(
                             onClick = { onReviewClick(product.id ?: "") },

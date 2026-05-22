@@ -139,9 +139,9 @@ fun ProductGridCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val priceFormatted = String.format("%,.0f", product.price).replace(",", ".")
+                    val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
                     Text(
-                        text = "₫$priceFormatted",
+                        text = "$priceFormatted",
                         color = SmartPickColor,
                         fontWeight = FontWeight.Medium,
                         fontSize = 15.sp
@@ -202,10 +202,10 @@ fun CartBottomSheet(
                                 )
                             },
                             supportingContent = {
-                                val priceFormatted = String.format("%,.0f", product.price).replace(",", ".")
+                                val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
                                 Text(
-                                    "₫$priceFormatted",
-                                    color = ErrorRed,
+                                    "$priceFormatted",
+                                    color = AccentBlue,
                                     fontWeight = FontWeight.Bold
                                 )
                             },
@@ -229,7 +229,7 @@ fun CartBottomSheet(
                                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                                     ) {
                                         IconButton(onClick = { item.id?.let { onDecrease(it) } }, modifier = Modifier.size(30.dp)) {
-                                            Icon(if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete, null, tint = if (item.quantity > 1) TextSecondary else ErrorRed, modifier = Modifier.size(16.dp))
+                                            Icon(if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete, null, tint = if (item.quantity > 1) TextSecondary else AccentBlue, modifier = Modifier.size(16.dp))
                                         }
                                         Text(text = item.quantity.toString(), modifier = Modifier.padding(horizontal = 8.dp), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                                         IconButton(onClick = { item.id?.let { onIncrease(it) } }, modifier = Modifier.size(30.dp)) {
@@ -245,10 +245,10 @@ fun CartBottomSheet(
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = SurfaceCard)
 
                 val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
-                val totalFormatted = String.format("%,.0f", total).replace(",", ".")
+                val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("Tổng cộng:", fontWeight = FontWeight.Bold, color = TextSecondary)
-                    Text("₫$totalFormatted", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = ErrorRed)
+                    Text("$totalFormatted", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AccentBlue)
                 }
             }
 
@@ -300,7 +300,7 @@ fun ProductDetailContent(
                     Button(
                         onClick = onBuyNow,
                         modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = ErrorRed),
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("Mua Ngay", color = White)
@@ -340,11 +340,11 @@ fun ProductDetailContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val priceFormatted = String.format("%,.0f", product.price).replace(",", ".")
+                        val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
                         Text(
-                            text = "₫$priceFormatted",
+                            text = "$priceFormatted",
                             style = MaterialTheme.typography.titleLarge,
-                            color = ErrorRed,
+                            color = AccentBlue,
                             fontWeight = FontWeight.Bold
                         )
 

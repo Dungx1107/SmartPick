@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -13,13 +12,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.smartpick.core.model.CartItem // Đảm bảo import đúng model của bạn
+import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.ui.theme.*
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 
@@ -78,19 +78,21 @@ fun CheckoutContent(
     onOrderClick: () -> Unit
 ) {
     val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
+    // Format tổng tiền chuẩn: 20.000 đ
+    val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thanh toán", style = MaterialTheme.typography.titleLarge) },
+                title = { Text("Thanh toán", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         },
         bottomBar = {
-            Surface(shadowElevation = 8.dp, color = White) {
+            Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
                 Row(
                     modifier = Modifier.padding(16.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -98,7 +100,12 @@ fun CheckoutContent(
                 ) {
                     Column {
                         Text("Tổng thanh toán", fontSize = 12.sp, color = TextMuted)
-                        Text("${total}đ", style = MaterialTheme.typography.titleLarge, color = ErrorRed, fontWeight = FontWeight.Bold)
+                        Text(
+                            totalFormatted,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = AccentBlue, // Đã đổi từ ErrorRed sang AccentBlue
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                     Button(
                         onClick = onOrderClick,
@@ -110,17 +117,18 @@ fun CheckoutContent(
                     }
                 }
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding).background(PageBg),
+            modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = White)) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Thông tin nhận hàng", fontWeight = FontWeight.Bold)
+                        Text("Thông tin nhận hàng", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.height(12.dp))
                         OutlinedTextField(
                             value = phone,
@@ -140,30 +148,33 @@ fun CheckoutContent(
             }
 
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = White)) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Phương thức thanh toán", fontWeight = FontWeight.Bold)
+                        Text("Phương thức thanh toán", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
-                            Text("Thanh toán khi nhận hàng (COD)")
+                            Text("Thanh toán khi nhận hàng (COD)", color = MaterialTheme.colorScheme.onSurface)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(selected = paymentMethod == "CARD", onClick = { onPaymentMethodChange("CARD") })
-                            Text("Thẻ tín dụng / Ghi nợ")
+                            Text("Thẻ tín dụng / Ghi nợ", color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                 }
             }
 
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = White)) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Tóm tắt sản phẩm", fontWeight = FontWeight.Bold)
+                        Text("Tóm tắt sản phẩm", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.height(8.dp))
                         cartItems.forEach { item ->
+                            val itemTotal = (item.product?.price ?: 0.0) * item.quantity
+                            val itemTotalFormatted = String.format("%,.0f đ", itemTotal).replace(",", ".")
+
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("${item.product?.name ?: "Sản phẩm"} x${item.quantity}", modifier = Modifier.weight(1f), maxLines = 1)
-                                Text("${(item.product?.price ?: 0.0) * item.quantity}đ", fontWeight = FontWeight.Medium)
+                                Text("${item.product?.name ?: "Sản phẩm"} x${item.quantity}", modifier = Modifier.weight(1f), maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(itemTotalFormatted, fontWeight = FontWeight.Medium, color = AccentBlue) // Đã đổi sang AccentBlue
                             }
                         }
                     }
@@ -171,20 +182,4 @@ fun CheckoutContent(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun CheckoutContentPreview() {
-    CheckoutContent(
-        cartItems = emptyList(),
-        phone = "0987654321",
-        address = "123 Đường UET, Hà Nội",
-        paymentMethod = "COD",
-        onPhoneChange = {},
-        onAddressChange = {},
-        onPaymentMethodChange = {},
-        onBack = {},
-        onOrderClick = {}
-    )
 }

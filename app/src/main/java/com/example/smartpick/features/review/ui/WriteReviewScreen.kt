@@ -83,7 +83,7 @@ fun WriteReviewScreen(
                             Text(product.name, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Spacer(modifier = Modifier.height(4.dp))
                             val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
-                            Text(priceFormatted, color = ErrorRed, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text(priceFormatted, color = AccentBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         }
                     }
                 }

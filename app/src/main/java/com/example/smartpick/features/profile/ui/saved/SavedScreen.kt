@@ -77,7 +77,7 @@ fun SavedCollectionScreen(
                             Text("Tổng cộng", style = MaterialTheme.typography.labelMedium, color = TextMuted)
                             // FIX: Đồng bộ format tiền tệ 150.000 đ
                             val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
-                            Text(totalFormatted, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = ErrorRed)
+                            Text(totalFormatted, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AccentBlue)
                         }
                         Button(
                             onClick = { navController.navigate(Routes.Checkout.route) },
@@ -216,13 +216,11 @@ fun OrderCard(order: OrderResponse) {
                 val date = order.createdAt.split("T").firstOrNull() ?: order.createdAt
                 Text(text = date, style = MaterialTheme.typography.bodySmall, color = TextMuted)
 
-                // FIX: Đồng bộ format tiền tệ
-                val priceFormatted = String.format("%,.0f đ", order.totalAmount).replace(",", ".")
                 Text(
-                    text = priceFormatted,
+                    text = String.format("%,.0f đ", order.totalAmount).replace(",", "."),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = ErrorRed
+                    color = AccentBlue
                 )
             }
         }
@@ -249,8 +247,11 @@ fun CartGridCard(item: CartItem, onIncrease: (CartItem) -> Unit, onDecrease: (Ca
                 Text(product.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
 
                 // FIX: Đồng bộ format tiền tệ
-                val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
-                Text(priceFormatted, color = ErrorRed, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(
+                    text = String.format("%,.0f đ", product.price).replace(",", "."),
+                    color = AccentBlue,
+                    fontWeight = FontWeight.Bold
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -265,7 +266,7 @@ fun CartGridCard(item: CartItem, onIncrease: (CartItem) -> Unit, onDecrease: (Ca
                         modifier = Modifier.padding(horizontal = 4.dp)
                     ) {
                         IconButton(onClick = { onDecrease(item) }, modifier = Modifier.size(32.dp)) {
-                            Icon(if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete, null, modifier = Modifier.size(16.dp), tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurfaceVariant else ErrorRed)
+                            Icon(if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete, null, modifier = Modifier.size(16.dp), tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurfaceVariant else AccentBlue)
                         }
                         Text(item.quantity.toString(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(32.dp)) {
