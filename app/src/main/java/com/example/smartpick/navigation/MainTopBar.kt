@@ -2,8 +2,10 @@ package com.example.smartpick.navigation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -20,6 +22,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -55,7 +58,6 @@ fun MainTopBarContent(
     tagText: String? = null,
     showNotificationBadge: Int
 ) {
-    // FIX: Bọc MutableInteractionSource trong remember để sửa lỗi Compose
     val interactionSource = remember { MutableInteractionSource() }
 
     TopAppBar(
@@ -65,11 +67,14 @@ fun MainTopBarContent(
                 fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
+                    // FIX UX: Tăng vùng chạm tối thiểu lên 48dp chuẩn Google
+                    .defaultMinSize(minHeight = 48.dp, minWidth = 48.dp)
                     .clickable(
                         interactionSource = interactionSource,
-                        indication = null
+                        indication = null // Tắt hiệu ứng ripple để trông như iOS
                     ) { onTitleClick() }
-                    .padding(vertical = 8.dp)
+                    .wrapContentHeight(Alignment.CenterVertically)
+                    .padding(horizontal = 8.dp)
             )
         },
         navigationIcon = {

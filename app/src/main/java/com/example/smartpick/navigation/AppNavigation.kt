@@ -1,11 +1,13 @@
 package com.example.smartpick.navigation
 
 import androidx.navigation.navDeepLink
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,17 +55,14 @@ fun AppNavigation(
     notificationViewModel: NotificationViewModel = hiltViewModel()
 ) {
     val navController = rememberNavController()
-
-    val navBackStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry.value?.destination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val currentUser by authViewModel.currentUser.collectAsState()
     val isInitializing by authViewModel.isInitializing.collectAsState()
 
-    // FIX: Tách riêng logic hiển thị TopBar và BottomBar
     val showBottomBar = shouldShowBottomBar(currentRoute)
     val showTopBar = shouldShowTopBar(currentRoute)
-
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
     var feedScrollToTopTrigger by remember { mutableLongStateOf(0L) }
@@ -75,26 +73,34 @@ fun AppNavigation(
         }
     }
 
+    // FIX UX: Tối ưu hóa Auth Logic để tránh nháy màn hình
     LaunchedEffect(currentUser, isInitializing) {
         if (isInitializing) return@LaunchedEffect
+        val route = navController.currentDestination?.route
 
-        val destination = navController.currentDestination ?: return@LaunchedEffect
-        val route = destination.route
-
-        if (currentUser != null) {
-            if (route == Routes.Login.route || route == Routes.SignUp.route) {
-                navController.navigate(Routes.Home.route) { popUpTo(Routes.Login.route) { inclusive = true } }
-            }
-        } else {
+        if (currentUser == null) {
             if (route != Routes.Login.route && route != Routes.SignUp.route) {
                 navController.navigate(Routes.Login.route) { popUpTo(0) { inclusive = true } }
+            }
+        } else {
+            if (route == Routes.Login.route || route == Routes.SignUp.route) {
+                navController.navigate(Routes.Home.route) { popUpTo(Routes.Login.route) { inclusive = true } }
             }
         }
     }
 
     if (isInitializing) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color(0xFF1E3A8A))
+        // FIX UX: Branding Loading Screen (Có nền, màu vòng quay đồng nhất app)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 4.dp
+            )
         }
     } else {
         Scaffold(
@@ -136,82 +142,70 @@ fun AppNavigation(
                     )
                 }
             }
-        ) { padding ->
+        ) { innerPadding ->
 
+            // FIX UX: Không dùng padding trực tiếp ở NavHost để hỗ trợ Edge-to-Edge
             NavHost(
                 navController = navController,
                 startDestination = Routes.Login.route,
-                // FIX: Áp dụng insets an toàn
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.fillMaxSize()
             ) {
+                // Các màn hình tràn viền (Không padding)
                 composable(route = Routes.SignUp.route) {
                     SignUpScreen(
                         onLoginClick = { navController.navigate(Routes.Login.route) },
-                        onNavigateToHome = { navController.navigate(Routes.Home.route) { popUpTo(Routes.SignUp.route) { inclusive = true } } }
+                        onNavigateToHome = { /* Xử lý bởi LaunchedEffect */ }
                     )
                 }
 
                 composable(route = Routes.Login.route) {
                     LoginScreen(
-                        onNavigateToHome = { navController.navigate(Routes.Home.route) { popUpTo(Routes.Login.route) { inclusive = true } } },
+                        onNavigateToHome = { /* Xử lý bởi LaunchedEffect */ },
                         onNavigateToSignUp = { navController.navigate(Routes.SignUp.route) }
                     )
                 }
 
+                // Các màn hình Main Tabs (Truyền innerPadding vào để tránh BottomBar)
                 composable(route = Routes.Home.route) {
-                    HomeScreen(navController = navController, paddingValues = PaddingValues(0.dp))
-                }
-
-                composable(route = Routes.ReviewHub.route) {
-                    ReviewHubScreen(
-                        onNavigateToWriteReview = { productId -> navController.navigate(Routes.WriteReview.createRoute(productId)) }
-                    )
-                }
-
-                composable(
-                    route = Routes.WriteReview.route,
-                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
-                    WriteReviewScreen(productId = productId, onBack = { navController.popBackStack() }, onReviewSubmitted = { navController.popBackStack() })
-                }
-
-                composable(route = Routes.Checkout.route) {
-                    com.example.smartpick.features.home.ui.CheckoutScreen(
-                        onBack = { navController.popBackStack() },
-                        onNavigateToSuccess = { navController.navigate(Routes.Saved.route) { popUpTo(Routes.Home.route) } }
-                    )
-                }
-
-                composable(route = Routes.Saved.route) { SavedCollectionScreen(navController = navController) }
-
-                composable(route = Routes.Profile.route) { ProfileScreen(navController) }
-
-                composable(route = Routes.EditProfile.route) { EditProfileScreen(onNavigateBack = { navController.popBackStack() }) }
-
-                composable(
-                    route = Routes.PostDetail.route,
-                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) { type = NavType.StringType })
-                ) {
-                    PostDetailScreen(onBackClick = { navController.popBackStack() })
+                    HomeScreen(navController = navController, paddingValues = innerPadding)
                 }
 
                 composable(route = Routes.Feed.route) {
                     FeedScreen(
-                        paddingValues = PaddingValues(0.dp),
+                        paddingValues = innerPadding,
                         scrollToTopTrigger = feedScrollToTopTrigger,
                         onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
                 }
 
-                composable(route = Routes.CreatePost.route) {
-                    CreatePostScreen(currentUser = currentUser, onClose = { navController.popBackStack() })
+                composable(route = Routes.Profile.route) {
+                    Box(modifier = Modifier.padding(innerPadding)) { ProfileScreen(navController) }
+                }
+
+                composable(route = Routes.ReviewHub.route) {
+                    Box(modifier = Modifier.padding(innerPadding)) {
+                        ReviewHubScreen(
+                            onNavigateToWriteReview = { productId -> navController.navigate(Routes.WriteReview.createRoute(productId)) }
+                        )
+                    }
+                }
+
+                composable(route = Routes.Saved.route) {
+                    Box(modifier = Modifier.padding(innerPadding)) { SavedCollectionScreen(navController = navController) }
+                }
+
+                composable(
+                    route = "${Routes.Saved.route}?category={category}",
+                    arguments = listOf(navArgument("category") { type = NavType.StringType; defaultValue = "Giỏ hàng" })
+                ) { backStackEntry ->
+                    val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
+                    Box(modifier = Modifier.padding(innerPadding)) { SavedCollectionScreen(navController = navController, initialCategory = category) }
                 }
 
                 composable(route = Routes.Notifications.route) {
                     NotificationsScreen(
-                        paddingValues = PaddingValues(0.dp),
+                        paddingValues = innerPadding,
                         currentUserId = currentUser?.id ?: "",
                         onNotificationClick = { notification ->
                             if (notification.type == NotificationType.COMMUNITY) {
@@ -227,19 +221,40 @@ fun AppNavigation(
                     )
                 }
 
-                composable(Routes.Settings.route) {
-                    SettingsScreen(
-                        onBackClick = { navController.popBackStack() },
-                        onLogoutSuccess = { navController.navigate(Routes.Login.route) { popUpTo(0) { inclusive = true } } }
+                // Các màn hình phụ không dính BottomBar
+                composable(
+                    route = Routes.WriteReview.route,
+                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    WriteReviewScreen(productId = productId, onBack = { navController.popBackStack() }, onReviewSubmitted = { navController.popBackStack() })
+                }
+
+                composable(route = Routes.Checkout.route) {
+                    com.example.smartpick.features.home.ui.CheckoutScreen(
+                        onBack = { navController.popBackStack() },
+                        onNavigateToSuccess = { navController.navigate(Routes.Saved.route) { popUpTo(Routes.Home.route) } }
                     )
                 }
 
+                composable(route = Routes.EditProfile.route) { EditProfileScreen(onNavigateBack = { navController.popBackStack() }) }
+
                 composable(
-                    route = "${Routes.Saved.route}?category={category}",
-                    arguments = listOf(navArgument("category") { type = NavType.StringType; defaultValue = "Giỏ hàng" })
-                ) { backStackEntry ->
-                    val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
-                    SavedCollectionScreen(navController = navController, initialCategory = category)
+                    route = Routes.PostDetail.route,
+                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) { type = NavType.StringType })
+                ) {
+                    PostDetailScreen(onBackClick = { navController.popBackStack() })
+                }
+
+                composable(route = Routes.CreatePost.route) {
+                    CreatePostScreen(currentUser = currentUser, onClose = { navController.popBackStack() })
+                }
+
+                composable(Routes.Settings.route) {
+                    SettingsScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onLogoutSuccess = { /* Tự động redirect bởi LaunchedEffect */ }
+                    )
                 }
 
                 composable(
