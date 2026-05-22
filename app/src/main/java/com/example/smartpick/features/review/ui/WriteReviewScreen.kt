@@ -22,8 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.core.ui.theme.*
-import com.example.smartpick.features.home.viewmodel.HomeUiState
-import com.example.smartpick.features.home.viewmodel.HomeViewModel
+import com.example.smartpick.features.review.viewmodel.ReviewViewModel // Sử dụng đúng ReviewViewModel độc lập
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,18 +30,17 @@ fun WriteReviewScreen(
     productId: String,
     onBack: () -> Unit,
     onReviewSubmitted: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: ReviewViewModel = hiltViewModel() // FIX: Khởi tạo luồng xử lý đánh giá chuẩn
 ) {
     var rating by remember { mutableIntStateOf(5) }
     var content by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    // Lấy dữ liệu sản phẩm từ ViewModel để hiển thị UI
-    val uiState by viewModel.uiState.collectAsState()
-    val product = remember(uiState, productId) {
-        if (uiState is HomeUiState.Success) {
-            (uiState as HomeUiState.Success).products.find { it.id == productId }
-        } else null
+    val isSubmitting by viewModel.isSubmitting.collectAsState()
+
+    // Kích hoạt nạp dữ liệu thông tin quyền đánh giá
+    LaunchedEffect(productId) {
+        viewModel.loadReviewData(productId)
     }
 
     Scaffold(
@@ -51,7 +49,7 @@ fun WriteReviewScreen(
             TopAppBar(
                 title = { Text("Viết đánh giá", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
+                    IconButton(onClick = onBack, enabled = !isSubmitting) { Icon(Icons.Default.ArrowBack, null) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
             )
@@ -63,32 +61,6 @@ fun WriteReviewScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // FIX: THẺ TÓM TẮT SẢN PHẨM TRƯỚC KHI ĐÁNH GIÁ (CHUẨN SHOPEE)
-            if (product != null) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = White),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(1.dp, SurfaceCard),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-                ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        AsyncImage(
-                            model = product.imageUrls.firstOrNull(),
-                            contentDescription = null,
-                            modifier = Modifier.size(60.dp).clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(product.name, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            Spacer(modifier = Modifier.height(4.dp))
-                            val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
-                            Text(priceFormatted, color = AccentBlue, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
-
             Card(
                 colors = CardDefaults.cardColors(containerColor = White),
                 shape = RoundedCornerShape(12.dp)
@@ -105,7 +77,7 @@ fun WriteReviewScreen(
                     Row {
                         repeat(5) { index ->
                             IconButton(
-                                onClick = { rating = index + 1 },
+                                onClick = { if (!isSubmitting) rating = index + 1 },
                                 modifier = Modifier.size(48.dp)
                             ) {
                                 Icon(
@@ -136,7 +108,8 @@ fun WriteReviewScreen(
                     focusedContainerColor = White,
                     unfocusedContainerColor = White
                 ),
-                maxLines = 5
+                maxLines = 5,
+                enabled = !isSubmitting
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -164,9 +137,14 @@ fun WriteReviewScreen(
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                enabled = !isSubmitting && content.isNotBlank()
             ) {
-                Text("Gửi Đánh Giá", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                if (isSubmitting) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = White, strokeWidth = 2.dp)
+                } else {
+                    Text("Gửi Đánh Giá", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
         }
     }

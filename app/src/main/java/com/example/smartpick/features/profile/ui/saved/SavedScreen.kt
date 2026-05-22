@@ -34,19 +34,22 @@ import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.OrderResponse
 import com.example.smartpick.core.ui.components.PostItem
 import com.example.smartpick.core.ui.theme.*
+import com.example.smartpick.features.cart.viewmodel.CartViewModel
+import com.example.smartpick.features.checkout.viewmodel.CheckoutViewModel
 import com.example.smartpick.features.feed.viewmodel.FeedViewModel
-import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
 
 @Composable
 fun SavedCollectionScreen(
     navController: NavController,
+    paddingValues: PaddingValues,
     initialCategory: String = "Giỏ hàng",
-    homeViewModel: HomeViewModel = hiltViewModel(),
+    cartViewModel: CartViewModel = hiltViewModel(),
+    checkoutViewModel: CheckoutViewModel = hiltViewModel(),
     feedViewModel: FeedViewModel = hiltViewModel()
 ) {
-    val cartItems by homeViewModel.cartItems.collectAsState()
-    val orders by homeViewModel.orders.collectAsState()
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val orders by checkoutViewModel.cartItems.collectAsState()
     val reactedPosts by feedViewModel.reactedPosts.collectAsState()
     val isReactedLoading by feedViewModel.isReactedLoading.collectAsState()
 
@@ -56,10 +59,11 @@ fun SavedCollectionScreen(
 
     LaunchedEffect(selectedCategory) {
         if (selectedCategory == "Bài viết đã thích") feedViewModel.loadReactedPosts()
+        if (selectedCategory == "Giỏ hàng") cartViewModel.refreshCart()
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background, // Chuẩn hóa màu nền hệ thống
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (selectedCategory == "Giỏ hàng" && cartItems.isNotEmpty()) {
                 Surface(
@@ -75,7 +79,6 @@ fun SavedCollectionScreen(
                         val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
                         Column {
                             Text("Tổng cộng", style = MaterialTheme.typography.labelMedium, color = TextMuted)
-                            // FIX: Đồng bộ format tiền tệ 150.000 đ
                             val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
                             Text(totalFormatted, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = AccentBlue)
                         }
@@ -84,81 +87,95 @@ fun SavedCollectionScreen(
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
                         ) {
-                            Text("Thanh toán (${cartItems.sumOf { it.quantity }})", color = White)
+                            val totalCount = cartItems.sumOf { it.quantity }
+                            Text("Thanh toán ($totalCount)", color = White)
                         }
                     }
                 }
             }
         }
-    ) { paddingValues ->
+    ) { innerPadding ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp), // Chuẩn lưới 12dp
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item(span = { GridItemSpan(2) }) {
+            // FIX: Cú pháp chuẩn hóa span cho cấu trúc đơn phần tử 'item'
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 CategorySection(selectedCategory = selectedCategory, onCategorySelected = { selectedCategory = it })
             }
 
             if (selectedCategory == "Giỏ hàng") {
-                item(span = { GridItemSpan(2) }) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text("Giỏ hàng của bạn", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 }
 
                 if (cartItems.isEmpty()) {
-                    item(span = { GridItemSpan(2) }) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             Text("Giỏ hàng trống", color = TextMuted)
                         }
                     }
                 } else {
-                    items(cartItems) { item ->
+                    // Đối với lưới thường (2 cột), hiển thị Card dạng lưới không cần truyền thuộc tính span full-width
+                    items(items = cartItems, key = { it.id ?: "" }) { item ->
                         CartGridCard(
                             item = item,
-                            onIncrease = { homeViewModel.increaseQuantity(it) },
-                            onDecrease = { homeViewModel.decreaseQuantity(it) }
+                            onIncrease = { cartViewModel.increaseQuantity(it) },
+                            onDecrease = { cartViewModel.decreaseQuantity(it) }
                         )
                     }
                 }
             } else if (selectedCategory == "Lịch sử mua hàng") {
-                item(span = { GridItemSpan(2) }) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text("Lịch sử mua hàng", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 }
 
                 if (orders.isEmpty()) {
-                    item(span = { GridItemSpan(2) }) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             Text("Chưa có đơn hàng nào", color = TextMuted)
                         }
                     }
                 } else {
-                    items(orders, span = { GridItemSpan(2) }) { order ->
-                        OrderCard(order = order)
+                    // FIX: Cú pháp Lambda nhận 2 tham số chuẩn signature: LazyGridItemSpanScope.(T) -> GridItemSpan
+                    items(
+                        items = orders,
+                        span = { _ -> GridItemSpan(maxLineSpan) }
+                    ) { item ->
+                        if (item is OrderResponse) {
+                            OrderCard(order = item)
+                        }
                     }
                 }
             } else if (selectedCategory == "Bài viết đã thích") {
-                item(span = { GridItemSpan(2) }) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text("Bài viết bạn đã thích", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 8.dp))
                 }
 
                 if (isReactedLoading) {
-                    item(span = { GridItemSpan(2) }) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = SmartPickColor, strokeWidth = 3.dp)
                         }
                     }
                 } else if (reactedPosts.isEmpty()) {
-                    item(span = { GridItemSpan(2) }) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             Text("Chưa có bài viết nào được lưu", color = TextMuted)
                         }
                     }
                 } else {
-                    items(reactedPosts, span = { GridItemSpan(2) }) { (post, user, product) ->
+                    // FIX: Cú pháp Lambda nhận 2 tham số giúp compiler suy luận chính xác kiểu để destructuring
+                    items(
+                        items = reactedPosts,
+                        span = { _ -> GridItemSpan(maxLineSpan) }
+                    ) { triple ->
+                        val (post, user, product) = triple
                         PostItem(
                             post = post,
                             user = user,
@@ -169,7 +186,7 @@ fun SavedCollectionScreen(
                     }
                 }
             }
-            item(span = { GridItemSpan(2) }) { Spacer(modifier = Modifier.height(24.dp)) }
+            item(span = { GridItemSpan(maxLineSpan) }) { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
 }
@@ -179,8 +196,8 @@ fun OrderCard(order: OrderResponse) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(12.dp)), // FIX: Bỏ màu fix cứng
-        shape = RoundedCornerShape(12.dp), // FIX: Đồng bộ bo góc 12dp
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -195,7 +212,6 @@ fun OrderCard(order: OrderResponse) {
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold
                 )
-                // FIX: Dùng màu nền System cho Badge để hỗ trợ Dark Mode
                 Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(12.dp)) {
                     Text(
                         text = "Thành công",
@@ -231,22 +247,24 @@ fun OrderCard(order: OrderResponse) {
 fun CartGridCard(item: CartItem, onIncrease: (CartItem) -> Unit, onDecrease: (CartItem) -> Unit) {
     val product = item.product ?: return
     Card(
-        shape = RoundedCornerShape(12.dp), // FIX: Đồng bộ bo góc 12.dp
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp), // Tương đương Shopee
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
             AsyncImage(
                 model = product.imageUrls.firstOrNull(),
                 contentDescription = null,
-                modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
                 contentScale = ContentScale.Crop
             )
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(product.name, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
 
-                // FIX: Đồng bộ format tiền tệ
                 Text(
                     text = String.format("%,.0f đ", product.price).replace(",", "."),
                     color = AccentBlue,
@@ -266,7 +284,12 @@ fun CartGridCard(item: CartItem, onIncrease: (CartItem) -> Unit, onDecrease: (Ca
                         modifier = Modifier.padding(horizontal = 4.dp)
                     ) {
                         IconButton(onClick = { onDecrease(item) }, modifier = Modifier.size(32.dp)) {
-                            Icon(if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete, null, modifier = Modifier.size(16.dp), tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurfaceVariant else AccentBlue)
+                            Icon(
+                                imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurfaceVariant else AccentBlue
+                            )
                         }
                         Text(item.quantity.toString(), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                         IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(32.dp)) {
@@ -303,7 +326,7 @@ fun CategoryItem(title: String, icon: ImageVector, isSelected: Boolean, onClick:
         Box(
             modifier = Modifier
                 .size(width = 100.dp, height = 70.dp)
-                .clip(RoundedCornerShape(12.dp)) // FIX: Bo góc 12.dp chuẩn hệ thống
+                .clip(RoundedCornerShape(12.dp))
                 .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
                 .clickable { onClick() },
             contentAlignment = Alignment.Center

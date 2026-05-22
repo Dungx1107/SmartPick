@@ -35,6 +35,7 @@ import com.example.smartpick.core.utils.NavigationUtils.shouldShowTopBar
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
+import com.example.smartpick.features.checkout.ui.CheckoutScreen
 import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
 import com.example.smartpick.features.post_creation.ui.CreatePostScreen
@@ -84,7 +85,11 @@ fun AppNavigation(
             }
         } else {
             if (route == Routes.Login.route || route == Routes.SignUp.route) {
-                navController.navigate(Routes.Home.route) { popUpTo(Routes.Login.route) { inclusive = true } }
+                navController.navigate(Routes.Home.route) {
+                    popUpTo(Routes.Login.route) {
+                        inclusive = true
+                    }
+                }
             }
         }
     }
@@ -134,7 +139,9 @@ fun AppNavigation(
                         navController = navController,
                         onNavigate = { route ->
                             navController.navigate(route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }
@@ -172,7 +179,13 @@ fun AppNavigation(
                     FeedScreen(
                         paddingValues = innerPadding,
                         scrollToTopTrigger = feedScrollToTopTrigger,
-                        onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
+                        onPostClick = { postId ->
+                            navController.navigate(
+                                Routes.PostDetail.createRoute(
+                                    postId
+                                )
+                            )
+                        },
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
                     )
                 }
@@ -183,28 +196,48 @@ fun AppNavigation(
 
                 // FIX LỖI 1: Bọc Box cho màn hình Đánh giá để nhận padding mà không cần sửa tham số file gốc
                 composable(route = Routes.ReviewHub.route) {
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)) {
                         ReviewHubScreen(
-                            onNavigateToWriteReview = { productId -> navController.navigate(Routes.WriteReview.createRoute(productId)) }
+                            onNavigateToWriteReview = { productId ->
+                                navController.navigate(
+                                    Routes.WriteReview.createRoute(
+                                        productId
+                                    )
+                                )
+                            }
                         )
                     }
                 }
 
-                // FIX LỖI 2: Bọc Box cho màn hình Đã lưu để nhận padding an toàn
                 composable(route = Routes.Saved.route) {
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        SavedCollectionScreen(navController = navController)
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)) {
+                        SavedCollectionScreen(
+                            navController = navController,
+                            paddingValues = PaddingValues(0.dp)
+                        )
                     }
                 }
 
                 // FIX LỖI 3: Bọc Box cho màn hình Đã lưu (khi truyền Category)
                 composable(
                     route = "${Routes.Saved.route}?category={category}",
-                    arguments = listOf(navArgument("category") { type = NavType.StringType; defaultValue = "Giỏ hàng" })
+                    arguments = listOf(navArgument("category") {
+                        type = NavType.StringType; defaultValue = "Giỏ hàng"
+                    })
                 ) { backStackEntry ->
                     val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        SavedCollectionScreen(navController = navController, initialCategory = category)
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)) {
+                        SavedCollectionScreen(
+                            navController = navController,
+                            initialCategory = category,
+                            paddingValues = PaddingValues(0.dp)
+                        )
                     }
                 }
 
@@ -218,7 +251,12 @@ fun AppNavigation(
                                 val commentId = notification.targetId
 
                                 if (postId.isNotEmpty()) {
-                                    if (!commentId.isNullOrEmpty()) navController.navigate(Routes.CommentsFromNotification.createRoute(postId, commentId))
+                                    if (!commentId.isNullOrEmpty()) navController.navigate(
+                                        Routes.CommentsFromNotification.createRoute(
+                                            postId,
+                                            commentId
+                                        )
+                                    )
                                     else navController.navigate("comments_notification/$postId")
                                 }
                             }
@@ -228,16 +266,28 @@ fun AppNavigation(
 
                 composable(
                     route = Routes.WriteReview.route,
-                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType })
+                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) {
+                        type = NavType.StringType
+                    })
                 ) { backStackEntry ->
-                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
-                    WriteReviewScreen(productId = productId, onBack = { navController.popBackStack() }, onReviewSubmitted = { navController.popBackStack() })
+                    val productId =
+                        backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    WriteReviewScreen(
+                        productId = productId,
+                        onBack = { navController.popBackStack() },
+                        onReviewSubmitted = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.Checkout.route) {
-                    com.example.smartpick.features.home.ui.CheckoutScreen(
+                    CheckoutScreen(
                         onBack = { navController.popBackStack() },
-                        onNavigateToSuccess = { navController.navigate(Routes.Saved.route) { popUpTo(Routes.Home.route) } }
+                        onNavigateToSuccess = {
+                            navController.navigate(Routes.Saved.route) {
+                                popUpTo(
+                                    Routes.Home.route
+                                )
+                            }
+                        }
                     )
                 }
 
@@ -247,13 +297,17 @@ fun AppNavigation(
 
                 composable(
                     route = Routes.PostDetail.route,
-                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) { type = NavType.StringType })
+                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
+                        type = NavType.StringType
+                    })
                 ) {
                     PostDetailScreen(onBackClick = { navController.popBackStack() })
                 }
 
                 composable(route = Routes.CreatePost.route) {
-                    CreatePostScreen(currentUser = currentUser, onClose = { navController.popBackStack() })
+                    CreatePostScreen(
+                        currentUser = currentUser,
+                        onClose = { navController.popBackStack() })
                 }
 
                 composable(Routes.Settings.route) {
@@ -267,7 +321,9 @@ fun AppNavigation(
                     route = Routes.CommentsFromNotification.route,
                     arguments = listOf(
                         navArgument("postId") { type = NavType.StringType },
-                        navArgument("commentId") { type = NavType.StringType; nullable = true; defaultValue = null }
+                        navArgument("commentId") {
+                            type = NavType.StringType; nullable = true; defaultValue = null
+                        }
                     )
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""

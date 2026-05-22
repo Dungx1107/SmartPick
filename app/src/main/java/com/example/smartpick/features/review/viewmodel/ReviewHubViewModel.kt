@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/features/review/viewmodel/ReviewHubViewModel.kt
 package com.example.smartpick.features.review.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -6,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReviewResponse
 import com.example.smartpick.features.auth.data.AuthRepository
-import com.example.smartpick.features.home.data.HomeRepository
+import com.example.smartpick.features.review.data.ReviewRepository // Đổi sang ReviewRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ReviewHubViewModel @Inject constructor(
-    private val repository: HomeRepository,
+    private val repository: ReviewRepository, // FIX: Sử dụng đúng Repository chuyên trách
     private val authRepository: AuthRepository
 ) : ViewModel() {
 

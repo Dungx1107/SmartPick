@@ -9,46 +9,70 @@ import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.model.ReviewResponse
-import com.example.smartpick.features.home.ui.components.*
-import com.example.smartpick.features.home.viewmodel.HomeUiState
-import com.example.smartpick.features.home.viewmodel.HomeViewModel
-import com.example.smartpick.navigation.Routes
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.features.cart.ui.CartBottomSheet
+import com.example.smartpick.features.cart.viewmodel.CartViewModel
+import com.example.smartpick.features.home.ui.components.ProductGridCard
+import com.example.smartpick.features.home.ui.components.SearchBar
+import com.example.smartpick.features.home.viewmodel.HomeUiState
+import com.example.smartpick.features.home.viewmodel.HomeViewModel
+import com.example.smartpick.features.productdetail.ui.components.ProductDetailContent
+import com.example.smartpick.navigation.Routes
 import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     navController: NavController,
     paddingValues: PaddingValues,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    cartViewModel: CartViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val cartItems by viewModel.cartItems.collectAsState()
-    val productReviews by viewModel.productReviews.collectAsState()
-    val canReview by viewModel.canReview.collectAsState()
+    val cartItems by cartViewModel.cartItems.collectAsState()
+    val totalCartCount by cartViewModel.totalCartCount.collectAsState()
 
     var showCart by rememberSaveable { mutableStateOf(false) }
     var selectedProduct by rememberSaveable { mutableStateOf<Product?>(null) }
@@ -89,18 +113,18 @@ fun HomeScreen(
             }
         }
 
-    LaunchedEffect(selectedProduct) {
-        selectedProduct?.id?.let { viewModel.fetchReviewsAndCheckEligibility(it) }
+    // Mỗi khi HomeScreen được quay lại, làm mới giỏ hàng để cập nhật trạng thái dữ liệu ổn định
+    LaunchedEffect(Unit) {
+        cartViewModel.refreshCart()
     }
 
     HomeContent(
         paddingValues = paddingValues,
         uiState = uiState,
         cartItems = cartItems,
+        totalCartCount = totalCartCount,
         searchQuery = searchQuery,
         selectedProduct = freshSelectedProduct,
-        productReviews = productReviews,
-        canReview = canReview,
         showCart = showCart,
         onSearchQueryChange = { searchQuery = it; viewModel.searchProducts(it) },
         onMicClick = {
@@ -119,40 +143,35 @@ fun HomeScreen(
         },
         onCartClick = { showCart = true },
         onProductClick = { selectedProduct = it },
-        onAddToCart = {
+        onAddToCart = { product ->
             viewModel.addToCart(
-                it,
-                { Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show() },
-                { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() })
+                product = product,
+                onSuccess = {
+                    Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show()
+                    cartViewModel.refreshCart()
+                },
+                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+            )
         },
         onDismissSheet = { selectedProduct = null },
-        onViewFeed = {
-            scope.launch {
-                val postId = viewModel.getPostId(freshSelectedProduct?.id ?: "")
-                if (postId != null) {
-                    selectedProduct = null; navController.navigate(
-                        Routes.PostDetail.createRoute(postId)
-                    )
-                } else Toast.makeText(context, "Chưa có bài đăng thảo luận!", Toast.LENGTH_SHORT).show()
-            }
+        onViewFeed = { postId ->
+            selectedProduct = null
+            navController.navigate(Routes.PostDetail.createRoute(postId))
         },
         onBuyNow = {
             viewModel.addToCart(
-                freshSelectedProduct!!,
-                { selectedProduct = null; navController.navigate(Routes.Checkout.route) },
-                { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() })
-        },
-        onSubmitReview = { r, c ->
-            viewModel.submitProductReview(
-                freshSelectedProduct!!.id!!,
-                r,
-                c,
-                { Toast.makeText(context, "Đã đánh giá!", Toast.LENGTH_SHORT).show() },
-                { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() })
+                product = freshSelectedProduct!!,
+                onSuccess = {
+                    selectedProduct = null
+                    cartViewModel.refreshCart()
+                    navController.navigate(Routes.Checkout.route)
+                },
+                onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+            )
         },
         onDismissCart = { showCart = false },
-        onIncrease = { item -> viewModel.increaseQuantity(item) },
-        onDecrease = { item -> viewModel.decreaseQuantity(item) },
+        onIncrease = { item -> cartViewModel.increaseQuantity(item) },
+        onDecrease = { item -> cartViewModel.decreaseQuantity(item) },
         onCheckout = { showCart = false; navController.navigate(Routes.Checkout.route) }
     )
 }
@@ -163,15 +182,19 @@ fun HomeContent(
     paddingValues: PaddingValues,
     uiState: HomeUiState,
     cartItems: List<CartItem>,
+    totalCartCount: Int,
     searchQuery: String,
     selectedProduct: Product?,
-    productReviews: List<ReviewResponse>,
-    canReview: Boolean,
     showCart: Boolean,
     onSearchQueryChange: (String) -> Unit,
-    onMicClick: () -> Unit, onCartClick: () -> Unit, onProductClick: (Product) -> Unit,
-    onAddToCart: (Product) -> Unit, onDismissSheet: () -> Unit, onViewFeed: () -> Unit,
-    onBuyNow: () -> Unit, onSubmitReview: (Int, String) -> Unit, onDismissCart: () -> Unit,
+    onMicClick: () -> Unit,
+    onCartClick: () -> Unit,
+    onProductClick: (Product) -> Unit,
+    onAddToCart: (Product) -> Unit,
+    onDismissSheet: () -> Unit,
+    onViewFeed: (String) -> Unit,
+    onBuyNow: () -> Unit,
+    onDismissCart: () -> Unit,
     onIncrease: (CartItem) -> Unit,
     onDecrease: (CartItem) -> Unit,
     onCheckout: () -> Unit
@@ -180,16 +203,15 @@ fun HomeContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Giữ lệnh này để khử khoảng trắng đáy
-        containerColor = MaterialTheme.colorScheme.background, // Khôi phục màu nền gốc
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onCartClick,
-                containerColor = SmartPickColor, // Khôi phục nút bấm thành màu SmartPick
+                containerColor = SmartPickColor,
                 contentColor = White
             ) {
-                val total = cartItems.sumOf { it.quantity }
-                if (total > 0) BadgedBox(badge = { Badge { Text(total.toString()) } }) {
+                if (totalCartCount > 0) BadgedBox(badge = { Badge { Text(totalCartCount.toString()) } }) {
                     Icon(Icons.Default.ShoppingCart, null)
                 }
                 else Icon(Icons.Default.ShoppingCart, null)
@@ -210,7 +232,9 @@ fun HomeContent(
                     .fillMaxWidth()
             )
 
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Box(modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
@@ -218,7 +242,12 @@ fun HomeContent(
 
                     is HomeUiState.Success -> LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 0.dp, bottom = 80.dp),
+                        contentPadding = PaddingValues(
+                            start = 8.dp,
+                            end = 8.dp,
+                            top = 0.dp,
+                            bottom = 80.dp
+                        ),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -243,13 +272,10 @@ fun HomeContent(
             modifier = Modifier.fillMaxHeight(0.9f)
         ) {
             ProductDetailContent(
-                selectedProduct,
-                productReviews,
-                canReview,
-                onViewFeed,
-                { onAddToCart(selectedProduct) },
-                onBuyNow,
-                onSubmitReview
+                product = selectedProduct,
+                onViewFeed = onViewFeed,
+                onAddToCart = { onAddToCart(selectedProduct) },
+                onBuyNow = onBuyNow
             )
         }
     }
@@ -258,43 +284,9 @@ fun HomeContent(
         CartBottomSheet(
             cartItems = cartItems,
             onDismiss = onDismissCart,
-            onIncrease = { cartId ->
-                val item = cartItems.find { it.id == cartId }
-                if (item != null) onIncrease(item)
-            },
-            onDecrease = { cartId ->
-                val item = cartItems.find { it.id == cartId }
-                if (item != null) onDecrease(item)
-            },
+            onIncrease = onIncrease,
+            onDecrease = onDecrease,
             onCheckout = onCheckout
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeContentPreview() {
-    HomeContent(
-        paddingValues = PaddingValues(0.dp),
-        uiState = HomeUiState.Loading,
-        cartItems = emptyList(),
-        searchQuery = "",
-        selectedProduct = null,
-        productReviews = emptyList(),
-        canReview = false,
-        showCart = false,
-        onSearchQueryChange = {},
-        onMicClick = {},
-        onCartClick = {},
-        onProductClick = {},
-        onAddToCart = {},
-        onDismissSheet = {},
-        onViewFeed = {},
-        onBuyNow = {},
-        onSubmitReview = { _, _ -> },
-        onDismissCart = {},
-        onIncrease = {},
-        onDecrease = {},
-        onCheckout = {}
-    )
 }

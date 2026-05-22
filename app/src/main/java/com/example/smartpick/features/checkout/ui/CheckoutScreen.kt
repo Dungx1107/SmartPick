@@ -1,64 +1,62 @@
-package com.example.smartpick.features.home.ui
+package com.example.smartpick.features.checkout.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.smartpick.core.model.CartItem
-import com.example.smartpick.core.ui.theme.*
-import com.example.smartpick.features.home.viewmodel.HomeViewModel
+import com.example.smartpick.core.ui.theme.AccentBlue
+import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.TextMuted
+import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.features.checkout.viewmodel.CheckoutViewModel
 
 @Composable
 fun CheckoutScreen(
     onBack: () -> Unit,
     onNavigateToSuccess: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: CheckoutViewModel = hiltViewModel() // Sử dụng ViewModel Checkout độc lập
 ) {
     val cartItems by viewModel.cartItems.collectAsState()
-    val context = LocalContext.current
+    val phone by viewModel.phone.collectAsState()
+    val address by viewModel.address.collectAsState()
+    val paymentMethod by viewModel.paymentMethod.collectAsState()
+    val isProcessing by viewModel.isProcessing.collectAsState()
 
-    var phone by rememberSaveable { mutableStateOf("") }
-    var address by rememberSaveable { mutableStateOf("") }
-    var paymentMethod by rememberSaveable { mutableStateOf("COD") }
+    val context = LocalContext.current
 
     CheckoutContent(
         cartItems = cartItems,
         phone = phone,
         address = address,
         paymentMethod = paymentMethod,
-        onPhoneChange = { phone = it },
-        onAddressChange = { address = it },
-        onPaymentMethodChange = { paymentMethod = it },
+        isProcessing = isProcessing,
+        onPhoneChange = { viewModel.updatePhone(it) },
+        onAddressChange = { viewModel.updateAddress(it) },
+        onPaymentMethodChange = { viewModel.updatePaymentMethod(it) },
         onBack = onBack,
         onOrderClick = {
-            if (phone.isBlank() || address.isBlank()) {
-                Toast.makeText(context, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
-                return@CheckoutContent
-            }
-            viewModel.processCheckout(
-                address = address,
-                phone = phone,
-                paymentMethod = paymentMethod,
+            viewModel.placeOrder(
                 onSuccess = {
                     Toast.makeText(context, "Đặt hàng thành công!", Toast.LENGTH_LONG).show()
                     onNavigateToSuccess()
                 },
-                onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                onError = { msg ->
+                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                }
             )
         }
     )
@@ -71,6 +69,7 @@ fun CheckoutContent(
     phone: String,
     address: String,
     paymentMethod: String,
+    isProcessing: Boolean,
     onPhoneChange: (String) -> Unit,
     onAddressChange: (String) -> Unit,
     onPaymentMethodChange: (String) -> Unit,
@@ -78,7 +77,6 @@ fun CheckoutContent(
     onOrderClick: () -> Unit
 ) {
     val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
-    // Format tổng tiền chuẩn: 20.000 đ
     val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
 
     Scaffold(
@@ -86,7 +84,7 @@ fun CheckoutContent(
             TopAppBar(
                 title = { Text("Thanh toán", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
+                    IconButton(onClick = onBack, enabled = !isProcessing) { Icon(Icons.Default.ArrowBack, null) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
@@ -103,7 +101,7 @@ fun CheckoutContent(
                         Text(
                             totalFormatted,
                             style = MaterialTheme.typography.titleLarge,
-                            color = AccentBlue, // Đã đổi từ ErrorRed sang AccentBlue
+                            color = AccentBlue,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -111,9 +109,14 @@ fun CheckoutContent(
                         onClick = onOrderClick,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
-                        modifier = Modifier.height(50.dp).width(150.dp)
+                        modifier = Modifier.height(50.dp).width(150.dp),
+                        enabled = !isProcessing && cartItems.isNotEmpty()
                     ) {
-                        Text("ĐẶT HÀNG", fontWeight = FontWeight.Bold)
+                        if (isProcessing) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = White, strokeWidth = 2.dp)
+                        } else {
+                            Text("ĐẶT HÀNG", fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
@@ -134,14 +137,16 @@ fun CheckoutContent(
                             value = phone,
                             onValueChange = onPhoneChange,
                             label = { Text("Số điện thoại") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isProcessing
                         )
                         Spacer(Modifier.height(8.dp))
                         OutlinedTextField(
                             value = address,
                             onValueChange = onAddressChange,
                             label = { Text("Địa chỉ nhận hàng") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !isProcessing
                         )
                     }
                 }
@@ -152,11 +157,19 @@ fun CheckoutContent(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Phương thức thanh toán", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = paymentMethod == "COD", onClick = { onPaymentMethodChange("COD") })
+                            RadioButton(
+                                selected = paymentMethod == "COD",
+                                onClick = { onPaymentMethodChange("COD") },
+                                enabled = !isProcessing
+                            )
                             Text("Thanh toán khi nhận hàng (COD)", color = MaterialTheme.colorScheme.onSurface)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = paymentMethod == "CARD", onClick = { onPaymentMethodChange("CARD") })
+                            RadioButton(
+                                selected = paymentMethod == "CARD",
+                                onClick = { onPaymentMethodChange("CARD") },
+                                enabled = !isProcessing
+                            )
                             Text("Thẻ tín dụng / Ghi nợ", color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
@@ -174,7 +187,7 @@ fun CheckoutContent(
 
                             Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("${item.product?.name ?: "Sản phẩm"} x${item.quantity}", modifier = Modifier.weight(1f), maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(itemTotalFormatted, fontWeight = FontWeight.Medium, color = AccentBlue) // Đã đổi sang AccentBlue
+                                Text(itemTotalFormatted, fontWeight = FontWeight.Medium, color = AccentBlue)
                             }
                         }
                     }
