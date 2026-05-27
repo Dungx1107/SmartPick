@@ -3,9 +3,7 @@ package com.example.smartpick.core.model
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
-import kotlinx.serialization.Serializable
 
-@Serializable
 enum class ReactionType {
     LIKE, LOVE, HAHA, WOW, SAD, ANGRY;
 

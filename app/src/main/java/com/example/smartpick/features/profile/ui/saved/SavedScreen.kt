@@ -31,7 +31,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.CartItem
-import com.example.smartpick.core.model.OrderResponse
+import com.example.smartpick.core.model.Order
 import com.example.smartpick.core.ui.components.PostItem
 import com.example.smartpick.core.ui.theme.*
 import com.example.smartpick.features.cart.viewmodel.CartViewModel
@@ -147,7 +147,7 @@ fun SavedCollectionScreen(
                         items = orders,
                         span = { _ -> GridItemSpan(maxLineSpan) }
                     ) { item ->
-                        if (item is OrderResponse) {
+                        if (item is Order) {
                             OrderCard(order = item)
                         }
                     }
@@ -192,7 +192,7 @@ fun SavedCollectionScreen(
 }
 
 @Composable
-fun OrderCard(order: OrderResponse) {
+fun OrderCard(order: Order) {
     Card(
         modifier = Modifier
             .fillMaxWidth()

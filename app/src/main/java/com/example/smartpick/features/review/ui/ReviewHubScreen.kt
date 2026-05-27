@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.model.ReviewResponse
+import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.ui.theme.*
 import com.example.smartpick.features.review.viewmodel.ReviewHubViewModel
 
@@ -50,8 +50,8 @@ fun ReviewHubScreen(
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
-    ) { padding ->
-        Column(modifier = Modifier.padding(padding)) {
+    ) { paddingValues ->
+        Column(modifier = Modifier.padding(paddingValues)) {
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -141,7 +141,7 @@ fun PendingReviewList(products: List<Product>, onReviewClick: (String) -> Unit) 
 }
 
 @Composable
-fun CompletedReviewList(reviews: List<ReviewResponse>) {
+fun CompletedReviewList(reviews: List<Review>) {
     if (reviews.isEmpty()) {
         EmptyState("Bạn chưa có đánh giá nào")
     } else {
@@ -156,7 +156,7 @@ fun CompletedReviewList(reviews: List<ReviewResponse>) {
 }
 
 @Composable
-fun CompletedReviewCard(review: ReviewResponse) {
+fun CompletedReviewCard(review: Review) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -164,7 +164,7 @@ fun CompletedReviewCard(review: ReviewResponse) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            review.products?.let { product ->
+            review.product?.let { product ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(
                         model = product.imageUrls.firstOrNull(),

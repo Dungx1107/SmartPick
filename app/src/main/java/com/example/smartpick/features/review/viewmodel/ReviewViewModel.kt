@@ -2,8 +2,7 @@ package com.example.smartpick.features.review.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartpick.core.model.ReviewRequest
-import com.example.smartpick.core.model.ReviewResponse
+import com.example.smartpick.core.model.Review
 import com.example.smartpick.features.auth.data.AuthRepository
 import com.example.smartpick.features.review.data.ReviewRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,8 +18,8 @@ class ReviewViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _productReviews = MutableStateFlow<List<ReviewResponse>>(emptyList())
-    val productReviews: StateFlow<List<ReviewResponse>> = _productReviews.asStateFlow()
+    private val _productReviews = MutableStateFlow<List<Review>>(emptyList())
+    val productReviews: StateFlow<List<Review>> = _productReviews.asStateFlow()
 
     private val _canReview = MutableStateFlow(false)
     val canReview: StateFlow<Boolean> = _canReview.asStateFlow()
@@ -71,14 +70,13 @@ class ReviewViewModel @Inject constructor(
             }
 
             _isSubmitting.value = true
-            val request = ReviewRequest(
+
+            val result = repository.submitReview(
                 userId = user.id,
                 productId = productId,
                 rating = rating,
                 content = content
             )
-
-            val result = repository.submitReview(request)
             _isSubmitting.value = false
 
             if (result.isSuccess) {

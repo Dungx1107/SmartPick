@@ -29,7 +29,7 @@ import coil.compose.AsyncImage
 import com.example.smartpick.R
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.model.ReviewResponse
+import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.ui.theme.*
 
 @Composable
@@ -268,7 +268,7 @@ fun CartBottomSheet(
 @Composable
 fun ProductDetailContent(
     product: Product,
-    reviews: List<ReviewResponse>,
+    reviews: List<Review>,
     canReview: Boolean,
     onViewFeed: () -> Unit,
     onAddToCart: () -> Unit,
@@ -465,7 +465,7 @@ fun ProductDetailContent(
 }
 
 @Composable
-fun ReviewCard(review: ReviewResponse) {
+fun ReviewCard(review: Review) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = White),

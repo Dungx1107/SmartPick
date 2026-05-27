@@ -1,17 +1,17 @@
-package com.example.smartpick.core.model
+package com.example.smartpick.core.data.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ReviewUser(
+data class ReviewUserDto(
     val id: String,
     @SerialName("full_name") val fullName: String? = null,
     @SerialName("avatar_url") val avatarUrl: String? = null
 )
 
 @Serializable
-data class ReviewRequest(
+data class ReviewRequestDto(
     @SerialName("user_id") val userId: String,
     @SerialName("product_id") val productId: String,
     val rating: Int,
@@ -19,13 +19,13 @@ data class ReviewRequest(
 )
 
 @Serializable
-data class ReviewResponse(
+data class ReviewResponseDto(
     val id: String,
     @SerialName("user_id") val userId: String,
     @SerialName("product_id") val productId: String,
     val rating: Int,
     val content: String,
     @SerialName("created_at") val createdAt: String,
-    val products: Product? = null,
-    @SerialName("users") val user: ReviewUser? = null
+    @SerialName("products") val products: ProductDto? = null,
+    @SerialName("users") val user: ReviewUserDto? = null
 )

@@ -1,11 +1,10 @@
-// File: app/src/main/java/com/example/smartpick/core/model/OrderModels.kt
-package com.example.smartpick.core.model
+package com.example.smartpick.core.data.dto
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class OrderRequest(
+data class OrderRequestDto(
     @SerialName("user_id") val userId: String,
     @SerialName("total_amount") val totalAmount: Double,
     @SerialName("shipping_address") val shippingAddress: String,
@@ -15,7 +14,7 @@ data class OrderRequest(
 )
 
 @Serializable
-data class OrderResponse(
+data class OrderResponseDto(
     val id: String,
     @SerialName("total_amount") val totalAmount: Double = 0.0,
     val status: String = "completed",
@@ -23,7 +22,7 @@ data class OrderResponse(
 )
 
 @Serializable
-data class OrderItemRequest(
+data class OrderItemRequestDto(
     @SerialName("order_id") val orderId: String,
     @SerialName("product_id") val productId: String,
     val quantity: Int,

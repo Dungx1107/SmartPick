@@ -28,8 +28,9 @@ fun User.toDto(): UserDto = UserDto(
     updatedAt = updatedAt
 )
 
-// --- Cập nhật đoạn mapping cho Product ---
-fun ProductDto.toDomain(): Product = Product(    id = id,
+// --- Product Mappers ---
+fun ProductDto.toDomain(): Product = Product(
+    id = id,
     ownerId = ownerId,
     name = name,
     brand = brand,
@@ -38,8 +39,8 @@ fun ProductDto.toDomain(): Product = Product(    id = id,
     imageUrls = imageUrls,
     videoUrl = videoUrl,
     status = status,
-    stock = stock,           // Đã bổ sung mapping
-    soldCount = soldCount,   // Đã bổ sung mapping
+    stock = stock,
+    soldCount = soldCount,
     createdAt = createdAt
 )
 
@@ -117,7 +118,6 @@ fun CommentResponse.toDomain(): Comment = Comment(
     parentId = parentId
 )
 
-// Nếu cần thêm CommentDto để tạo comment mới
 fun Comment.toDto(): CommentDto = CommentDto(
     id = id,
     postId = postId,
@@ -126,6 +126,7 @@ fun Comment.toDto(): CommentDto = CommentDto(
     parentId = parentId,
     createdAt = createdAt
 )
+
 fun CartDto.toDomain(): CartItem = CartItem(
     id = id,
     userId = userId,
@@ -133,7 +134,7 @@ fun CartDto.toDomain(): CartItem = CartItem(
     quantity = quantity,
     createdAt = createdAt,
     updatedAt = updatedAt,
-    product = products?.toDomain() // Sử dụng mapper của Product đã có
+    product = products?.toDomain()
 )
 
 fun CartItem.toDto(): CartDto = CartDto(
@@ -144,6 +145,49 @@ fun CartItem.toDto(): CartDto = CartDto(
     createdAt = createdAt,
     updatedAt = updatedAt,
     products = product?.toDto()
+)
+
+// --- Review Mappers ---
+fun ReviewUserDto.toDomain(): ReviewUser = ReviewUser(
+    id = id,
+    fullName = fullName,
+    avatarUrl = avatarUrl
+)
+
+fun ReviewUser.toDto(): ReviewUserDto = ReviewUserDto(
+    id = id,
+    fullName = fullName,
+    avatarUrl = avatarUrl
+)
+
+fun ReviewResponseDto.toDomain(): Review = Review(
+    id = id,
+    userId = userId,
+    productId = productId,
+    rating = rating,
+    content = content,
+    createdAt = createdAt,
+    product = products?.toDomain(),
+    user = user?.toDomain()
+)
+
+fun Review.toDto(): ReviewResponseDto = ReviewResponseDto(
+    id = id,
+    userId = userId,
+    productId = productId,
+    rating = rating,
+    content = content,
+    createdAt = createdAt,
+    products = product?.toDto(),
+    user = user?.toDto()
+)
+
+// --- Order Mappers ---
+fun OrderResponseDto.toDomain(): Order = Order(
+    id = id,
+    totalAmount = totalAmount,
+    status = status,
+    createdAt = createdAt
 )
 
 // --- Complex Mapping (Feature specific) ---

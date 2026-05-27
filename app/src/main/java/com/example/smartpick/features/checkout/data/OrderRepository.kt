@@ -1,10 +1,10 @@
 package com.example.smartpick.features.checkout.data
 
 import android.util.Log
+import com.example.smartpick.core.data.dto.OrderItemRequestDto
+import com.example.smartpick.core.data.dto.OrderRequestDto
+import com.example.smartpick.core.data.dto.OrderResponseDto
 import com.example.smartpick.core.model.CartItem
-import com.example.smartpick.core.model.OrderItemRequest
-import com.example.smartpick.core.model.OrderRequest
-import com.example.smartpick.core.model.OrderResponse
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +34,7 @@ class OrderRepository @Inject constructor(
 
             // 1. Tính tổng tiền đơn hàng
             val totalAmount = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
-            val orderRequest = OrderRequest(
+            val orderRequest = OrderRequestDto(
                 userId = userId,
                 totalAmount = totalAmount,
                 shippingAddress = address,
@@ -43,11 +43,11 @@ class OrderRepository @Inject constructor(
             )
 
             // 2. Chèn thông tin vào bảng 'orders' và lấy thông tin phản hồi (chứa ID đơn hàng)
-            val orderResponse = postgrest["orders"].insert(orderRequest) { select() }.decodeSingle<OrderResponse>()
+            val orderResponse = postgrest["orders"].insert(orderRequest) { select() }.decodeSingle<OrderResponseDto>()
 
             // 3. Tạo danh sách các item chi tiết dựa trên ID đơn hàng vừa tạo
             val orderItems = cartItems.map { item ->
-                OrderItemRequest(
+                OrderItemRequestDto(
                     orderId = orderResponse.id,
                     productId = item.productId,
                     quantity = item.quantity,

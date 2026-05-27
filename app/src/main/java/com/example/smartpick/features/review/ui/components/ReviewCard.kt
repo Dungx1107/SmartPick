@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.example.smartpick.core.model.ReviewResponse
+import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.model.ReviewUser
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.SurfaceCard
@@ -31,7 +31,7 @@ import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun ReviewCard(
-    review: ReviewResponse,
+    review: Review,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -92,7 +92,7 @@ fun ReviewCard(
 fun ReviewCardPreview() {
     SmartPickTheme {
         ReviewCard(
-            review = ReviewResponse(
+            review = Review(
                 id = "review_1",
                 userId = "user_1",
                 productId = "product_1",

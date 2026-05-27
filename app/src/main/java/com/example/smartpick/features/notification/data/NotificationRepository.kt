@@ -1,6 +1,5 @@
 package com.example.smartpick.features.notification.data
 
-import PushPayload
 import android.util.Log
 import com.example.smartpick.core.data.dto.NotificationDto
 import com.example.smartpick.core.data.mapper.toDomain

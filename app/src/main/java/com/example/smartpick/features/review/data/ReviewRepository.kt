@@ -1,10 +1,11 @@
 package com.example.smartpick.features.review.data
 
 import android.util.Log
+import com.example.smartpick.core.data.dto.ReviewRequestDto
+import com.example.smartpick.core.data.dto.ReviewResponseDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.model.ReviewRequest
-import com.example.smartpick.core.model.ReviewResponse
+import com.example.smartpick.core.model.Review
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
@@ -24,12 +25,12 @@ class ReviewRepository @Inject constructor(
     /**
      * Lấy danh sách đánh giá của một sản phẩm cụ thể
      */
-    suspend fun getProductReviews(productId: String): List<ReviewResponse> = withContext(Dispatchers.IO) {
+    suspend fun getProductReviews(productId: String): List<Review> = withContext(Dispatchers.IO) {
         try {
             postgrest["reviews"].select(Columns.raw("*, users(id, full_name, avatar_url)")) {
                 filter { eq("product_id", productId) }
                 order("created_at", Order.DESCENDING)
-            }.decodeList<ReviewResponse>()
+            }.decodeList<ReviewResponseDto>().map { it.toDomain() }
         } catch (e: Exception) {
             Log.e(TAG, "getProductReviews error: ${e.message}", e)
             emptyList()
@@ -57,9 +58,15 @@ class ReviewRepository @Inject constructor(
     /**
      * Gửi đánh giá mới lên Supabase
      */
-    suspend fun submitReview(request: ReviewRequest): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun submitReview(userId: String, productId: String, rating: Int, content: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            postgrest["reviews"].insert(request)
+            val requestDto = ReviewRequestDto(
+                userId = userId,
+                productId = productId,
+                rating = rating,
+                content = content
+            )
+            postgrest["reviews"].insert(requestDto)
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "submitReview error: ${e.message}", e)
@@ -102,12 +109,12 @@ class ReviewRepository @Inject constructor(
         }
     }
 
-    suspend fun getMyReviewedProducts(userId: String): List<ReviewResponse> = withContext(Dispatchers.IO) {
+    suspend fun getMyReviewedProducts(userId: String): List<Review> = withContext(Dispatchers.IO) {
         try {
             postgrest["reviews"].select(Columns.raw("*, products(*)")) {
                 filter { eq("user_id", userId) }
                 order("created_at", Order.DESCENDING)
-            }.decodeList<ReviewResponse>()
+            }.decodeList<ReviewResponseDto>().map { it.toDomain() }
         } catch (e: Exception) {
             emptyList()
         }
