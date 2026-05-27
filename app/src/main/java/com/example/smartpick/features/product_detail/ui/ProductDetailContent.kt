@@ -1,4 +1,4 @@
-package com.example.smartpick.features.productdetail.ui.components
+package com.example.smartpick.features.product_detail.ui.components
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -18,7 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.*
-import com.example.smartpick.features.productdetail.viewmodel.ProductDetailViewModel
+import com.example.smartpick.features.product_detail.viewmodel.ProductDetailViewModel
 import com.example.smartpick.features.review.ui.components.ReviewCard
 import com.example.smartpick.features.review.ui.components.ReviewInputForm
 import com.example.smartpick.features.review.viewmodel.ReviewViewModel

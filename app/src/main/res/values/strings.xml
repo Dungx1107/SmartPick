@@ -137,4 +137,21 @@
     <string name="Huy">Hủy</string>
     <string name="CheDoToi">Chế độ tối</string>
     <string name="reviews">Review</string>
+    <string name="NguoiDung">Người dùng</string>
+    <string name="daChiaSeBaiViet">" đã chia sẻ một bài viết."</string>
+    <string name="t">T</string>
+    <string name="DangBai">Đăng bài</string>
+    <string name="ChiaSeBaiViet">Chia sẻ bài viết</string>
+    <string name="HayNoiGiVeBaiVietNay">Hãy nói gì đó về bài viết này...</string>
+    <string name="ChiaSeNgay">Chia sẻ ngay</string>
+    <string name="YeuThich">Yêu thích</string>
+    <string name="haha">Haha</string>
+    <string name="wow">Wow</string>
+    <string name="buon">Buồn</string>
+    <string name="PhanNo">Phẫn nộ</string>
+    <string name="ChuaDanhGia">Chưa đánh giá</string>
+    <string name="DaDanhGia">Đã đánh giá</string>
+    <string name="DanhGiaSanPham">Đánh giá sản phẩm</string>
+    <string name="QuanLiMuaSam">Quản lý mua sắm</string>
+    <string name="BaiVietDaThich">Bài viết đã thích</string>
 </resources>

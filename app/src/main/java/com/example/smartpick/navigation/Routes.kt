@@ -1,4 +1,3 @@
-// File: app/src/main/java/com/example/smartpick/navigation/Routes.kt
 package com.example.smartpick.navigation
 
 sealed class Routes(val route: String) {
@@ -12,6 +11,7 @@ sealed class Routes(val route: String) {
     object SignUp : Routes("sign_up")
     object CreatePost : Routes("create_post")
     object Notifications : Routes("notifications")
+    object Settings : Routes("settings")
     object Checkout : Routes("checkout")
 
     // THÊM MỚI: Route cho màn hình viết đánh giá
@@ -29,7 +29,6 @@ sealed class Routes(val route: String) {
         fun createRoute(postId: String, postOwnerId: String) = "comments/$postId/$postOwnerId"
     }
 
-    object Settings : Routes("settings")
 
     // Dành cho click thông báo bên trong màn hình NotificationsScreen của app
     object CommentsFromNotification : Routes("comments_notification/{postId}?commentId={commentId}") {

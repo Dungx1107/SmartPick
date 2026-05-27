@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,6 +47,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,6 +56,7 @@ import androidx.navigation.NavController
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.features.cart.ui.CartBottomSheet
 import com.example.smartpick.features.cart.viewmodel.CartViewModel
@@ -59,9 +64,8 @@ import com.example.smartpick.features.home.ui.components.ProductGridCard
 import com.example.smartpick.features.home.ui.components.SearchBar
 import com.example.smartpick.features.home.viewmodel.HomeUiState
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
-import com.example.smartpick.features.productdetail.ui.components.ProductDetailContent
+import com.example.smartpick.features.product_detail.ui.components.ProductDetailContent
 import com.example.smartpick.navigation.Routes
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -201,8 +205,7 @@ fun HomeContent(
 ) {
     Scaffold(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
+            .fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
@@ -221,20 +224,28 @@ fun HomeContent(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(
+                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
+                    top = paddingValues.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding()
+                )
         ) {
             SearchBar(
                 query = searchQuery,
                 onQueryChange = onSearchQueryChange,
                 onMicClick = onMicClick,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .fillMaxWidth()
+                    .padding(horizontal = 0.dp)
+                    .padding(top = 4.dp, bottom = 4.dp)
             )
 
-            Box(modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
@@ -246,7 +257,7 @@ fun HomeContent(
                             start = 8.dp,
                             end = 8.dp,
                             top = 0.dp,
-                            bottom = 80.dp
+                            bottom = 16.dp
                         ),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -287,6 +298,137 @@ fun HomeContent(
             onIncrease = onIncrease,
             onDecrease = onDecrease,
             onCheckout = onCheckout
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, name = "Trạng Thái Danh Sách Sản Phẩm")
+@Composable
+fun HomeContentSuccessPreview() {
+    val mockProducts = listOf(
+        Product(
+            id = "prod_01",
+            ownerId = "user_01",
+            name = "Tai nghe Bluetooth Không Dây Chống Ồn Chủ Động Sony WH-1000XM5",
+            brand = "Sony",
+            category = "Phụ kiện",
+            price = 6490000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 5,
+            soldCount = 1250 // Kiểm tra hiển thị định dạng rút gọn (1k)
+        ),
+        Product(
+            id = "prod_02",
+            ownerId = "user_01",
+            name = "Bàn phím cơ Custom Keychron K2 V2 Nhôm Hot-swappable",
+            brand = "Keychron",
+            category = "Phụ kiện",
+            price = 1850000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 12,
+            soldCount = 45
+        ),
+        Product(
+            id = "prod_03",
+            ownerId = "user_02",
+            name = "Điện thoại Apple iPhone 15 Pro Max 256GB Chính hãng VN/A",
+            brand = "Apple",
+            category = "Điện thoại",
+            price = 29990000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 8,
+            soldCount = 89
+        ),
+        Product(
+            id = "prod_04",
+            ownerId = "user_02",
+            name = "Củ sạc nhanh Anker GaNPrime 65W 3 cổng (2 C, 1 A) nhỏ gọn",
+            brand = "Anker",
+            category = "Phụ kiện",
+            price = 850000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 50,
+            soldCount = 2100
+        )
+    )
+
+    SmartPickTheme {
+        HomeContent(
+            paddingValues = PaddingValues(top = 56.dp), // Giả lập lề TopBar hệ thống
+            uiState = HomeUiState.Success(products = mockProducts),
+            cartItems = emptyList(),
+            totalCartCount = 3, // Giả lập Badge giỏ hàng hiển thị số 3
+            searchQuery = "",
+            selectedProduct = null,
+            showCart = false,
+            onSearchQueryChange = {},
+            onMicClick = {},
+            onCartClick = {},
+            onProductClick = {},
+            onAddToCart = {},
+            onDismissSheet = {},
+            onViewFeed = {},
+            onBuyNow = {},
+            onDismissCart = {},
+            onIncrease = {},
+            onDecrease = {},
+            onCheckout = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, name = "Trạng Thái Đang Tải (Loading)")
+@Composable
+fun HomeContentLoadingPreview() {
+    SmartPickTheme {
+        HomeContent(
+            paddingValues = PaddingValues(top = 56.dp),
+            uiState = HomeUiState.Loading,
+            cartItems = emptyList(),
+            totalCartCount = 0,
+            searchQuery = "",
+            selectedProduct = null,
+            showCart = false,
+            onSearchQueryChange = {},
+            onMicClick = {},
+            onCartClick = {},
+            onProductClick = {},
+            onAddToCart = {},
+            onDismissSheet = {},
+            onViewFeed = {},
+            onBuyNow = {},
+            onDismissCart = {},
+            onIncrease = {},
+            onDecrease = {},
+            onCheckout = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, name = "Trạng Thái Không Có Dữ Liệu")
+@Composable
+fun HomeContentEmptyPreview() {
+    SmartPickTheme {
+        HomeContent(
+            paddingValues = PaddingValues(top = 56.dp),
+            uiState = HomeUiState.Success(products = emptyList()),
+            cartItems = emptyList(),
+            totalCartCount = 0,
+            searchQuery = "Sản phẩm không tồn tại", // Giả lập từ khóa tìm kiếm không ra kết quả
+            selectedProduct = null,
+            showCart = false,
+            onSearchQueryChange = {},
+            onMicClick = {},
+            onCartClick = {},
+            onProductClick = {},
+            onAddToCart = {},
+            onDismissSheet = {},
+            onViewFeed = {},
+            onBuyNow = {},
+            onDismissCart = {},
+            onIncrease = {},
+            onDecrease = {},
+            onCheckout = {}
         )
     }
 }

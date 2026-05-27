@@ -194,12 +194,12 @@ fun AppNavigation(
                     ProfileScreen(navController = navController, paddingValues = innerPadding)
                 }
 
-                // FIX LỖI 1: Bọc Box cho màn hình Đánh giá để nhận padding mà không cần sửa tham số file gốc
                 composable(route = Routes.ReviewHub.route) {
                     Box(modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)) {
                         ReviewHubScreen(
+                            paddingValues = innerPadding,
                             onNavigateToWriteReview = { productId ->
                                 navController.navigate(
                                     Routes.WriteReview.createRoute(
@@ -222,7 +222,6 @@ fun AppNavigation(
                     }
                 }
 
-                // FIX LỖI 3: Bọc Box cho màn hình Đã lưu (khi truyền Category)
                 composable(
                     route = "${Routes.Saved.route}?category={category}",
                     arguments = listOf(navArgument("category") {

@@ -1,4 +1,4 @@
-package com.example.smartpick.features.productdetail.viewmodel
+package com.example.smartpick.features.product_detail.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

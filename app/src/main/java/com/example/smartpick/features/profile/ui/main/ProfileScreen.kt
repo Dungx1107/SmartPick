@@ -23,7 +23,7 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.CreatePostPrompt
-import com.example.smartpick.core.ui.components.PostItem
+import com.example.smartpick.core.ui.components.post.PostItem
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel

@@ -35,6 +35,12 @@ import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.*
+import com.example.smartpick.core.ui.components.post.PostActionButton
+import com.example.smartpick.core.ui.components.post.PostHeader
+import com.example.smartpick.core.ui.components.post.ReactionButton
+import com.example.smartpick.core.ui.components.post.ReactionPopup
+import com.example.smartpick.core.ui.components.post.SharePostDialog
+import com.example.smartpick.core.ui.components.post.SharedPostCard
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.SurfaceCard

@@ -13,7 +13,7 @@ object NavigationUtils {
         Routes.Comments.route,
         Routes.Settings.route,
         Routes.Checkout.route,
-        Routes.WriteReview.route
+        Routes.WriteReview.route,
     )
 
     // Danh sách ẩn thanh Tiêu đề trên cùng (TopAppBar)
@@ -25,8 +25,13 @@ object NavigationUtils {
         Routes.PostDetail.route,
         Routes.Comments.route,
         Routes.Settings.route,
-        Routes.Checkout.route, // FIX: Đã ẩn TopBar trên màn Thanh toán
-        Routes.WriteReview.route
+        Routes.Checkout.route,
+        Routes.WriteReview.route,
+        Routes.ReviewHub.route,
+        Routes.Notifications.route,
+        Routes.Saved.route
+
+
     )
 
     fun shouldShowBottomBar(currentRoute: String?): Boolean {
