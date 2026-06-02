@@ -84,11 +84,11 @@ fun ReviewHubContent(
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = SmartPickColor,
+                contentColor = MaterialTheme.colorScheme.primary,
                 indicator = { tabPositions ->
                     SecondaryIndicator(
                         modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
-                        color = SmartPickColor
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             ) {
@@ -99,7 +99,7 @@ fun ReviewHubContent(
                         text = {
                             Text(
                                 text = title,
-                                color = if (selectedTabIndex == index) SmartPickColor else TextMuted,
+                                color = if (selectedTabIndex == index) MaterialTheme.colorScheme.primary else TextMuted,
                                 fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -109,7 +109,7 @@ fun ReviewHubContent(
 
             if (isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = SmartPickColor, strokeWidth = 3.dp)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 3.dp)
                 }
             } else {
                 when (selectedTabIndex) {

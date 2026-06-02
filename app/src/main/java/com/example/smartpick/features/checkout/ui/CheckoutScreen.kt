@@ -108,12 +108,12 @@ fun CheckoutContent(
                     Button(
                         onClick = onOrderClick,
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         modifier = Modifier.height(50.dp).width(150.dp),
                         enabled = !isProcessing && cartItems.isNotEmpty()
                     ) {
                         if (isProcessing) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = White, strokeWidth = 2.dp)
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                         } else {
                             Text("ĐẶT HÀNG", fontWeight = FontWeight.Bold)
                         }

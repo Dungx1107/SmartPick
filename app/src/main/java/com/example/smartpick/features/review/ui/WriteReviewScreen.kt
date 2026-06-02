@@ -44,14 +44,14 @@ fun WriteReviewScreen(
     }
 
     Scaffold(
-        containerColor = PageBg,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Viết đánh giá", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack, enabled = !isSubmitting) { Icon(Icons.Default.ArrowBack, null) }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
             )
         }
     ) { padding ->
@@ -62,7 +62,7 @@ fun WriteReviewScreen(
                 .padding(16.dp)
         ) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Column(
@@ -103,10 +103,10 @@ fun WriteReviewScreen(
                 placeholder = { Text("Hãy chia sẻ những điều bạn thích về sản phẩm này nhé...", color = TextMuted) },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = SmartPickColor,
-                    unfocusedBorderColor = DividerColor,
-                    focusedContainerColor = White,
-                    unfocusedContainerColor = White
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
                 ),
                 maxLines = 5,
                 enabled = !isSubmitting
@@ -136,14 +136,14 @@ fun WriteReviewScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isSubmitting && content.isNotBlank()
             ) {
                 if (isSubmitting) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = White, strokeWidth = 2.dp)
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
                 } else {
-                    Text("Gửi Đánh Giá", color = White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Gửi Đánh Giá", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
             }
         }

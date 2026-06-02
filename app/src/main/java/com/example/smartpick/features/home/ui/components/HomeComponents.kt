@@ -60,8 +60,8 @@ fun SearchBar(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(White)
-            .border(1.dp, SurfaceCard, RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -80,7 +80,7 @@ fun SearchBar(
                 value = query,
                 onValueChange = onQueryChange,
                 singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -92,7 +92,7 @@ fun SearchBar(
             Icon(
                 Icons.Default.Mic,
                 contentDescription = stringResource(R.string.TimKiemBangGiongNoi),
-                tint = TextSecondary
+                tint = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -109,7 +109,7 @@ fun ProductGridCard(
             .fillMaxWidth()
             .clickable { onProductClick(product) },
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column {
@@ -127,7 +127,7 @@ fun ProductGridCard(
                         .align(Alignment.BottomEnd)
                         .padding(4.dp)
                         .size(30.dp)
-                        .background(White.copy(alpha = 0.8f), CircleShape)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.AddShoppingCart,
@@ -159,7 +159,7 @@ fun ProductGridCard(
                     val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
                     Text(
                         text = "$priceFormatted",
-                        color = SmartPickColor,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium,
                         fontSize = 15.sp
                     )

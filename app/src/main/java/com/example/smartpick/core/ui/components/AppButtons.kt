@@ -32,10 +32,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.DividerColor
 import com.example.smartpick.core.ui.theme.LoginBlue
 import com.example.smartpick.core.ui.theme.LoginBlueGradientEnd
-import com.example.smartpick.core.ui.theme.SocialButtonLightColor
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.utils.Constants.PROVIDER_GOOGLE
 
@@ -69,7 +67,7 @@ fun AuthPrimaryButton(
             .clickable(enabled = enabled, onClick = onClick)
             .border(
                 width = 1.dp,
-                color = if (enabled) DividerColor else Color.Transparent,
+                color = if (enabled) MaterialTheme.colorScheme.outlineVariant else Color.Transparent,
                 shape = RoundedCornerShape(12.dp)
             ),
         shape = RoundedCornerShape(12.dp),
@@ -111,7 +109,7 @@ fun SocialAuthButton(
     enabled: Boolean = true,
     loading: Boolean = false
 ) {
-    val backgroundColor = if (enabled && !loading) SocialButtonLightColor else MaterialTheme.colorScheme.surfaceVariant
+    val backgroundColor = if (enabled && !loading) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant
     val contentAlpha = if (enabled && !loading) 1f else 0.5f
 
     Surface(
@@ -120,7 +118,7 @@ fun SocialAuthButton(
             .height(60.dp)
             .clickable(enabled = enabled && !loading, onClick = onClick)
             .background(backgroundColor, RoundedCornerShape(12.dp))
-            .border(1.dp, DividerColor, RoundedCornerShape(12.dp)),
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         color = Color.Transparent
     ) {

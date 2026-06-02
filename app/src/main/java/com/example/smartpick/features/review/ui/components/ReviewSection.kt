@@ -13,10 +13,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun ReviewInputForm(
@@ -69,13 +67,13 @@ fun ReviewInputForm(
             modifier = Modifier
                 .padding(top = 8.dp)
                 .align(Alignment.End),
-            colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             enabled = !isSubmitting && reviewContent.isNotBlank()
         ) {
             if (isSubmitting) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = White, strokeWidth = 2.dp)
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
             } else {
-                Text("Gửi đánh giá", color = White)
+                Text("Gửi đánh giá", color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }

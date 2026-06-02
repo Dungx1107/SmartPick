@@ -164,7 +164,7 @@ fun SavedCollectionContent(
                         if (isReactedLoading) {
                             item(span = { GridItemSpan(maxLineSpan) }) {
                                 Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                                    CircularProgressIndicator(color = SmartPickColor, strokeWidth = 3.dp)
+                                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary, strokeWidth = 3.dp)
                                 }
                             }
                         } else if (reactedPosts.isEmpty()) {
@@ -214,10 +214,10 @@ fun SavedCollectionContent(
                         Button(
                             onClick = onNavigateToCheckout,
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             val totalCount = cartItems.sumOf { it.quantity }
-                            Text("Thanh toán ($totalCount)", color = White)
+                            Text("Thanh toán ($totalCount)", color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
                 }

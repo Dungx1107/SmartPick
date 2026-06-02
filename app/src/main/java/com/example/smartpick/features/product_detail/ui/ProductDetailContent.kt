@@ -49,10 +49,10 @@ fun ProductDetailContent(
     }
 
     Scaffold(
-        containerColor = White,
+        containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
             // Thanh BottomBar ghim ở đáy
-            Surface(shadowElevation = 16.dp, color = White) {
+            Surface(shadowElevation = 16.dp, color = MaterialTheme.colorScheme.surface) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -62,20 +62,20 @@ fun ProductDetailContent(
                     Button(
                         onClick = onAddToCart,
                         modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(12.dp),
                         enabled = viewModel.isProductAvailable(product)
                     ) {
-                        Text("Thêm Giỏ Hàng", color = White)
+                        Text("Thêm Giỏ Hàng", color = MaterialTheme.colorScheme.onPrimary)
                     }
                     Button(
                         onClick = onBuyNow,
                         modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AccentBlue),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                         shape = RoundedCornerShape(12.dp),
                         enabled = viewModel.isProductAvailable(product)
                     ) {
-                        Text("Mua Ngay", color = White)
+                        Text("Mua Ngay", color = MaterialTheme.colorScheme.onSecondary)
                     }
                 }
             }
@@ -140,10 +140,10 @@ fun ProductDetailContent(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Xem bài đăng thảo luận trong Feed", color = SmartPickColor)
+                    Text("Xem bài đăng thảo luận trong Feed", color = MaterialTheme.colorScheme.primary)
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = SurfaceCard)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = MaterialTheme.colorScheme.outlineVariant)
             }
 
             // 4. Form viết đánh giá (Nếu đủ điều kiện)

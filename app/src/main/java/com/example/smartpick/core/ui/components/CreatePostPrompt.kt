@@ -19,6 +19,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,12 +34,8 @@ import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.theme.AccentBlue
-import com.example.smartpick.core.ui.theme.DividerColor
 import com.example.smartpick.core.ui.theme.SmartPickTheme
-import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.TextSecondary
-import com.example.smartpick.core.ui.theme.White
 
 
 @Composable
@@ -50,7 +47,7 @@ fun CreatePostPrompt(
     val avatarUrl = user?.avatarUrl
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -64,7 +61,7 @@ fun CreatePostPrompt(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(24.dp))
-                        .background(SurfaceCard)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                         .clickable { onClick() }
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
@@ -77,7 +74,7 @@ fun CreatePostPrompt(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
-            HorizontalDivider(color = DividerColor.copy(alpha = 0.4f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             Spacer(modifier = Modifier.height(8.dp))
 
             Row(
@@ -87,7 +84,7 @@ fun CreatePostPrompt(
                 TextButton(onClick = onClick) {
                     Icon(Icons.Default.Image, contentDescription = null, tint = AccentBlue)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.AnhVideo), color = TextSecondary)
+                    Text(stringResource(R.string.AnhVideo), color = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }

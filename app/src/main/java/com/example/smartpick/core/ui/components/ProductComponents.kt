@@ -22,7 +22,6 @@ import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.AccentBlue
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.White
 import java.util.Locale
 
 @Composable
@@ -36,14 +35,14 @@ fun ProductVerticalCard(
             .shadow(4.dp, RoundedCornerShape(16.dp))
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
-                    .background(Color(0xFFF3F4F6)),
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 AsyncImage(
@@ -92,8 +91,8 @@ fun ProductHorizontalTag(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(

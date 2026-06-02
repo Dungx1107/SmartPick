@@ -22,10 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.CardLight
-import com.example.smartpick.core.ui.theme.DividerColor
-import com.example.smartpick.core.ui.theme.LoginBlue
 
 /**
  * Biểu tượng bóng đèn đặc trưng của ứng dụng SmartPick.
@@ -35,8 +33,8 @@ fun BulbIconLight() {
     Surface(
         modifier = Modifier
             .size(64.dp)
-            .background(CardLight, shape = RoundedCornerShape(16.dp))
-            .border(1.dp, DividerColor, shape = RoundedCornerShape(16.dp)),
+            .background(MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(16.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape = RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 4.dp
     ) {
@@ -45,7 +43,7 @@ fun BulbIconLight() {
                 imageVector = Icons.Filled.Lightbulb,
                 contentDescription = stringResource(R.string.bulb_icon),
                 modifier = Modifier.size(32.dp),
-                tint = LoginBlue
+                tint = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
     }
@@ -66,18 +64,18 @@ fun AuthDivider(text: String = stringResource(R.string.or_connect_with)) {
             modifier = Modifier
                 .weight(1f)
                 .padding(end = 16.dp),
-            color = DividerColor
+            color = MaterialTheme.colorScheme.outlineVariant
         )
         Text(
             text = text.uppercase(),
             fontSize = 12.sp,
-            color = DividerColor
+            color = MaterialTheme.colorScheme.outlineVariant
         )
         Divider(
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 16.dp),
-            color = DividerColor
+            color = MaterialTheme.colorScheme.outlineVariant
         )
     }
 }

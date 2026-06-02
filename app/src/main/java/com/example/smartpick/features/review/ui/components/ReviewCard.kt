@@ -25,9 +25,7 @@ import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.model.ReviewUser
 import com.example.smartpick.core.ui.theme.SmartPickTheme
-import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun ReviewCard(
@@ -36,8 +34,8 @@ fun ReviewCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = White),
-        border = BorderStroke(1.dp, SurfaceCard),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -48,7 +46,7 @@ fun ReviewCard(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(SurfaceCard),
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.width(10.dp))

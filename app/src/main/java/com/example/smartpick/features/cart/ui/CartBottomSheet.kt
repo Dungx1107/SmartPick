@@ -31,7 +31,7 @@ fun CartBottomSheet(
     onDismiss: () -> Unit,
     onCheckout: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -58,13 +58,13 @@ fun CartBottomSheet(
                         val product = item.product
                         if (product != null) {
                             ListItem(
-                                colors = ListItemDefaults.colors(containerColor = White),
+                                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                                 headlineContent = {
                                     Text(product.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 },
                                 supportingContent = {
                                     val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
-                                    Text("$priceFormatted", color = AccentBlue, fontWeight = FontWeight.Bold)
+                                    Text("$priceFormatted", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                 },
                                 leadingContent = {
                                     AsyncImage(
@@ -77,7 +77,7 @@ fun CartBottomSheet(
                                     )
                                 },
                                 trailingContent = {
-                                    Surface(shape = RoundedCornerShape(20.dp), color = SurfaceCard) {
+                                    Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
                                         Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
@@ -86,7 +86,7 @@ fun CartBottomSheet(
                                                 Icon(
                                                     imageVector = if (item.quantity > 1) Icons.Default.Remove else Icons.Default.Delete,
                                                     contentDescription = null,
-                                                    tint = if (item.quantity > 1) TextSecondary else AccentBlue,
+                                                    tint = if (item.quantity > 1) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                                                     modifier = Modifier.size(16.dp)
                                                 )
                                             }
@@ -97,7 +97,7 @@ fun CartBottomSheet(
                                                 fontSize = 14.sp
                                             )
                                             IconButton(onClick = { onIncrease(item) }, modifier = Modifier.size(30.dp)) {
-                                                Icon(Icons.Default.Add, null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                                                Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }
@@ -107,13 +107,13 @@ fun CartBottomSheet(
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = SurfaceCard)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
 
                 val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
                 val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Tổng cộng:", fontWeight = FontWeight.Bold, color = TextSecondary)
-                    Text("$totalFormatted", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AccentBlue)
+                    Text("Tổng cộng:", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("$totalFormatted", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                 }
             }
 
@@ -121,9 +121,9 @@ fun CartBottomSheet(
                 onClick = onCheckout,
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 enabled = cartItems.isNotEmpty(),
-                colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor)
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
-                Text("Thanh toán ngay", color = White)
+                Text("Thanh toán ngay", color = MaterialTheme.colorScheme.onPrimary)
             }
         }
     }

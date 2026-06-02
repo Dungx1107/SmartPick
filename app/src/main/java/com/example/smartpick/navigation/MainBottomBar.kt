@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -22,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.AccentBlue
 
 @Composable
 fun MainBottomBar(
@@ -83,7 +82,7 @@ fun MainBottomBarContent(
     )
 
     NavigationBar(
-        containerColor = colorResource(R.color.white),
+        containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 8.dp
     ) {
         items.forEach { item ->
@@ -102,11 +101,11 @@ fun MainBottomBarContent(
                 selected = selected,
                 onClick = { onNavigate(item.route) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = AccentBlue,
-                    selectedTextColor = AccentBlue,
-                    unselectedIconColor = Color.DarkGray,
-                    unselectedTextColor = Color.DarkGray,
-                    indicatorColor = Color(0xFFEBF3FF)
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedTextColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
         }

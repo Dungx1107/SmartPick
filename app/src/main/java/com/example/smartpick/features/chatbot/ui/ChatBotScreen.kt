@@ -37,9 +37,9 @@ fun ChatbotScreen(
     }
 
     Scaffold(
-        containerColor = PageBg,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            Surface(shadowElevation = 8.dp, color = White) {
+            Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
                 Row(
                     modifier = Modifier
                         .padding(16.dp)
@@ -54,10 +54,10 @@ fun ChatbotScreen(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(24.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = SmartPickColor,
-                            unfocusedBorderColor = DividerColor,
-                            focusedContainerColor = SurfaceCard,
-                            unfocusedContainerColor = SurfaceCard
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         maxLines = 3 // Giới hạn số dòng khi chat quá dài
                     )
@@ -69,9 +69,9 @@ fun ChatbotScreen(
                                 inputText = ""
                             }
                         },
-                        modifier = Modifier.background(SmartPickColor, RoundedCornerShape(50))
+                        modifier = Modifier.background(MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
                     ) {
-                        Icon(Icons.Default.Send, contentDescription = "Gửi", tint = White)
+                        Icon(Icons.Default.Send, contentDescription = "Gửi", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -95,8 +95,8 @@ fun ChatbotScreen(
 @Composable
 fun ChatBubble(message: ChatMessage) {
     val alignment = if (message.isFromUser) Alignment.CenterEnd else Alignment.CenterStart
-    val bgColor = if (message.isFromUser) SmartPickColor else White
-    val textColor = if (message.isFromUser) White else TextSecondary
+    val bgColor = if (message.isFromUser) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (message.isFromUser) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     val shape = if (message.isFromUser)
         RoundedCornerShape(16.dp, 16.dp, 4.dp, 16.dp) else
         RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp)
@@ -109,7 +109,7 @@ fun ChatBubble(message: ChatMessage) {
         ) {
             Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
                 if (message.isLoading) {
-                    Text("✨ Đang suy nghĩ...", color = SmartPickColor, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text("✨ Đang suy nghĩ...", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 } else {
                     Text(text = message.text, color = textColor, fontSize = 15.sp, lineHeight = 22.sp)
                 }

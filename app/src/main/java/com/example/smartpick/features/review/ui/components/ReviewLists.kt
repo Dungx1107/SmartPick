@@ -20,9 +20,7 @@ import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.ui.theme.AccentBlue
-import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun PendingReviewList(
@@ -60,10 +58,10 @@ fun PendingReviewList(
                         }
                         Button(
                             onClick = { onReviewClick(product.id ?: "") },
-                            colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Đánh giá", fontSize = 12.sp, color = White)
+                            Text("Đánh giá", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary)
                         }
                     }
                 }
