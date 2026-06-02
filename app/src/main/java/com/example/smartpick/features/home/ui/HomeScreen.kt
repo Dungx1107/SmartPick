@@ -58,6 +58,7 @@ import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.R
 import com.example.smartpick.features.cart.ui.CartBottomSheet
 import com.example.smartpick.features.cart.viewmodel.CartViewModel
 import com.example.smartpick.features.home.ui.components.ProductGridCard
@@ -142,7 +143,7 @@ fun HomeScreen(
             try {
                 speechLauncher.launch(intent)
             } catch (e: Exception) {
-                Toast.makeText(context, "Thiết bị không hỗ trợ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ThietBiKhongHoTro), Toast.LENGTH_SHORT).show()
             }
         },
         onCartClick = { showCart = true },
@@ -151,7 +152,7 @@ fun HomeScreen(
             viewModel.addToCart(
                 product = product,
                 onSuccess = {
-                    Toast.makeText(context, "Đã thêm vào giỏ", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.DaThemVaoGioHang), Toast.LENGTH_SHORT).show()
                     cartViewModel.refreshCart()
                 },
                 onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }

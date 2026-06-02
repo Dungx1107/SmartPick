@@ -18,6 +18,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.*
+import com.example.smartpick.R
+import androidx.compose.ui.res.stringResource
 import com.example.smartpick.features.product_detail.viewmodel.ProductDetailViewModel
 import com.example.smartpick.features.review.ui.components.ReviewCard
 import com.example.smartpick.features.review.ui.components.ReviewInputForm
@@ -66,7 +68,7 @@ fun ProductDetailContent(
                         shape = RoundedCornerShape(12.dp),
                         enabled = viewModel.isProductAvailable(product)
                     ) {
-                        Text("Thêm Giỏ Hàng", color = MaterialTheme.colorScheme.onPrimary)
+                        Text(stringResource(R.string.ThemGioHang), color = MaterialTheme.colorScheme.onPrimary)
                     }
                     Button(
                         onClick = onBuyNow,
@@ -75,7 +77,7 @@ fun ProductDetailContent(
                         shape = RoundedCornerShape(12.dp),
                         enabled = viewModel.isProductAvailable(product)
                     ) {
-                        Text("Mua Ngay", color = MaterialTheme.colorScheme.onSecondary)
+                        Text(stringResource(R.string.mua_ngay), color = MaterialTheme.colorScheme.onSecondary)
                     }
                 }
             }
@@ -135,12 +137,12 @@ fun ProductDetailContent(
                 OutlinedButton(
                     onClick = {
                         if (postId != null) onViewFeed(postId!!)
-                        else Toast.makeText(context, "Chưa có bài đăng thảo luận!", Toast.LENGTH_SHORT).show()
+                        else Toast.makeText(context, context.getString(R.string.ChuaCoBaiDangThaoLuan), Toast.LENGTH_SHORT).show()
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Xem bài đăng thảo luận trong Feed", color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.XemBaiDangTrongFeed), color = MaterialTheme.colorScheme.primary)
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = MaterialTheme.colorScheme.outlineVariant)
@@ -156,7 +158,7 @@ fun ProductDetailContent(
                                 productId = product.id!!,
                                 rating = rating,
                                 content = content,
-                                onSuccess = { Toast.makeText(context, "Đã gửi đánh giá!", Toast.LENGTH_SHORT).show() },
+                                onSuccess = { Toast.makeText(context, context.getString(R.string.DaGuiDanhGia), Toast.LENGTH_SHORT).show() },
                                 onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
                             )
                         }

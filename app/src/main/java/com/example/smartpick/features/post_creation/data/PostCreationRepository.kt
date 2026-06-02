@@ -23,6 +23,11 @@ import com.example.smartpick.core.data.dto.PostDto
 import com.example.smartpick.core.data.dto.ProductDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.data.mapper.toDto
+import io.github.jan.supabase.storage.upload
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import java.io.File
+import java.io.InputStream
 
 /**
  * Repository xử lý logic tạo bài viết và upload media lên Supabase.
@@ -39,6 +44,32 @@ import com.example.smartpick.core.data.mapper.toDto
 class PostCreationRepository @Inject constructor(
     private val supabase: SupabaseClient
 ) {
+
+    /**
+     * Tối ưu hóa việc đọc Uri thành Flow<ByteArray> để Stream dữ liệu lên Storage.
+     * Tránh nạp toàn bộ file cùng lúc vào bộ nhớ RAM (Fix OutOfMemoryError).
+     */
+    private fun uriToFlow(context: Context, uri: Uri) = flow {
+        val contentResolver = context.contentResolver
+        val inputStream: InputStream = contentResolver.openInputStream(uri) ?: return@flow
+
+        // Khởi tạo buffer kích thước cố định (64KB mỗi chunk)
+        val buffer = ByteArray(64 * 1024)
+        try {
+            inputStream.use { stream ->
+                while (true) {
+                    val bytesRead = stream.read(buffer)
+                    if (bytesRead == -1) break
+
+                    // Trích xuất chính xác lượng byte đã đọc để phát đi (emit)
+                    val chunk = buffer.copyOfRange(0, bytesRead)
+                    emit(chunk)
+                }
+            }
+        } catch (e: Exception) {
+            throw e
+        }
+    }.flowOn(Dispatchers.IO)
 
     /**
      * Upload file media từ Uri lên Supabase Storage.
@@ -70,7 +101,7 @@ class PostCreationRepository @Inject constructor(
         uri: Uri,
         context: Context
     ): String = withContext(Dispatchers.IO) {
-
+        var tempFile: File? = null
         try {
             val contentResolver = context.contentResolver
 
@@ -95,18 +126,23 @@ class PostCreationRepository @Inject constructor(
                     "post_media_${UUID.randomUUID()}"
                 }
 
-            // Đọc toàn bộ dữ liệu file thành ByteArray
-            val bytes = contentResolver.openInputStream(uri)
-                ?.use { it.readBytes() }
-                ?: return@withContext ""
+// 1. Tạo file tạm trong bộ nhớ đệm (Cache) của ứng dụng
+            tempFile = File(context.cacheDir, fileName)
 
-            // Truy cập bucket "media" trên Supabase Storage
+            // 2. Stream dữ liệu từ Uri trực tiếp vào File tạm
+            contentResolver.openInputStream(uri)?.use { input ->
+                tempFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
             val bucket = supabase.storage.from("media")
 
-            // Upload file lên Supabase
+            // 3. Upload File trực tiếp (Ktor sẽ tự động stream dưới nền tảng, không gây OOM)
+            // Lưu ý: upsert = false nằm bên trong ngoặc tròn, không dùng ngoặc nhọn
             bucket.upload(
                 path = fileName,
-                data = bytes,
+                file = tempFile,
                 upsert = false
             )
 
@@ -115,7 +151,9 @@ class PostCreationRepository @Inject constructor(
         } catch (e: Exception) {
             e.printStackTrace()  // In lỗi để debug
             return@withContext ""  // Trả về chuỗi rỗng nếu upload thất bại
-
+        } finally {
+            // 4. Luôn xóa file tạm sau khi upload xong hoặc xảy ra lỗi để giải phóng bộ nhớ thiết bị
+            tempFile?.delete()
         }
     }
 

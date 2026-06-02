@@ -78,7 +78,7 @@ fun FeedScreen(
         onReactionClick = { postId, type -> viewModel.toggleReaction(postId, type) },
         onShareClick = { postId, caption ->
             viewModel.sharePost(postId, caption) {
-                Toast.makeText(context, "Đã chia sẻ lên Trang cá nhân!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.DaChiaSeLenTrangCaNhan), Toast.LENGTH_SHORT).show()
             }
         }
     )

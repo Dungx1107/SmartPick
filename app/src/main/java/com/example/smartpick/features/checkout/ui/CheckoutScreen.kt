@@ -22,6 +22,8 @@ import com.example.smartpick.core.ui.theme.AccentBlue
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.ui.theme.White
+import com.example.smartpick.R
+import androidx.compose.ui.res.stringResource
 import com.example.smartpick.features.checkout.viewmodel.CheckoutViewModel
 
 @Composable
@@ -51,7 +53,7 @@ fun CheckoutScreen(
         onOrderClick = {
             viewModel.placeOrder(
                 onSuccess = {
-                    Toast.makeText(context, "Đặt hàng thành công!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.DatHangThanhCong), Toast.LENGTH_LONG).show()
                     onNavigateToSuccess()
                 },
                 onError = { msg ->
@@ -82,7 +84,7 @@ fun CheckoutContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thanh toán", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.ThanhToan), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack, enabled = !isProcessing) { Icon(Icons.Default.ArrowBack, null) }
                 },

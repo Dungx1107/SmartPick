@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.example.smartpick.core.ui.theme.*
+import com.example.smartpick.R
+import androidx.compose.ui.res.stringResource
 import com.example.smartpick.features.review.viewmodel.ReviewViewModel // Sử dụng đúng ReviewViewModel độc lập
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,7 +49,7 @@ fun WriteReviewScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("Viết đánh giá", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.DanhGiaSanPham), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack, enabled = !isSubmitting) { Icon(Icons.Default.ArrowBack, null) }
                 },
@@ -117,7 +119,7 @@ fun WriteReviewScreen(
             Button(
                 onClick = {
                     if (content.isBlank()) {
-                        Toast.makeText(context, "Vui lòng viết nội dung đánh giá!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.VuiLongVietNoiDungDanhGia), Toast.LENGTH_SHORT).show()
                         return@Button
                     }
                     viewModel.submitProductReview(
@@ -125,7 +127,7 @@ fun WriteReviewScreen(
                         rating = rating,
                         content = content,
                         onSuccess = {
-                            Toast.makeText(context, "Đánh giá thành công!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.DanhGiaThanhCong), Toast.LENGTH_SHORT).show()
                             onReviewSubmitted()
                         },
                         onError = {
