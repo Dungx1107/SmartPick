@@ -553,11 +553,15 @@ fun PostDetailContent(
 
 @Composable
 fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
+    // Nếu trong file Product.kt của bạn chưa có thuộc tính `stock`,
+    // hãy sửa file Product.kt thêm `val stock: Int = 0` nhé!
+    val isOutOfStock = product.stock <= 0
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .clickable { onClick() },
+            .clickable(enabled = !isOutOfStock) { onClick() }, // Vô hiệu hóa click toàn Card nếu hết hàng
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = SmartPickColor.copy(alpha = 0.05f)),
         border = BorderStroke(1.dp, SmartPickColor.copy(alpha = 0.2f))
@@ -576,19 +580,27 @@ fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
                     .padding(start = 12.dp)
                     .weight(1f)
             ) {
-                Text(
-                    product.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    maxLines = 1
-                ); Text("${product.price}đ", color = SmartPickColor, fontWeight = FontWeight.Bold)
+                Text(product.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
+                Text("${product.price}đ", color = SmartPickColor, fontWeight = FontWeight.Bold)
+                if (isOutOfStock) {
+                    Text("Đã hết hàng", color = MaterialTheme.colorScheme.error, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                } else {
+                    Text("Kho: ${product.stock}", color = TextMuted, fontSize = 11.sp)
+                }
             }
             Button(
                 onClick = onClick,
-                colors = ButtonDefaults.buttonColors(containerColor = SmartPickColor),
+                enabled = !isOutOfStock, // Vô hiệu hóa nút Mua
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SmartPickColor,
+                    disabledContainerColor = Color.LightGray,
+                    disabledContentColor = Color.DarkGray
+                ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(8.dp)
-            ) { Text("Mua ngay", fontSize = 12.sp) }
+            ) {
+                Text(if (isOutOfStock) "Hết hàng" else "Mua ngay", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
