@@ -49,11 +49,15 @@ class FeedViewModel @Inject constructor(
     fun refreshFeedSilently() {
         viewModelScope.launch {
             try {
-                val currentUserId = authRepository.getCurrentUser()?.id ?: ""
-                val posts = feedRepository.getPostsWithUsers(currentUserId)
-                _uiState.value = FeedUiState.Success(posts.filter { it.first.sharedPostId == null })
-                _reactedPosts.value = feedRepository.getReactedPosts(currentUserId)
-            } catch (e: Exception) { }
+                // authRepository là instance AuthRepository bạn đã inject vào FeedViewModel
+                val currentUserId = authRepository.getCurrentUser()?.id ?: return@launch
+                val updatedPosts = feedRepository.getPostsWithUsers(currentUserId)
+                if (updatedPosts.isNotEmpty()) {
+                    _uiState.value = FeedUiState.Success(updatedPosts)
+                }
+            } catch (e: Exception) {
+                // Ignore silent update errors
+            }
         }
     }
 

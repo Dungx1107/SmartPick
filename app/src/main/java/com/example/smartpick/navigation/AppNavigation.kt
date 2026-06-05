@@ -340,10 +340,13 @@ fun AppNavigation(
                     arguments = listOf(navArgument("postId") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val postId = backStackEntry.arguments?.getString("postId") ?: ""
-                    com.example.smartpick.features.post_creation.ui.EditPostScreen(
-                        postId = postId,
-                        onClose = { navController.popBackStack() }
-                    )
+                    // FIX: Bọc Box và truyền innerPadding để TopBar không bị che khuất
+                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                        com.example.smartpick.features.post_creation.ui.EditPostScreen(
+                            postId = postId,
+                            onClose = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }

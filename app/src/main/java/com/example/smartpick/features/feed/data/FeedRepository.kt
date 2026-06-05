@@ -12,7 +12,6 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
-// Dòng import cực kỳ quan trọng để dùng được Storage Supabase
 import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,7 +26,6 @@ class FeedRepository @Inject constructor(
 ) {
     private val TABLE_REACTIONS = "post_reactions"
 
-    // DTO DÀNH RIÊNG CHO HÀNG ĐÃ BÁN
     @Serializable
     data class SoldItemDto(
         val id: String,
@@ -35,6 +33,20 @@ class FeedRepository @Inject constructor(
         @SerialName("price_at_purchase") val priceAtPurchase: Double,
         @SerialName("created_at") val createdAt: String? = null,
         val products: ProductDto? = null
+    )
+
+    @Serializable
+    private data class PostUpdateDto(
+        val content: String?,
+        @SerialName("media_urls") val mediaUrls: List<String>
+    )
+
+    @Serializable
+    private data class ProductUpdateDto(
+        val name: String,
+        val brand: String?,
+        val category: String?,
+        val price: Double
     )
 
     @Serializable
@@ -91,10 +103,16 @@ class FeedRepository @Inject constructor(
         @SerialName("posts") val post: SafePostResponse? = null
     )
 
+    // Lấy dữ liệu cho trang Feed (Chỉ lấy bài viết gốc, không lấy bài chia sẻ)
     suspend fun getPostsWithUsers(currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
-            val response = supabase.postgrest[TABLE_POSTS].select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) { order("created_at", Order.DESCENDING) }
-            val rawPosts = response.decodeList<SafePostResponse>()
+            val response = supabase.postgrest[TABLE_POSTS].select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
+                order("created_at", Order.DESCENDING)
+            }
+
+            // FIX TRIỆT ĐỂ: Dùng Kotlin filter để lọc bỏ các bài đăng chia sẻ (sharedPostId != null)
+            // Cách này an toàn 100% không phụ thuộc vào cú pháp của SDK Supabase.
+            val rawPosts = response.decodeList<SafePostResponse>().filter { it.sharedPostId == null }
 
             val sharedPostIds = rawPosts.mapNotNull { it.sharedPostId }.distinct()
             val sharedPostsMap = mutableMapOf<String, Triple<Post, User, Product?>>()
@@ -107,6 +125,7 @@ class FeedRepository @Inject constructor(
         } catch (e: Exception) { emptyList() }
     }
 
+    // Lấy dữ liệu cho trang Profile (Giữ nguyên: lấy cả bài viết gốc + bài đã chia sẻ)
     suspend fun getUserPosts(profileUserId: String, currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
             val response = supabase.postgrest[TABLE_POSTS].select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
@@ -128,7 +147,6 @@ class FeedRepository @Inject constructor(
 
     suspend fun getReactedPosts(currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
-            // FIX: Đã xóa 1 dấu ')' bị dư sau chữ post_reactions(*)
             val response = supabase.postgrest[TABLE_REACTIONS].select(columns = Columns.raw("post_id, user_id, posts(*, users(*), products(*), post_reactions(*))")) {
                 filter { eq("user_id", currentUserId) }
                 order("created_at", Order.DESCENDING)
@@ -221,7 +239,7 @@ class FeedRepository @Inject constructor(
         try {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
             val fileName = "${java.util.UUID.randomUUID()}.jpg"
-            val bucket = supabase.storage.from("post_media") // Sử dụng from() chuẩn Supabase
+            val bucket = supabase.storage.from("post_media")
             bucket.upload(fileName, bytes)
             bucket.publicUrl(fileName)
         } catch (e: Exception) {
@@ -237,20 +255,20 @@ class FeedRepository @Inject constructor(
         product: Product?
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val postUpdateData = mapOf(
-                "content" to newContent,
-                "media_urls" to newMediaUrls
+            val postUpdateData = PostUpdateDto(
+                content = newContent,
+                mediaUrls = newMediaUrls
             )
             supabase.postgrest[TABLE_POSTS].update(postUpdateData) {
                 filter { eq("id", postId) }
             }
 
             if (product != null && product.id != null) {
-                val productUpdateData = mapOf(
-                    "name" to product.name,
-                    "brand" to product.brand,
-                    "category" to product.category,
-                    "price" to product.price
+                val productUpdateData = ProductUpdateDto(
+                    name = product.name,
+                    brand = product.brand,
+                    category = product.category,
+                    price = product.price
                 )
                 supabase.postgrest["products"].update(productUpdateData) {
                     filter { eq("id", product.id) }
