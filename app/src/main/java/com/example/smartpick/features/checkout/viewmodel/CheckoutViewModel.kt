@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.features.auth.data.AuthRepository
 import com.example.smartpick.features.checkout.data.OrderRepository
-import com.example.smartpick.features.home.data.HomeRepository // Tạm thời dùng để lấy thông tin giỏ hàng hiện tại
+import com.example.smartpick.features.home.data.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,6 @@ class CheckoutViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    // Quản lý trạng thái Form nhập liệu
     var phone = MutableStateFlow("")
     var address = MutableStateFlow("")
     var paymentMethod = MutableStateFlow("COD")
@@ -35,9 +34,6 @@ class CheckoutViewModel @Inject constructor(
         loadCurrentCart()
     }
 
-    /**
-     * Tải danh sách item cần thanh toán trong giỏ hàng hiện tại
-     */
     private fun loadCurrentCart() {
         viewModelScope.launch {
             try {
@@ -55,9 +51,6 @@ class CheckoutViewModel @Inject constructor(
     fun updateAddress(value: String) { address.value = value }
     fun updatePaymentMethod(value: String) { paymentMethod.value = value }
 
-    /**
-     * Xử lý gửi đơn đặt hàng
-     */
     fun placeOrder(onSuccess: () -> Unit, onError: (String) -> Unit) {
         val currentPhone = phone.value
         val currentAddress = address.value
@@ -72,6 +65,24 @@ class CheckoutViewModel @Inject constructor(
         if (currentItems.isEmpty()) {
             onError("Giỏ hàng của bạn đang trống")
             return
+        }
+
+        // ==========================================
+        // FIX: CHỐT CHẶN TỒN KHO TRƯỚC KHI ĐẶT HÀNG
+        // ==========================================
+        val outOfStockItem = currentItems.find { item ->
+            val stock = item.product?.stock ?: 0
+            item.quantity > stock // Nếu số lượng mua lớn hơn số lượng kho
+        }
+
+        if (outOfStockItem != null) {
+            val stockInfo = outOfStockItem.product?.stock ?: 0
+            if (stockInfo <= 0) {
+                onError("Sản phẩm '${outOfStockItem.product?.name}' hiện đã hết hàng!")
+            } else {
+                onError("Sản phẩm '${outOfStockItem.product?.name}' chỉ còn $stockInfo chiếc trong kho!")
+            }
+            return // Dừng ngay luồng đặt hàng
         }
 
         viewModelScope.launch {
