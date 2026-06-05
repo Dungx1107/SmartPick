@@ -346,12 +346,29 @@ fun PostDetailContent(
                                                 .fillMaxWidth()
                                                 .height(350.dp)
                                         ) { page ->
-                                            AsyncImage(
-                                                model = post.mediaUrls[page],
-                                                contentDescription = null,
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentScale = ContentScale.Crop
-                                            )
+                                            val url = post.mediaUrls[page]
+
+                                            // Kiểm tra xem URL có đuôi video hay không
+                                            val isVideo = url.lowercase().let {
+                                                it.endsWith(".mp4") || it.contains(".mp4?") ||
+                                                        it.endsWith(".mov") || it.contains(".mov?") ||
+                                                        it.endsWith(".webm") || it.contains(".webm?")
+                                            }
+
+                                            if (isVideo) {
+                                                // Gọi VideoPlayer. Nếu VideoPlayer của bạn nhận biến tên khác (vd: videoUrl) thì hãy đổi lại cho khớp nhé
+                                                VideoPlayer(
+                                                    videoUrl = url,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                            } else {
+                                                AsyncImage(
+                                                    model = url,
+                                                    contentDescription = null,
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentScale = ContentScale.Crop
+                                                )
+                                            }
                                         }
                                         if (post.mediaUrls.size > 1) {
                                             Row(

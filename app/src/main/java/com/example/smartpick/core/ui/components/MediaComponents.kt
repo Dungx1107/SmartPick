@@ -26,194 +26,62 @@ import coil.compose.AsyncImage
 import coil.decode.VideoFrameDecoder
 import coil.request.ImageRequest
 
-/**
- * Hiển thị danh sách media (ảnh/video) theo dạng lưới động.
- *
- * Layout sẽ tự động thay đổi dựa trên số lượng media:
- *
- * - 1 media:
- *   Hiển thị full chiều ngang.
- *
- * - 2 media:
- *   Chia đôi màn hình theo chiều dọc.
- *
- * - 3 media:
- *   1 media lớn bên trái,
- *   2 media nhỏ xếp chồng bên phải.
- *
- * - 4 media trở lên:
- *   Hiển thị dạng lưới 2x2.
- *   Nếu số lượng > 4 sẽ hiển thị overlay "+x".
- *
- * Hỗ trợ:
- * - Ảnh.
- * - Video thumbnail bằng Coil VideoFrameDecoder.
- *
- * @param mediaUrls Danh sách URL media từ Supabase Storage.
- * @param modifier Modifier tùy chỉnh cho layout tổng thể.
- */
+private fun isVideoUrl(url: String): Boolean {
+    val lower = url.lowercase()
+    return lower.endsWith(".mp4") || lower.contains(".mp4?") ||
+            lower.endsWith(".mov") || lower.contains(".mov?") ||
+            lower.endsWith(".webm") || lower.contains(".webm?")
+}
+
 @Composable
 fun MediaGrid(
     mediaUrls: List<String>,
     modifier: Modifier = Modifier
 ) {
-
     val context = LocalContext.current
-
-    // Tổng số media
     val totalMedia = mediaUrls.size
 
-    // Không hiển thị nếu danh sách rỗng
     if (totalMedia == 0) return
 
-    Column(
-        modifier = modifier.fillMaxWidth()
-    ) {
-
+    Column(modifier = modifier.fillMaxWidth()) {
         when (totalMedia) {
-
-            // =====================================================
-            // 1 MEDIA
-            // =====================================================
             1 -> {
-
-                MediaItem(
-                    url = mediaUrls[0],
-                    modifier = Modifier.fillMaxWidth()
-                        .height(300.dp)
-                )
+                MediaItem(url = mediaUrls[0], modifier = Modifier.fillMaxWidth().height(300.dp))
             }
-
-            // =====================================================
-            // 2 MEDIA
-            // =====================================================
             2 -> {
-
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .height(200.dp)
-                ) {
-
-                    MediaItem(
-                        url = mediaUrls[0],
-                        modifier = Modifier.weight(1f)
-                            .fillMaxHeight()
-                    )
-
+                Row(modifier = Modifier.fillMaxWidth().height(200.dp)) {
+                    MediaItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxHeight())
                     Spacer(modifier = Modifier.width(4.dp))
-
-                    MediaItem(
-                        url = mediaUrls[1],
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    )
+                    MediaItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxHeight())
                 }
             }
-
-            // =====================================================
-            // 3 MEDIA
-            // =====================================================
             3 -> {
-
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .height(300.dp)
-                ) {
-
-                    // Media lớn bên trái
-                    MediaItem(
-                        url = mediaUrls[0],
-                        modifier = Modifier.weight(1f)
-                            .fillMaxHeight()
-                    )
-
+                Row(modifier = Modifier.fillMaxWidth().height(300.dp)) {
+                    MediaItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxHeight())
                     Spacer(modifier = Modifier.width(4.dp))
-
-                    // 2 media nhỏ bên phải
-                    Column(
-                        modifier = Modifier.weight(1f)
-                            .fillMaxHeight()
-                    ) {
-
-                        MediaItem(
-                            url = mediaUrls[1],
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                        )
-
+                    Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        MediaItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxWidth())
                         Spacer(modifier = Modifier.height(4.dp))
-
-                        MediaItem(
-                            url = mediaUrls[2],
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth()
-                        )
+                        MediaItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxWidth())
                     }
                 }
             }
-
-            // =====================================================
-            // 4 MEDIA TRỞ LÊN
-            // =====================================================
             else -> {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                        .height(400.dp)
-                ) {
-
-                    // Hàng trên
-                    Row(
-                        modifier = Modifier.weight(1f)
-                    ) {
-
-                        MediaItem(
-                            url = mediaUrls[0],
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight()
-                        )
-
+                Column(modifier = Modifier.fillMaxWidth().height(400.dp)) {
+                    Row(modifier = Modifier.weight(1f)) {
+                        MediaItem(url = mediaUrls[0], modifier = Modifier.weight(1f).fillMaxHeight())
                         Spacer(modifier = Modifier.width(4.dp))
-
-                        MediaItem(
-                            url = mediaUrls[1],
-                            modifier = Modifier.weight(1f)
-                                .fillMaxHeight()
-                        )
+                        MediaItem(url = mediaUrls[1], modifier = Modifier.weight(1f).fillMaxHeight())
                     }
-
                     Spacer(modifier = Modifier.height(4.dp))
-
-                    // Hàng dưới
-                    Row(
-                        modifier = Modifier.weight(1f)
-                    ) {
-
-                        MediaItem(
-                            url = mediaUrls[2],
-                            modifier = Modifier.weight(1f).fillMaxHeight()
-                        )
-
+                    Row(modifier = Modifier.weight(1f)) {
+                        MediaItem(url = mediaUrls[2], modifier = Modifier.weight(1f).fillMaxHeight())
                         Spacer(modifier = Modifier.width(4.dp))
-
-                        // Media cuối cùng
-                        Box(
-                            modifier = Modifier.weight(1f).fillMaxHeight()
-                        ) {
-
-                            MediaItem(
-                                url = mediaUrls[3],
-                                modifier = Modifier.fillMaxSize()
-                            )
-
-                            // Overlay hiển thị số media còn lại
+                        Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                            MediaItem(url = mediaUrls[3], modifier = Modifier.fillMaxSize())
                             if (totalMedia > 4) {
                                 Box(
-                                    modifier = Modifier.fillMaxSize()
-                                        .background(Color.Black.copy(alpha = 0.5f)),
+                                    modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.5f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(
@@ -232,35 +100,25 @@ fun MediaGrid(
     }
 }
 
-/**
- * Hiển thị một media item đơn lẻ.
- *
- * Hỗ trợ:
- * - Hiển thị ảnh.
- * - Hiển thị thumbnail video tự động.
- *
- * Sử dụng:
- * - Coil AsyncImage.
- * - VideoFrameDecoder để trích frame video.
- *
- * @param url URL media từ Supabase Storage.
- * @param modifier Modifier dùng để tùy chỉnh kích thước và layout.
- */
 @Composable
 fun MediaItem(
     url: String,
     modifier: Modifier = Modifier
 ) {
-    AsyncImage(       // Cấu hình Coil ImageRequest
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(url)     // URL media
-            .decoderFactory(VideoFrameDecoder.Factory()) // Tự động lấy thumbnail nếu là video
-            .crossfade(true)  // Hiệu ứng fade khi load
-            .build(),
-
-        contentDescription = null,
-        modifier = modifier.clip(RoundedCornerShape(4.dp)),
-        contentScale = ContentScale.Crop   // Crop để ảnh/video phủ kín item
-
-    )
+    if (isVideoUrl(url)) {
+        // Nếu là video, sử dụng VideoPlayer
+        VideoPlayer(videoUrl = url, modifier = modifier.clip(RoundedCornerShape(4.dp)))
+    } else {
+        // Nếu là ảnh, sử dụng AsyncImage
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(url)
+                .decoderFactory(VideoFrameDecoder.Factory())
+                .crossfade(true)
+                .build(),
+            contentDescription = null,
+            modifier = modifier.clip(RoundedCornerShape(4.dp)),
+            contentScale = ContentScale.Crop
+        )
+    }
 }
