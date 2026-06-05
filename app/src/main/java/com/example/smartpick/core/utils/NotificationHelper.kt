@@ -1,6 +1,5 @@
 package com.example.smartpick.core.utils
 
-import android.R
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 
 object NotificationHelper {
     private const val CHANNEL_ID = "smartpick_channel_id"
@@ -37,7 +37,7 @@ object NotificationHelper {
 
         // 2. Tạo Intent xử lý Deep Link khi User click vào thông báo
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(deepLink)).apply {
-            setPackage(context.packageName) // Đảm bảo mở bằng ứng dụng hiện tại
+            setPackage(context.packageName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 
@@ -48,20 +48,17 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 3. Build giao diện Notification
+        // 3. Build giao diện Notification tiêu chuẩn
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            // QUAN TRỌNG: Thay R.drawable.ic_launcher_foreground bằng icon app của bạn.
-            // Nếu dùng icon mặc định của Android, giao diện sẽ bị lỗi màu trắng hoặc hiển thị sai.
-            .setSmallIcon(R.drawable.ic_dialog_info)
-//            .setSmallIcon(R.mipmap.ic_launcher.)
+            .setSmallIcon(com.example.smartpick.R.drawable.smartpick_icon)
             .setContentTitle(title)
             .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(body)) // Hỗ trợ hiển thị text dài
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true) // Tự động tắt thông báo khi click
-            .setContentIntent(pendingIntent) // Gắn sự kiện click
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
 
-        // 4. Hiển thị
+        // 4. Hiển thị thông báo lên hệ thống
         notificationManager.notify(notificationId, builder.build())
     }
 }
