@@ -60,32 +60,27 @@ fun PostHeader(
             if (isShared) {
                 Text(
                     text = buildAnnotatedString {
-                        withStyle(
-                            SpanStyle(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        ) { append(user.fullName ?: stringResource(R.string.NguoiDung)) }
-                        append(stringResource(R.string.daChiaSeBaiViet))
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) { append(user.fullName ?: "Người dùng") }
+                        append(" đã chia sẻ một bài viết.")
                     },
                     fontSize = 15.sp, color = TextMuted
                 )
             } else {
                 Text(
-                    text = user.fullName ?: stringResource(R.string.smartpick_user),
+                    text = user.fullName ?: "Người dùng SmartPick",
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
+            // FIX: Tách chuỗi thời gian chuẩn ISO 8601 (Chữ "T" viết hoa)
             Text(
-                text = createdAt.split(stringResource(R.string.t)).firstOrNull() ?: "",
+                text = createdAt.split("T").firstOrNull() ?: "Vừa xong",
                 fontSize = 12.sp,
                 color = TextMuted
             )
         }
 
-        // CHỈ HIỆN 3 CHẤM (SỬA/XÓA) NẾU LÀ BÀI CỦA MÌNH
         if (currentUserId == postOwnerId && currentUserId != null) {
             Box {
                 IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, null, tint = TextMuted) }
@@ -103,7 +98,6 @@ fun PostHeader(
                 }
             }
         } else {
-            // Hiện nút 3 chấm mặc định cho bài người khác
             IconButton(onClick = onMoreClick) { Icon(Icons.Default.MoreVert, null, tint = TextMuted) }
         }
     }
