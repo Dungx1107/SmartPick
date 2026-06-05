@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,6 +31,7 @@ import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.CreatePostPrompt
 import com.example.smartpick.core.ui.components.post.PostItem
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.profile.viewmodel.ProfileViewModel
@@ -47,7 +49,6 @@ fun ProfileScreen(
     val isLoading by profileViewModel.isLoading.collectAsState()
     val context = LocalContext.current
 
-    // FIX UX: Bộ lắng nghe vòng đời. Mỗi khi quay lại trang Profile, bắt buộc load lại data mới nhất
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -73,7 +74,8 @@ fun ProfileScreen(
         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) },
         onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
         onHistoryClick = { navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") { launchSingleTop = true } },
-        onNotificationsClick = { navController.navigate(Routes.Notifications.route) { launchSingleTop = true } },
+        onSettingsClick = { navController.navigate(Routes.Settings.route) },
+
         onDeletePost = { postId ->
             profileViewModel.deletePost(
                 postId = postId,
@@ -102,21 +104,25 @@ fun ProfileContent(
     onCreatePostClick: () -> Unit,
     onPostClick: (String) -> Unit,
     onHistoryClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {},
+    onSettingsClick: () -> Unit = {},
     onDeletePost: (String) -> Unit = {},
     onEditPost: (String) -> Unit = {},
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
     onShareClick: (String, String) -> Unit = { _, _ -> }
 ) {
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
-        contentPadding = PaddingValues(top = paddingValues.calculateTopPadding() + 8.dp, bottom = paddingValues.calculateBottomPadding() + 32.dp)
-    ) {
+        modifier = Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding(),
+        contentPadding = PaddingValues(
+            top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 4.dp,
+            bottom = paddingValues.calculateBottomPadding() + 32.dp
+        )    ) {
         item {
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 ProfileHeaderCard(user = user, onEditProfile = onEditProfile)
                 Spacer(modifier = Modifier.height(28.dp))
-                SettingsBentoGrid(onHistoryClick = onHistoryClick, onNotificationsClick = onNotificationsClick)
+                SettingsBentoGrid(onHistoryClick = onHistoryClick, onSettingsClick = onSettingsClick)
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -156,5 +162,75 @@ fun ProfileContent(
                 Text("SmartPick Version 1.0", fontSize = 10.sp, color = TextMuted, fontWeight = FontWeight.Bold)
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Trang cá nhân chính thức")
+@Composable
+fun ProfileContentPreview() {
+    SmartPickTheme {
+        // 1. Tạo dữ liệu User giả lập
+        val mockUser = User(
+            id = "user_123",
+            email = "nguyenvana@gmail.com",
+            fullName = "Nguyễn Văn A",
+            username = "nguyenvana123",
+            avatarUrl = null
+        )
+
+        // 2. Tạo dữ liệu Sản phẩm giả lập
+        val mockProduct = Product(
+            id = "prod_001",
+            ownerId = "owner_456",            // Thêm trường ownerId bắt buộc[cite: 11]
+            name = "Tai nghe chụp tai Sony WH-1000XM5",
+            brand = "Sony",                   // Thêm brand tùy chọn[cite: 11]
+            category = "Audio",               // Thêm category tùy chọn[cite: 11]
+            price = 6500000.0,
+            imageUrls = emptyList(),          // Thay thế bằng imageUrls hệ List<String>[cite: 11]
+            status = "available",             // Thuộc tính mặc định[cite: 11]
+            stock = 10,
+            soldCount = 2
+        )
+
+        // 3. Tạo danh sách Bài viết mẫu (Cấu trúc Triple tương thích với LazyColumn của bạn)
+        val mockPosts = listOf(
+            Triple(
+                Post(
+                    id = "post_01",
+                    userId = "user_123",
+                    content = "Trải nghiệm thực tế chiếc tai nghe Sony WH-1000XM5 sau 3 tháng sử dụng. Chất âm bass sâu, chống ồn chủ động đỉnh cao, cực kỳ đáng tiền cho anh em lập trình viên tập trung làm việc!",
+                    createdAt = "2026-06-06T08:00:00Z"
+                ),
+                mockUser,
+                mockProduct
+            ),
+            Triple(
+                Post(
+                    id = "post_02",
+                    userId = "user_123",
+                    content = "Hôm nay vừa setup xong giao diện mới cho app SmartPick, bỏ luôn thanh TopAppBar nhìn thoáng và cao hẳn lên, anh em thấy giao diện này ổn không?",
+                    createdAt = "2026-06-05T15:30:00Z"
+                ),
+                mockUser,
+                null // Bài viết này dạng thảo luận, không gắn sản phẩm
+            )
+        )
+
+        ProfileContent(
+            user = mockUser,
+            posts = mockPosts,
+            isLoading = false,
+            paddingValues = PaddingValues(top = 0.dp, bottom = 56.dp),
+            onLogout = {},
+            onEditProfile = {},
+            onCreatePostClick = {},
+            onPostClick = {},
+            onHistoryClick = {},
+            onSettingsClick = {},
+            onDeletePost = {},
+            onEditPost = {},
+            onReactionClick = { _, _ -> },
+            onShareClick = { _, _ -> }
+        )
     }
 }

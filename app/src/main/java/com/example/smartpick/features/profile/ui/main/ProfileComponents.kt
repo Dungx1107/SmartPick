@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.HelpCenter
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -140,7 +141,7 @@ fun ProfileHeaderCard(
 @Composable
 fun SettingsBentoGrid(
     onHistoryClick: () -> Unit = {},
-    onNotificationsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -162,15 +163,16 @@ fun SettingsBentoGrid(
                 description = stringResource(R.string.QuanLiTaiChinh)
             )
         }
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SettingItemCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Default.NotificationsActive,
+                icon = Icons.Default.Settings,
                 iconBgColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.4f),
                 iconColor = MaterialTheme.colorScheme.tertiary,
-                title = stringResource(R.string.ThongBao),
-                description = stringResource(R.string.TuyChinhCachNhanTinTuc),
-                onClick = onNotificationsClick
+                title = stringResource(R.string.CaiDat),
+                description = "Tùy chỉnh tài khoản & ứng dụng",
+                onClick = onSettingsClick
             )
             SettingItemCard(
                 modifier = Modifier.weight(1f),

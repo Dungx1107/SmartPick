@@ -14,7 +14,10 @@ sealed class Routes(val route: String) {
     object Settings : Routes("settings")
     object Checkout : Routes("checkout")
 
-    // THÊM MỚI: Route cho màn hình viết đánh giá
+    object EditPost : Routes("edit_post/{postId}") {
+        const val ARG_POST_ID = "postId"
+        fun createRoute(postId: String) = "edit_post/$postId"
+    }
     object WriteReview : Routes("write_review/{productId}") {
         const val ARG_PRODUCT_ID = "productId"
         fun createRoute(productId: String) = "write_review/$productId"
@@ -29,8 +32,6 @@ sealed class Routes(val route: String) {
         fun createRoute(postId: String, postOwnerId: String) = "comments/$postId/$postOwnerId"
     }
 
-
-    // Dành cho click thông báo bên trong màn hình NotificationsScreen của app
     object CommentsFromNotification : Routes("comments_notification/{postId}?commentId={commentId}") {
         fun createRoute(postId: String, commentId: String) = "comments_notification/$postId?commentId=$commentId"
     }

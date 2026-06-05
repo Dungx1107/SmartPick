@@ -1,17 +1,22 @@
 package com.example.smartpick.navigation
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.DynamicFeed
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.DynamicFeed
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -21,7 +26,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,6 +38,7 @@ import com.example.smartpick.R
 @Composable
 fun MainBottomBar(
     navController: NavController,
+    unreadCount: Int,
     onNavigate: (String) -> Unit
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -41,6 +46,7 @@ fun MainBottomBar(
 
     MainBottomBarContent(
         currentRoute = currentRoute,
+        unreadCount = unreadCount,
         onNavigate = onNavigate
     )
 }
@@ -48,14 +54,15 @@ fun MainBottomBar(
 @Composable
 fun MainBottomBarContent(
     currentRoute: String?,
+    unreadCount: Int,
     onNavigate: (String) -> Unit
 ) {
-    // FIX: Bổ sung thêm selectedIcon và unselectedIcon để đồng bộ mỹ thuật
     data class NavItem(
         val selectedIcon: ImageVector,
         val unselectedIcon: ImageVector,
         val label: String,
-        val route: String
+        val route: String,
+        val isNotification: Boolean = false
     )
 
     val items = listOf(
@@ -72,8 +79,9 @@ fun MainBottomBarContent(
             stringResource(R.string.reviews), Routes.ReviewHub.route
         ),
         NavItem(
-            Icons.Filled.Bookmark, Icons.Outlined.BookmarkBorder,
-            stringResource(R.string.saved), Routes.Saved.route
+            Icons.Filled.Notifications, Icons.Outlined.Notifications,
+            stringResource(R.string.alert), Routes.Notifications.route,
+            isNotification = true
         ),
         NavItem(
             Icons.Filled.Person, Icons.Outlined.Person,
@@ -81,33 +89,63 @@ fun MainBottomBarContent(
         ),
     )
 
-    NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 8.dp
-    ) {
-        items.forEach { item ->
-            val selected = currentRoute == item.route
+    Column {
+        HorizontalDivider(
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+        )
 
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        // FIX: Logic đổi Icon dựa trên trạng thái
-                        if (selected) item.selectedIcon else item.unselectedIcon,
-                        contentDescription = item.label,
-                        modifier = Modifier.size(24.dp)
+        NavigationBar(
+            containerColor = MaterialTheme.colorScheme.surface,
+            tonalElevation = 0.dp
+        ) {
+            items.forEach { item ->
+                val selected = currentRoute?.substringBefore("?")?.substringBefore("/") ==
+                        item.route.substringBefore("?")?.substringBefore("/")
+
+                NavigationBarItem(
+                    icon = {
+                        if (item.isNotification) {
+                            BadgedBox(
+                                badge = {
+                                    if (unreadCount > 0) {
+                                        val badgeText = if (unreadCount > 9) stringResource(R.string._9cong) else unreadCount.toString()
+                                        Badge(
+                                            modifier = Modifier.offset(x = 4.dp, y = (-4).dp),
+                                            containerColor = MaterialTheme.colorScheme.error,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary
+                                        ) {
+                                            Text(text = badgeText, fontSize = 9.sp)
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                    contentDescription = item.label,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        } else {
+                            Icon(
+                                imageVector = if (selected) item.selectedIcon else item.unselectedIcon,
+                                contentDescription = item.label,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    },
+                    label = { Text(item.label, fontSize = 10.sp) },
+                    selected = selected,
+                    onClick = { onNavigate(item.route) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer
                     )
-                },
-                label = { Text(item.label, fontSize = 10.sp) },
-                selected = selected,
-                onClick = { onNavigate(item.route) },
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.primary,
-                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    indicatorColor = MaterialTheme.colorScheme.primaryContainer
                 )
-            )
+            }
         }
     }
 }
@@ -115,5 +153,9 @@ fun MainBottomBarContent(
 @Preview(showBackground = true)
 @Composable
 fun MainBottomBarPreview() {
-    MainBottomBarContent(currentRoute = Routes.Home.route, onNavigate = {})
+    MainBottomBarContent(
+        currentRoute = Routes.Home.route,
+        unreadCount = 5,
+        onNavigate = {}
+    )
 }

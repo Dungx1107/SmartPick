@@ -29,9 +29,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.smartpick.R
 import com.example.smartpick.core.utils.NavigationUtils.shouldShowBottomBar
-import com.example.smartpick.core.utils.NavigationUtils.shouldShowTopBar
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
@@ -43,6 +41,7 @@ import com.example.smartpick.features.home.ui.HomeScreen
 import com.example.smartpick.features.notification.data.NotificationType
 import com.example.smartpick.features.notification.ui.NotificationsScreen
 import com.example.smartpick.features.notification.viewmodel.NotificationViewModel
+import com.example.smartpick.features.post_creation.ui.EditPostScreen
 import com.example.smartpick.features.profile.ui.main.ProfileScreen
 import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
@@ -64,7 +63,6 @@ fun AppNavigation(
     val isInitializing by authViewModel.isInitializing.collectAsState()
 
     val showBottomBar = shouldShowBottomBar(currentRoute)
-    val showTopBar = shouldShowTopBar(currentRoute)
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
     var feedScrollToTopTrigger by remember { mutableLongStateOf(0L) }
@@ -108,42 +106,24 @@ fun AppNavigation(
         }
     } else {
         Scaffold(
-            topBar = {
-                if (showTopBar) {
-                    MainTopBar(
-                        onMenuClick = { navController.navigate(Routes.Settings.route) },
-                        onNotificationClick = { navController.navigate(Routes.Notifications.route) },
-                        onTitleClick = {
-                            if (currentRoute == Routes.Feed.route) {
-                                feedScrollToTopTrigger = System.currentTimeMillis()
-                            }
-                        },
-                        tagText = when (currentRoute) {
-                            Routes.Home.route -> stringResource(R.string.app_name)
-                            Routes.Feed.route -> stringResource(R.string.feeds)
-                            Routes.ReviewHub.route -> stringResource(R.string.reviews)
-                            Routes.Saved.route -> stringResource(R.string.saved)
-                            Routes.Profile.route -> stringResource(R.string.profile)
-                            Routes.CreatePost.route -> stringResource(R.string.create_post)
-                            Routes.Notifications.route -> stringResource(R.string.notifications)
-                            Routes.EditProfile.route -> stringResource(R.string.profile)
-                            else -> null
-                        },
-                        showNotificationBadge = unreadCount
-                    )
-                }
-            },
             bottomBar = {
                 if (showBottomBar) {
                     MainBottomBar(
                         navController = navController,
+                        unreadCount = unreadCount, // KHẮC PHỤC LỖI: Truyền unreadCount xuống MainBottomBar
                         onNavigate = { route ->
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                            // Tránh điều hướng lại nếu đang ở chính màn hình đó
+                            if (currentRoute?.substringBefore("?")?.substringBefore("/") != route.substringBefore("?")?.substringBefore("/")) {
+                                navController.navigate(route) {
+                                    // Pop up về start destination của đồ thị để tránh tích tụ backstack
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    // Tránh khởi tạo lại màn hình nếu nó đã nằm ở trên cùng của backstack
+                                    launchSingleTop = true
+                                    // Khôi phục lại trạng thái cuộn hoặc dữ liệu trước đó của màn hình khi quay lại
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         }
                     )
@@ -175,7 +155,7 @@ fun AppNavigation(
                     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                         HomeScreen(
                             navController = navController,
-                            paddingValues = PaddingValues(0.dp) // FIX: Trả lại 0.dp để Home hiện Cart bình thường
+                            paddingValues = PaddingValues(0.dp)
                         )
                     }
                 }
@@ -189,7 +169,7 @@ fun AppNavigation(
                         },
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) },
                         onEditPostClick = { postId ->
-                            navController.navigate("edit_post/$postId")
+                            navController.navigate(Routes.EditPost.createRoute(postId))
                         },
                     )
                 }
@@ -340,13 +320,12 @@ fun AppNavigation(
                 }
 
                 composable(
-                    route = "edit_post/{postId}",
-                    arguments = listOf(navArgument("postId") { type = NavType.StringType })
+                    route = Routes.EditPost.route,
+                    arguments = listOf(navArgument(Routes.EditPost.ARG_POST_ID) { type = NavType.StringType })
                 ) { backStackEntry ->
-                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
-                    // FIX: Bọc Box và truyền innerPadding để TopBar không bị che khuất
+                    val postId = backStackEntry.arguments?.getString(Routes.EditPost.ARG_POST_ID) ?: ""
                     Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        com.example.smartpick.features.post_creation.ui.EditPostScreen(
+                        EditPostScreen(
                             postId = postId,
                             onClose = { navController.popBackStack() }
                         )
