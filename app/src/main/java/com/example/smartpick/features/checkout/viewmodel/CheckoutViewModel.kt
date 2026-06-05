@@ -32,6 +32,33 @@ class CheckoutViewModel @Inject constructor(
 
     init {
         loadCurrentCart()
+        loadUserDefaultInfo() // FIX: Tự động gọi hàm gợi ý thông tin khi mở màn hình
+    }
+
+    /**
+     * Tự động lấy thông tin từ Profile và Đơn hàng cũ để điền sẵn cho khách
+     */
+    private fun loadUserDefaultInfo() {
+        viewModelScope.launch {
+            val user = authRepository.getCurrentUser()
+            if (user != null) {
+                // 1. Cố gắng lấy SĐT từ Profile người dùng trước
+                if (!user.phoneNumber.isNullOrBlank()) {
+                    phone.value = user.phoneNumber
+                }
+
+                // 2. Tìm đơn hàng gần nhất. Nếu có, ưu tiên lấy thông tin từ đơn hàng này (vì nó là địa chỉ giao thực tế)
+                val lastOrder = orderRepository.getLastOrderInfo(user.id)
+                if (lastOrder != null) {
+                    if (!lastOrder.phoneNumber.isNullOrBlank()) {
+                        phone.value = lastOrder.phoneNumber
+                    }
+                    if (!lastOrder.shippingAddress.isNullOrBlank()) {
+                        address.value = lastOrder.shippingAddress
+                    }
+                }
+            }
+        }
     }
 
     private fun loadCurrentCart() {
@@ -67,12 +94,10 @@ class CheckoutViewModel @Inject constructor(
             return
         }
 
-        // ==========================================
-        // FIX: CHỐT CHẶN TỒN KHO TRƯỚC KHI ĐẶT HÀNG
-        // ==========================================
+        // Chốt chặn tồn kho
         val outOfStockItem = currentItems.find { item ->
             val stock = item.product?.stock ?: 0
-            item.quantity > stock // Nếu số lượng mua lớn hơn số lượng kho
+            item.quantity > stock
         }
 
         if (outOfStockItem != null) {
@@ -82,7 +107,7 @@ class CheckoutViewModel @Inject constructor(
             } else {
                 onError("Sản phẩm '${outOfStockItem.product?.name}' chỉ còn $stockInfo chiếc trong kho!")
             }
-            return // Dừng ngay luồng đặt hàng
+            return
         }
 
         viewModelScope.launch {
