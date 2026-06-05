@@ -103,15 +103,11 @@ class FeedRepository @Inject constructor(
         @SerialName("posts") val post: SafePostResponse? = null
     )
 
-    // Lấy dữ liệu cho trang Feed (Chỉ lấy bài viết gốc, không lấy bài chia sẻ)
     suspend fun getPostsWithUsers(currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
             val response = supabase.postgrest[TABLE_POSTS].select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
                 order("created_at", Order.DESCENDING)
             }
-
-            // FIX TRIỆT ĐỂ: Dùng Kotlin filter để lọc bỏ các bài đăng chia sẻ (sharedPostId != null)
-            // Cách này an toàn 100% không phụ thuộc vào cú pháp của SDK Supabase.
             val rawPosts = response.decodeList<SafePostResponse>().filter { it.sharedPostId == null }
 
             val sharedPostIds = rawPosts.mapNotNull { it.sharedPostId }.distinct()
@@ -125,7 +121,6 @@ class FeedRepository @Inject constructor(
         } catch (e: Exception) { emptyList() }
     }
 
-    // Lấy dữ liệu cho trang Profile (Giữ nguyên: lấy cả bài viết gốc + bài đã chia sẻ)
     suspend fun getUserPosts(profileUserId: String, currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
             val response = supabase.postgrest[TABLE_POSTS].select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
@@ -238,7 +233,12 @@ class FeedRepository @Inject constructor(
     suspend fun uploadMedia(context: android.content.Context, uri: android.net.Uri): String? = withContext(Dispatchers.IO) {
         try {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
-            val fileName = "${java.util.UUID.randomUUID()}.jpg"
+
+            // FIX VIDEO: Tự động phát hiện MIME Type để gắn đuôi file chuẩn xác
+            val mimeType = context.contentResolver.getType(uri) ?: ""
+            val extension = if (mimeType.startsWith("video/")) ".mp4" else ".jpg"
+
+            val fileName = "${java.util.UUID.randomUUID()}$extension"
             val bucket = supabase.storage.from("post_media")
             bucket.upload(fileName, bytes)
             bucket.publicUrl(fileName)

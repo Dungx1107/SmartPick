@@ -18,6 +18,16 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.AccentBlue
+// FIX: Nhúng VideoPlayer vào Feed
+import com.example.smartpick.core.ui.components.VideoPlayer
+
+// Helper kiểm tra URL có phải video không
+private fun isVideoUrl(url: String): Boolean {
+    val lower = url.lowercase()
+    return lower.endsWith(".mp4") || lower.contains(".mp4?") ||
+            lower.endsWith(".mov") || lower.contains(".mov?") ||
+            lower.endsWith(".webm") || lower.contains(".webm?")
+}
 
 @Composable
 fun PostMainContent(
@@ -86,21 +96,33 @@ fun PostMainContent(
     }
 }
 
+// Widget dùng chung để hiển thị Ảnh hoặc Video
+@Composable
+private fun MediaCell(url: String, modifier: Modifier, onClick: () -> Unit) {
+    Box(modifier = modifier.clickable { onClick() }) {
+        if (isVideoUrl(url)) {
+            VideoPlayer(videoUrl = url, modifier = Modifier.fillMaxSize())
+        } else {
+            AsyncImage(
+                model = url,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
+}
+
 @Composable
 fun MediaGrid(mediaUrls: List<String>, modifier: Modifier = Modifier, onMediaClick: (Int) -> Unit) {
     val imageHeight = 220.dp
     val imageShape = RoundedCornerShape(8.dp)
     Box(modifier = modifier.fillMaxWidth()) {
         when (mediaUrls.size) {
-            1 -> AsyncImage(
-                model = mediaUrls[0],
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(imageHeight)
-                    .clip(imageShape)
-                    .clickable { onMediaClick(0) },
-                contentScale = ContentScale.Crop
+            1 -> MediaCell(
+                url = mediaUrls[0],
+                modifier = Modifier.fillMaxWidth().height(imageHeight).clip(imageShape),
+                onClick = { onMediaClick(0) }
             )
 
             2 -> Row(
@@ -108,15 +130,10 @@ fun MediaGrid(mediaUrls: List<String>, modifier: Modifier = Modifier, onMediaCli
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 repeat(2) { index ->
-                    AsyncImage(
-                        model = mediaUrls[index],
-                        contentDescription = null,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(imageHeight)
-                            .clip(imageShape)
-                            .clickable { onMediaClick(index) },
-                        contentScale = ContentScale.Crop
+                    MediaCell(
+                        url = mediaUrls[index],
+                        modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape),
+                        onClick = { onMediaClick(index) }
                     )
                 }
             }
@@ -125,32 +142,21 @@ fun MediaGrid(mediaUrls: List<String>, modifier: Modifier = Modifier, onMediaCli
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                AsyncImage(
-                    model = mediaUrls[0],
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(imageHeight)
-                        .clip(imageShape)
-                        .clickable { onMediaClick(0) },
-                    contentScale = ContentScale.Crop
+                MediaCell(
+                    url = mediaUrls[0],
+                    modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape),
+                    onClick = { onMediaClick(0) }
                 )
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(imageHeight)
-                        .clip(imageShape)
-                        .clickable { onMediaClick(1) }) {
-                    AsyncImage(
-                        model = mediaUrls[1],
-                        contentDescription = null,
+                Box(modifier = Modifier.weight(1f).height(imageHeight).clip(imageShape).clickable { onMediaClick(1) }) {
+
+                    MediaCell(
+                        url = mediaUrls[1],
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        onClick = { onMediaClick(1) }
                     )
+
                     Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f)),
+                        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(

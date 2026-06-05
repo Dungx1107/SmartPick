@@ -171,11 +171,16 @@ fun AppNavigation(
                     )
                 }
 
-                composable(route = Routes.Home.route) {
-                    HomeScreen(navController = navController, paddingValues = innerPadding)
+                composable(Routes.Home.route) {
+                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                        HomeScreen(
+                            navController = navController,
+                            paddingValues = PaddingValues(0.dp) // FIX: Trả lại 0.dp để Home hiện Cart bình thường
+                        )
+                    }
                 }
 
-                composable(route = Routes.Feed.route) {
+                composable(Routes.Feed.route) {
                     FeedScreen(
                         paddingValues = innerPadding,
                         scrollToTopTrigger = feedScrollToTopTrigger,
@@ -183,10 +188,9 @@ fun AppNavigation(
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
                         onCreatePostClick = { navController.navigate(Routes.CreatePost.route) },
-                        // NHẬN SỰ KIỆN SỬA BÀI VIẾT ĐỂ ĐIỀU HƯỚNG
                         onEditPostClick = { postId ->
                             navController.navigate("edit_post/$postId")
-                        }
+                        },
                     )
                 }
 

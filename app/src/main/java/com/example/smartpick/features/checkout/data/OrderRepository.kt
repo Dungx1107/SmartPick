@@ -11,7 +11,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerialName
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order
 
+@Serializable
+data class LastOrderInfoDto(
+    @SerialName("phone_number") val phoneNumber: String? = null,
+    @SerialName("shipping_address") val shippingAddress: String? = null
+)
 @Singleton
 class OrderRepository @Inject constructor(
     private val supabase: SupabaseClient
@@ -63,6 +72,19 @@ class OrderRepository @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Checkout error: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+    suspend fun getLastOrderInfo(userId: String): LastOrderInfoDto? = withContext(Dispatchers.IO) {
+        try {
+            supabase.postgrest["orders"]
+                .select(columns = Columns.raw("phone_number, shipping_address")) {
+                    filter { eq("user_id", userId) }
+                    order("created_at", Order.DESCENDING) // Sắp xếp mới nhất
+                    limit(1) // Chỉ lấy 1 đơn gần nhất
+                }.decodeSingleOrNull<LastOrderInfoDto>()
+        } catch (e: Exception) {
+            null
         }
     }
 }

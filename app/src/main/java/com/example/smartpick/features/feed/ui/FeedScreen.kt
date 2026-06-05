@@ -15,7 +15,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -35,6 +34,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.smartpick.R
+import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.post.PostItem
@@ -51,7 +51,8 @@ fun FeedScreen(
     scrollToTopTrigger: Long = 0L,
     onPostClick: (String) -> Unit = {},
     onCreatePostClick: () -> Unit = {},
-    onEditPostClick: (String) -> Unit = {} // Bổ sung Lambda để gọi lên AppNavigation
+    onEditPostClick: (String) -> Unit = {},
+    onProductClick: (Product) -> Unit = {} // FIX: Mở cổng kết nối sang Thanh toán
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()
@@ -85,9 +86,8 @@ fun FeedScreen(
                 onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
             )
         },
-        onEditPost = { postId ->
-            onEditPostClick(postId) // Đẩy sự kiện qua AppNavigation
-        }
+        onEditPost = { postId -> onEditPostClick(postId) },
+        onProductClick = onProductClick // Chuyền lệnh xuống Content
     )
 }
 
@@ -102,7 +102,8 @@ fun FeedContent(
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
     onShareClick: (String, String) -> Unit = { _, _ -> },
     onDeletePost: (String) -> Unit = {},
-    onEditPost: (String) -> Unit = {}
+    onEditPost: (String) -> Unit = {},
+    onProductClick: (Product) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
 
@@ -149,6 +150,7 @@ fun FeedContent(
                             product = product,
                             isDetailView = false,
                             onPostClick = { onPostClick(post.id.toString()) },
+                            onProductClick = { p -> onProductClick(p) }, // FIX: Nhận lệnh khi ấn "Mua ngay"
                             onReactionClick = { id, reaction -> onReactionClick(id, reaction) },
                             onShareClick = { caption -> onShareClick(post.id.toString(), caption) },
                             onDeleteClick = { onDeletePost(post.id.toString()) },
@@ -171,11 +173,8 @@ fun FeedContent(
                     )
                 }
             }
-
             is FeedUiState.Error -> Text(
-                text = uiState.message,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.Center)
+                text = uiState.message, color = MaterialTheme.colorScheme.error, modifier = Modifier.align(Alignment.Center)
             )
         }
     }

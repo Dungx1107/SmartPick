@@ -85,6 +85,7 @@ fun CreatePostContent(
                             brand = productState.brand,
                             category = productState.category,
                             price = productState.price.toDoubleOrNull() ?: 0.0,
+                            stock = productState.stock.toIntOrNull() ?: 1 // FIX: Truyền dữ liệu Kho hàng vào model
                         )
                     } else null
 
