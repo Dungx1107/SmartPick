@@ -180,13 +180,13 @@ fun AppNavigation(
                         paddingValues = innerPadding,
                         scrollToTopTrigger = feedScrollToTopTrigger,
                         onPostClick = { postId ->
-                            navController.navigate(
-                                Routes.PostDetail.createRoute(
-                                    postId
-                                )
-                            )
+                            navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
-                        onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
+                        onCreatePostClick = { navController.navigate(Routes.CreatePost.route) },
+                        // NHẬN SỰ KIỆN SỬA BÀI VIẾT ĐỂ ĐIỀU HƯỚNG
+                        onEditPostClick = { postId ->
+                            navController.navigate("edit_post/$postId")
+                        }
                     )
                 }
 
@@ -333,6 +333,20 @@ fun AppNavigation(
                         targetCommentId = commentId,
                         onBackClick = { navController.popBackStack() }
                     )
+                }
+
+                composable(
+                    route = "edit_post/{postId}",
+                    arguments = listOf(navArgument("postId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                    // FIX: Bọc Box và truyền innerPadding để TopBar không bị che khuất
+                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                        com.example.smartpick.features.post_creation.ui.EditPostScreen(
+                            postId = postId,
+                            onClose = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }

@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,10 +30,16 @@ import com.example.smartpick.core.ui.theme.TextMuted
 fun PostHeader(
     user: User,
     createdAt: String,
+    currentUserId: String? = null,
+    postOwnerId: String = "",
     modifier: Modifier = Modifier,
     isShared: Boolean = false,
+    onEditClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {},
     onMoreClick: () -> Unit = {}
 ) {
+    var expanded by remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -76,6 +84,27 @@ fun PostHeader(
                 color = TextMuted
             )
         }
-        IconButton(onClick = onMoreClick) { Icon(Icons.Default.MoreVert, null, tint = TextMuted) }
+
+        // CHỈ HIỆN 3 CHẤM (SỬA/XÓA) NẾU LÀ BÀI CỦA MÌNH
+        if (currentUserId == postOwnerId && currentUserId != null) {
+            Box {
+                IconButton(onClick = { expanded = true }) { Icon(Icons.Default.MoreVert, null, tint = TextMuted) }
+                DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, containerColor = Color.White) {
+                    DropdownMenuItem(
+                        text = { Text("Chỉnh sửa bài viết") },
+                        onClick = { expanded = false; onEditClick() },
+                        leadingIcon = { Icon(Icons.Outlined.Edit, null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Xóa bài viết", color = MaterialTheme.colorScheme.error) },
+                        onClick = { expanded = false; onDeleteClick() },
+                        leadingIcon = { Icon(Icons.Outlined.Delete, null, tint = MaterialTheme.colorScheme.error) }
+                    )
+                }
+            }
+        } else {
+            // Hiện nút 3 chấm mặc định cho bài người khác
+            IconButton(onClick = onMoreClick) { Icon(Icons.Default.MoreVert, null, tint = TextMuted) }
+        }
     }
 }

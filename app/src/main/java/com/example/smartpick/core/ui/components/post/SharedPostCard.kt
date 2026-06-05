@@ -1,6 +1,5 @@
 package com.example.smartpick.core.ui.components.post
 
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -53,12 +52,15 @@ fun SharedPostCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
+            // FIX: Đã xóa đuôi .kt và backtick, gọi trực tiếp hàm PostHeader
             PostHeader(user = sharedUser, createdAt = sharedPost.createdAt ?: "Vừa xong")
+
             PostMainContent(
                 content = sharedPost.content,
                 mediaUrls = sharedPost.mediaUrls,
                 product = null,
-                onMediaClick = { _ -> onPostClick() })
+                onMediaClick = { _ -> onPostClick() }
+            )
 
             if (localReactionCount > 0) {
                 Row(
@@ -85,7 +87,8 @@ fun SharedPostCard(
                             ReactionButton(
                                 currentReaction = localReaction,
                                 onLongPress = { showReactionPopup = true },
-                                onClick = { handleReaction(ReactionType.LIKE) })
+                                onClick = { handleReaction(ReactionType.LIKE) }
+                            )
                         }
                         PostActionButton(
                             icon = Icons.Outlined.ChatBubbleOutline,
@@ -101,7 +104,8 @@ fun SharedPostCard(
                         onReactionSelected = { reaction ->
                             showReactionPopup = false
                             handleReaction(reaction)
-                        })
+                        }
+                    )
                 }
             }
         }

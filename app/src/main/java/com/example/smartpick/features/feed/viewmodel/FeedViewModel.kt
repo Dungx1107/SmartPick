@@ -49,11 +49,15 @@ class FeedViewModel @Inject constructor(
     fun refreshFeedSilently() {
         viewModelScope.launch {
             try {
-                val currentUserId = authRepository.getCurrentUser()?.id ?: ""
-                val posts = feedRepository.getPostsWithUsers(currentUserId)
-                _uiState.value = FeedUiState.Success(posts.filter { it.first.sharedPostId == null })
-                _reactedPosts.value = feedRepository.getReactedPosts(currentUserId)
-            } catch (e: Exception) { }
+                // authRepository là instance AuthRepository bạn đã inject vào FeedViewModel
+                val currentUserId = authRepository.getCurrentUser()?.id ?: return@launch
+                val updatedPosts = feedRepository.getPostsWithUsers(currentUserId)
+                if (updatedPosts.isNotEmpty()) {
+                    _uiState.value = FeedUiState.Success(updatedPosts)
+                }
+            } catch (e: Exception) {
+                // Ignore silent update errors
+            }
         }
     }
 
@@ -131,6 +135,22 @@ class FeedViewModel @Inject constructor(
                     if (result.isSuccess) { onSuccess(); refreshFeedSilently() }
                 }
             } catch (e: Exception) { }
+        }
+    }
+
+    // HÀM XÓA BÀI VIẾT TỪ FEED
+    fun deletePost(postId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val result = feedRepository.deletePost(postId)
+            if (result.isSuccess) {
+                val currentState = _uiState.value
+                if (currentState is FeedUiState.Success) {
+                    _uiState.value = FeedUiState.Success(currentState.posts.filter { it.first.id != postId })
+                }
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Có lỗi xảy ra khi xóa")
+            }
         }
     }
 }
