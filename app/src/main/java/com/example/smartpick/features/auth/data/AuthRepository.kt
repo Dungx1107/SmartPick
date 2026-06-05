@@ -8,6 +8,7 @@ import com.example.smartpick.core.data.mapper.toDto
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.utils.Constants
 import com.example.smartpick.core.utils.EmailHelper
+import com.google.firebase.messaging.FirebaseMessaging
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
@@ -19,6 +20,7 @@ import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -26,6 +28,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -164,6 +167,27 @@ class AuthRepository @Inject constructor(
                         }
                     }
 
+                    try {
+                        val fcmToken = getFcmToken()
+                        if (!fcmToken.isNullOrEmpty()) {
+                            Log.d("AUTH_FCM", "Đang tự động lưu FCM Token sau khi login Google...")
+                            // Tạo payload để upsert trực tiếp tương tự NotificationRepository
+                            val payload = mapOf(
+                                "user_id" to currentUser.id,
+                                "token" to fcmToken,
+                                "device_type" to "android",
+                                "updated_at" to java.time.Instant.now().toString()
+                            )
+                            supabase.postgrest.from("user_push_tokens").upsert(payload)
+                            Log.d("AUTH_FCM", "Lưu FCM Token thành công")
+                        }
+                    } catch (fcmException: Exception) {
+                        Log.e(
+                            "AUTH_FCM",
+                            "Lỗi lưu token nhưng bỏ qua để không crash login: ${fcmException.message}"
+                        )
+                    }
+
                     return@withContext myUser
                 } else {
                     return@withContext null
@@ -279,7 +303,24 @@ class AuthRepository @Inject constructor(
                 type = EmailHelper.EmailType.LOGIN_MANUAL,
                 name = fullName ?: ""
             )
-
+            if (currentUser != null) {
+                try {
+                    val fcmToken = getFcmToken()
+                    if (!fcmToken.isNullOrEmpty()) {
+                        Log.d("AUTH_FCM", "Đang tự động lưu FCM Token sau khi login Manual...")
+                        val payload = mapOf(
+                            "user_id" to currentUser.id,
+                            "token" to fcmToken,
+                            "device_type" to "android",
+                            "updated_at" to java.time.Instant.now().toString()
+                        )
+                        supabase.postgrest.from("user_push_tokens").upsert(payload)
+                        Log.d("AUTH_FCM", "Lưu FCM Token thành công")
+                    }
+                } catch (fcmException: Exception) {
+                    Log.e("AUTH_FCM", "Lỗi lưu token: ${fcmException.message}")
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             val errorMsg = when {
@@ -293,6 +334,19 @@ class AuthRepository @Inject constructor(
                 else -> e.message ?: "Đăng nhập thất bại"
             }
             Result.failure(Exception(errorMsg))
+        }
+    }
+
+    // Hàm hỗ trợ lấy FCM Token dạng suspend để chạy mượt mà trong Coroutine
+    private suspend fun getFcmToken(): String? = suspendCancellableCoroutine { continuation ->
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                continuation.resume(task.result)
+            } else {
+                Log.e("AUTH_FCM", "Không lấy được FCM Token từ Firebase", task.exception)
+                continuation.resume(null)
+
+            }
         }
     }
 }

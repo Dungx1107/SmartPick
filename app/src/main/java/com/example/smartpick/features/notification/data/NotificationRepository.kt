@@ -136,14 +136,17 @@ class NotificationRepository @Inject constructor(
                 "updated_at" to java.time.Instant.now().toString()
             )
 
-            supabase.postgrest.from("user_push_tokens").upsert(payload)
-
+            supabase.postgrest.from("user_push_tokens").upsert(
+                value = payload,
+                onConflict = "user_id,token"
+            )
             println("DEBUG_NOTIFICATION: [Upsert Token Success] Lưu Token thành công")
         } catch (e: Exception) {
             println("ERROR_NOTIFICATION: [Upsert Token Failed] Lỗi khi lưu Token: ${e.message}")
             e.printStackTrace()
         }
     }
+
     suspend fun triggerPushNotification(
         receiverId: String,
         title: String,
@@ -175,9 +178,13 @@ class NotificationRepository @Inject constructor(
                 )
             }
 
-            Log.d("FCM_DEBUG", "Trigger Edge Function send-fcm thành công cho receiver_id: $receiverId")
+            Log.d(
+                "FCM_DEBUG",
+                "Trigger Edge Function send-fcm thành công cho receiver_id: $receiverId"
+            )
         } catch (e: Exception) {
             Log.e("FCM_DEBUG", "Crash tại triggerPushNotification:\n${e.stackTraceToString()}")
+            e.printStackTrace()
         }
     }
 }

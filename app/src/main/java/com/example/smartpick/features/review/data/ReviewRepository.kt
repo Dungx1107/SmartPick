@@ -1,6 +1,8 @@
 package com.example.smartpick.features.review.data
 
 import android.util.Log
+import com.example.smartpick.core.data.dto.BoughtProductDto
+import com.example.smartpick.core.data.dto.CheckBoughtResponseDto
 import com.example.smartpick.core.data.dto.ReviewRequestDto
 import com.example.smartpick.core.data.dto.ReviewResponseDto
 import com.example.smartpick.core.data.mapper.toDomain
@@ -47,7 +49,8 @@ class ReviewRepository @Inject constructor(
                     eq("product_id", productId)
                     eq("orders.user_id", userId)
                 }
-            }.decodeList<Map<String, String>>()
+            }.decodeList<CheckBoughtResponseDto>()
+
             response.isNotEmpty()
         } catch (e: Exception) {
             Log.e(TAG, "checkUserBoughtProduct error: ${e.message}", e)
@@ -74,14 +77,9 @@ class ReviewRepository @Inject constructor(
         }
     }
 
-    // Bổ sung các data class DTO cần thiết ở cuối file nếu chưa có
-    @kotlinx.serialization.Serializable
-    data class BoughtProductDto(
-        @kotlinx.serialization.SerialName("product_id") val productId: String,
-        @kotlinx.serialization.SerialName("products") val product: com.example.smartpick.core.data.dto.ProductDto? = null
-    )
-
-    // Thêm 2 hàm này vào bên trong class ReviewRepository
+    /**
+     * Lấy danh sách các sản phẩm user đã mua nhưng chưa thực hiện đánh giá
+     */
     suspend fun getProductsToReview(userId: String): List<Product> = withContext(Dispatchers.IO) {
         try {
             val userOrders = postgrest["orders"].select(Columns.raw("id")) {
@@ -105,10 +103,14 @@ class ReviewRepository @Inject constructor(
                 .mapNotNull { it.product?.toDomain() }
                 .distinctBy { it.id }
         } catch (e: Exception) {
+            Log.e(TAG, "getProductsToReview error: ${e.message}", e)
             emptyList()
         }
     }
 
+    /**
+     * Lấy danh sách các sản phẩm mà user hiện tại đã đánh giá xong
+     */
     suspend fun getMyReviewedProducts(userId: String): List<Review> = withContext(Dispatchers.IO) {
         try {
             postgrest["reviews"].select(Columns.raw("*, products(*)")) {
@@ -116,6 +118,7 @@ class ReviewRepository @Inject constructor(
                 order("created_at", Order.DESCENDING)
             }.decodeList<ReviewResponseDto>().map { it.toDomain() }
         } catch (e: Exception) {
+            Log.e(TAG, "getMyReviewedProducts error: ${e.message}", e)
             emptyList()
         }
     }
