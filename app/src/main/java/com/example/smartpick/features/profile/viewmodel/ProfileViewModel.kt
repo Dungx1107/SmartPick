@@ -24,6 +24,10 @@ class ProfileViewModel @Inject constructor(
     private val _userPosts = MutableStateFlow<List<Triple<Post, User, Product?>>>(emptyList())
     val userPosts: StateFlow<List<Triple<Post, User, Product?>>> = _userPosts.asStateFlow()
 
+    // Chứa danh sách Hàng đã bán
+    private val _soldItems = MutableStateFlow<List<FeedRepository.SoldItemDto>>(emptyList())
+    val soldItems: StateFlow<List<FeedRepository.SoldItemDto>> = _soldItems.asStateFlow()
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -31,10 +35,24 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val posts = feedRepository.getUserPosts(profileUserId, currentUserId)
-                _userPosts.value = posts
+                _userPosts.value = feedRepository.getUserPosts(profileUserId, currentUserId)
+                _soldItems.value = feedRepository.getSoldItems(profileUserId) // Tải kèm hàng đã bán
             } catch (e: Exception) { }
             finally { _isLoading.value = false }
+        }
+    }
+
+    // HÀM XÓA BÀI VIẾT TỪ TRANG CÁ NHÂN
+    fun deletePost(postId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val result = feedRepository.deletePost(postId)
+            if (result.isSuccess) {
+                // Xóa mượt mà khỏi UI không cần tải lại mạng
+                _userPosts.value = _userPosts.value.filter { it.first.id != postId }
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Có lỗi xảy ra khi xóa")
+            }
         }
     }
 

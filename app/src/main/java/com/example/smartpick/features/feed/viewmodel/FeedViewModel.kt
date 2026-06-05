@@ -133,4 +133,20 @@ class FeedViewModel @Inject constructor(
             } catch (e: Exception) { }
         }
     }
+
+    // HÀM XÓA BÀI VIẾT TỪ FEED
+    fun deletePost(postId: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            val result = feedRepository.deletePost(postId)
+            if (result.isSuccess) {
+                val currentState = _uiState.value
+                if (currentState is FeedUiState.Success) {
+                    _uiState.value = FeedUiState.Success(currentState.posts.filter { it.first.id != postId })
+                }
+                onSuccess()
+            } else {
+                onError(result.exceptionOrNull()?.message ?: "Có lỗi xảy ra khi xóa")
+            }
+        }
+    }
 }

@@ -12,6 +12,8 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+// Dòng import cực kỳ quan trọng để dùng được Storage Supabase
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
@@ -24,6 +26,16 @@ class FeedRepository @Inject constructor(
     private val supabase: SupabaseClient
 ) {
     private val TABLE_REACTIONS = "post_reactions"
+
+    // DTO DÀNH RIÊNG CHO HÀNG ĐÃ BÁN
+    @Serializable
+    data class SoldItemDto(
+        val id: String,
+        val quantity: Int,
+        @SerialName("price_at_purchase") val priceAtPurchase: Double,
+        @SerialName("created_at") val createdAt: String? = null,
+        val products: ProductDto? = null
+    )
 
     @Serializable
     private data class SafePostResponse(
@@ -45,7 +57,6 @@ class FeedRepository @Inject constructor(
                 try { ReactionType.valueOf(it.reactionType) } catch (e: Exception) { null }
             }
 
-            // GOM NHÓM VÀ ĐẾM SỐ LƯỢNG TỪNG LOẠI CẢM XÚC
             val breakdown = reactions
                 .mapNotNull { try { ReactionType.valueOf(it.reactionType) } catch (e: Exception) { null } }
                 .groupingBy { it }
@@ -62,7 +73,7 @@ class FeedRepository @Inject constructor(
                 createdAt = this.createdAt,
                 reactionCount = rCount,
                 currentUserReaction = cReaction,
-                reactionBreakdown = breakdown, // Truyền vào Model
+                reactionBreakdown = breakdown,
                 sharedPostId = this.sharedPostId,
                 sharedPost = sharedTriple?.first,
                 sharedPostUser = sharedTriple?.second
@@ -117,6 +128,7 @@ class FeedRepository @Inject constructor(
 
     suspend fun getReactedPosts(currentUserId: String): List<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
+            // FIX: Đã xóa 1 dấu ')' bị dư sau chữ post_reactions(*)
             val response = supabase.postgrest[TABLE_REACTIONS].select(columns = Columns.raw("post_id, user_id, posts(*, users(*), products(*), post_reactions(*))")) {
                 filter { eq("user_id", currentUserId) }
                 order("created_at", Order.DESCENDING)
@@ -162,5 +174,93 @@ class FeedRepository @Inject constructor(
             supabase.postgrest[TABLE_POSTS].insert(sharedPostData)
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun deletePost(postId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            supabase.postgrest["post_reactions"].delete { filter { eq("post_id", postId) } }
+            supabase.postgrest["comments"].delete { filter { eq("post_id", postId) } }
+            supabase.postgrest[TABLE_POSTS].delete { filter { eq("id", postId) } }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FEED_REPOSITORY", "Lỗi xóa bài viết: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getSoldItems(sellerId: String): List<SoldItemDto> = withContext(Dispatchers.IO) {
+        try {
+            val response = supabase.postgrest["order_items"]
+                .select(columns = Columns.raw("*, products!inner(*)")) {
+                    filter {
+                        eq("products.owner_id", sellerId)
+                    }
+                    order("created_at", Order.DESCENDING)
+                }
+            response.decodeList<SoldItemDto>()
+        } catch (e: Exception) {
+            Log.e("FEED_REPOSITORY", "Lỗi tải danh sách đã bán: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getPostById(postId: String): Result<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
+        try {
+            val response = supabase.postgrest[TABLE_POSTS]
+                .select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
+                    filter { eq("id", postId) }
+                }.decodeSingle<SafePostResponse>()
+
+            Result.success(response.toDomainTriple(""))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadMedia(context: android.content.Context, uri: android.net.Uri): String? = withContext(Dispatchers.IO) {
+        try {
+            val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
+            val fileName = "${java.util.UUID.randomUUID()}.jpg"
+            val bucket = supabase.storage.from("post_media") // Sử dụng from() chuẩn Supabase
+            bucket.upload(fileName, bytes)
+            bucket.publicUrl(fileName)
+        } catch (e: Exception) {
+            Log.e("FEED_REPO", "Lỗi upload media: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun updatePostFull(
+        postId: String,
+        newContent: String?,
+        newMediaUrls: List<String>,
+        product: Product?
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val postUpdateData = mapOf(
+                "content" to newContent,
+                "media_urls" to newMediaUrls
+            )
+            supabase.postgrest[TABLE_POSTS].update(postUpdateData) {
+                filter { eq("id", postId) }
+            }
+
+            if (product != null && product.id != null) {
+                val productUpdateData = mapOf(
+                    "name" to product.name,
+                    "brand" to product.brand,
+                    "category" to product.category,
+                    "price" to product.price
+                )
+                supabase.postgrest["products"].update(productUpdateData) {
+                    filter { eq("id", product.id) }
+                }
+            }
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("FEED_REPO", "Lỗi update post full: ${e.message}")
+            Result.failure(e)
+        }
     }
 }

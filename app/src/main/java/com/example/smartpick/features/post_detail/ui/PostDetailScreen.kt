@@ -36,14 +36,13 @@ import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.*
 import com.example.smartpick.core.ui.components.post.PostActionButton
-import com.example.smartpick.core.ui.components.post.PostHeader
+import com.example.smartpick.core.ui.components.post.PostHeader // Bổ sung import này
 import com.example.smartpick.core.ui.components.post.ReactionButton
 import com.example.smartpick.core.ui.components.post.ReactionPopup
 import com.example.smartpick.core.ui.components.post.SharePostDialog
 import com.example.smartpick.core.ui.components.post.SharedPostCard
 import com.example.smartpick.core.ui.theme.SmartPickColor
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.comment.ui.components.CommentInputField
 import com.example.smartpick.features.comment.ui.components.CommentItem
@@ -141,7 +140,7 @@ fun PostDetailScreen(
         onReplyCommentClick = { comment -> commentViewModel.setReplyingTo(comment) },
         onCancelReply = { commentViewModel.setReplyingTo(null) },
         onRetry = { uiState.post?.id?.let { viewModel.loadPostDetail(it) } },
-        onCommentClick = { postId, ownerId -> onCommentClick?.invoke(postId, ownerId) } // Truyền xuống
+        onCommentClick = { postId, ownerId -> onCommentClick?.invoke(postId, ownerId) }
     )
 }
 
@@ -293,6 +292,7 @@ fun PostDetailContent(
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
 
                         item {
+                            // FIX: Gọi đúng tên hàm PostHeader
                             PostHeader(
                                 user = uiState.user,
                                 createdAt = post.createdAt ?: "",

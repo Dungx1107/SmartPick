@@ -180,13 +180,13 @@ fun AppNavigation(
                         paddingValues = innerPadding,
                         scrollToTopTrigger = feedScrollToTopTrigger,
                         onPostClick = { postId ->
-                            navController.navigate(
-                                Routes.PostDetail.createRoute(
-                                    postId
-                                )
-                            )
+                            navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
-                        onCreatePostClick = { navController.navigate(Routes.CreatePost.route) }
+                        onCreatePostClick = { navController.navigate(Routes.CreatePost.route) },
+                        // NHẬN SỰ KIỆN SỬA BÀI VIẾT ĐỂ ĐIỀU HƯỚNG
+                        onEditPostClick = { postId ->
+                            navController.navigate("edit_post/$postId")
+                        }
                     )
                 }
 
@@ -332,6 +332,17 @@ fun AppNavigation(
                         currentUserName = currentUser?.fullName ?: "Một người dùng",
                         targetCommentId = commentId,
                         onBackClick = { navController.popBackStack() }
+                    )
+                }
+
+                composable(
+                    route = "edit_post/{postId}",
+                    arguments = listOf(navArgument("postId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val postId = backStackEntry.arguments?.getString("postId") ?: ""
+                    com.example.smartpick.features.post_creation.ui.EditPostScreen(
+                        postId = postId,
+                        onClose = { navController.popBackStack() }
                     )
                 }
             }

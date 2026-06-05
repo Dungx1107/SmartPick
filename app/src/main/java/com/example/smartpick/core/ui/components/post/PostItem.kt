@@ -10,14 +10,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.R
 import com.example.smartpick.core.model.Post
+import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
 import com.example.smartpick.core.model.User
-import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.core.utils.ReactionUtils.updateReactionState
 
@@ -25,15 +27,19 @@ import com.example.smartpick.core.utils.ReactionUtils.updateReactionState
 fun PostItem(
     post: Post,
     user: User,
+    currentUserId: String? = null,
     product: Product? = null,
     onPostClick: () -> Unit = {},
     onProductClick: (Product) -> Unit = {},
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
     onShareClick: (String) -> Unit = {},
+    onDeleteClick: () -> Unit = {},
+    onEditClick: () -> Unit = {},
     isDetailView: Boolean = false,
 ) {
     var showReactionPopup by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     var localReaction by remember(post.currentUserReaction) { mutableStateOf(post.currentUserReaction) }
     var localReactionCount by remember(post.reactionCount) { mutableIntStateOf(post.reactionCount) }
@@ -49,6 +55,23 @@ fun PostItem(
         onReactionClick(post.id.toString(), reaction)
     }
 
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            containerColor = Color.White,
+            title = { Text("Xóa bài viết", fontWeight = FontWeight.Bold) },
+            text = { Text("Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.") },
+            confirmButton = {
+                TextButton(onClick = { showDeleteDialog = false; onDeleteClick() }) {
+                    Text("Xóa", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("Hủy", color = TextMuted) }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -59,10 +82,15 @@ fun PostItem(
         shape = RoundedCornerShape(0.dp)
     ) {
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
+
             PostHeader(
                 user = user,
                 createdAt = post.createdAt ?: "Vừa xong",
-                isShared = post.sharedPostId != null
+                currentUserId = currentUserId,
+                postOwnerId = post.userId,
+                isShared = post.sharedPostId != null,
+                onEditClick = onEditClick,
+                onDeleteClick = { showDeleteDialog = true }
             )
 
             if (post.sharedPost != null && post.sharedPostUser != null) {
