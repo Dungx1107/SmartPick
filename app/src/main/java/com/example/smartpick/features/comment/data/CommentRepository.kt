@@ -52,48 +52,28 @@ class CommentRepository @Inject constructor(
         receiverId: String,
         content: String,
         parentId: String? = null
-    ) = withContext(Dispatchers.IO) {
+    ): String = withContext(Dispatchers.IO) {
 
         val commentId = java.util.UUID.randomUUID().toString()
-        /* Tạo data comment để insert */
+        val createdAt = Clock.System.now().toString()
+
         val data = mutableMapOf(
             "id" to commentId,
             "post_id" to postId,
             "user_id" to userId,
             "content" to content.trim(),
-            "created_at" to Clock.System.now().toString()
+            "created_at" to createdAt
         )
 
-        /* Nếu là reply thì thêm parent_id */
         if (parentId != null) {
             data["parent_id"] = parentId
         }
 
-        Log.d("CommentDebug", "Repository INSERT: $data")        /* Log debug dữ liệu comment */
-        supabase.postgrest[TABLE_COMMENTS].insert(data)        /* Lưu comment vào database */
-        if (userId != receiverId) {        /* Không gửi notification cho chính mình */
-            /* Đổi title theo loại comment */
-            val notificationTitle =
-                if (parentId == null) "Bình luận mới"
-                else "Phản hồi mới"
+        // Thực hiện chèn vào Database công khai
+        supabase.postgrest[TABLE_COMMENTS].insert(data)
 
-            /* Tạo object notification */
-            val notification = Notification(
-                receiverId = receiverId,
-                senderId = userId,
-                postId = postId,
-                type = NotificationType.COMMUNITY.databaseValue,
-                title = notificationTitle,
-                content = content.trim(),
-                targetId = commentId
-            )
-
-            /* Gửi notification */
-            notificationRepository.sendNotification(notification)
-        }
+        return@withContext commentId 
     }
-// File: CommentRepository.kt
-
     suspend fun toggleLike(
         commentId: String,
         userId: String,
@@ -123,25 +103,6 @@ class CommentRepository @Inject constructor(
                     )
                 )
                 Log.d("NotifDebug", "[SEND STEP 2] Ghi nhận lượt thích vào bảng comment_likes thành công.")
-
-                /* KIỂM TRA ĐIỀU KIỆN GỬI THÔNG BÁO */
-                if (userId != commentOwnerId) {
-                    Log.d("NotifDebug", "[SEND STEP 3] Thỏa mãn điều kiện gửi (Người thích khác chủ bình luận). Tiến hành build object.")
-                    val notification = Notification(
-                        receiverId = commentOwnerId,
-                        senderId = userId,
-                        postId = postId,
-                        type = NotificationType.COMMUNITY.databaseValue,
-                        title = "Lượt thích mới",
-                        content = "Một người dùng đã thích bình luận của bạn.",
-                        targetId = postId
-                    )
-
-                    val result = notificationRepository.sendNotification(notification)
-                    Log.d("NotifDebug", "[SEND STEP 5] Đã thực hiện xong lệnh sendNotification. Kết quả Result: ${result.isSuccess}")
-                } else {
-                    Log.d("NotifDebug", "[SEND SKIPPED] Tự thích bình luận của chính mình ($userId == $commentOwnerId). Bỏ qua luồng gửi thông báo.")
-                }
             } catch (e: Exception) {
                 val errorMsg = e.message ?: ""
                 if (errorMsg.contains("duplicate key") || errorMsg.contains("already exists")) {

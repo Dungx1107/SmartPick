@@ -228,19 +228,14 @@ fun AppNavigation(
                     NotificationsScreen(
                         paddingValues = innerPadding,
                         currentUserId = currentUser?.id ?: "",
+                        viewModel = notificationViewModel,
                         onNotificationClick = { notification ->
                             if (notification.type == NotificationType.COMMUNITY) {
                                 val postId = notification.postId ?: ""
                                 val commentId = notification.targetId
 
                                 if (postId.isNotEmpty()) {
-                                    if (!commentId.isNullOrEmpty()) navController.navigate(
-                                        Routes.CommentsFromNotification.createRoute(
-                                            postId,
-                                            commentId
-                                        )
-                                    )
-                                    else navController.navigate("comments_notification/$postId")
+                                    navController.navigate(Routes.PostDetail.createRoute(postId, commentId))
                                 }
                             }
                         }
@@ -280,9 +275,14 @@ fun AppNavigation(
 
                 composable(
                     route = Routes.PostDetail.route,
-                    arguments = listOf(navArgument(Routes.PostDetail.ARG_POST_ID) {
-                        type = NavType.StringType
-                    })
+                    arguments = listOf(
+                        navArgument(Routes.PostDetail.ARG_POST_ID) { type = NavType.StringType },
+                        navArgument(Routes.PostDetail.ARG_COMMENT_ID) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        }
+                    )
                 ) {
                     PostDetailScreen(onBackClick = { navController.popBackStack() })
                 }

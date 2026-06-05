@@ -23,6 +23,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.content.TextContent
 import io.ktor.http.contentType
+import kotlinx.coroutines.flow.transform
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -38,34 +39,28 @@ class NotificationRepository @Inject constructor(
         return channel.postgresChangeFlow<PostgresAction>(schema = "public") {
             table = "notifications"
             filter = "receiver_id=eq.$userId"
-        }.map { action ->
-            println("DEBUG_NOTIFICATION: [Real-time Event] Phát hiện thay đổi hành động: $action")
+        }.transform { action -> // ĐỔI TỪ .map SANG .transform ĐỂ QUẢN LÝ LUỒNG PHÁT DATA
 
-            // 1. Decode ra danh sách DTO thay vì Domain Model
-            val listDto = supabase.postgrest.from("notifications")
-                .select {
-                    filter { eq("receiver_id", userId) }
-                    order("created_at", Order.DESCENDING)
+            Log.d("NotificationDebug", "[Real-time Event] Nhận sự kiện: ${action::class.simpleName}")
+
+            // Chỉ xử lý fetch lại danh sách khi có sự kiện thay đổi thực sự (INSERT, UPDATE, DELETE)
+            if (action is PostgresAction.Insert || action is PostgresAction.Update || action is PostgresAction.Delete) {
+                try {
+                    val listDto = supabase.postgrest.from("notifications")
+                        .select {
+                            filter { eq("receiver_id", userId) }
+                            order("created_at", Order.DESCENDING)
+                        }
+                        .decodeList<NotificationDto>()
+
+                    // Phát dữ liệu đi một lần duy nhất cho mỗi sự kiện thay đổi
+                    emit(listDto.map { it.toDomain() })
+                } catch (e: Exception) {
+                    Log.e("NotificationDebug", "Lỗi fetch dữ liệu trong luồng real-time", e)
                 }
-                .decodeList<NotificationDto>()
-
-            println("DEBUG_NOTIFICATION: [Real-time Fetch] Danh sách DTO thô từ DB (${listDto.size} mục):")
-            listDto.forEachIndexed { index, dto ->
-                println("   -> DTO [$index]: ID=${dto.id}, Type=${dto.type}, Title='${dto.title}', CreatedAt=${dto.createdAt}")
             }
-
-            // 2. Map từng phần tử sang Domain Model dùng cho UI
-            val domainList = listDto.map { it.toDomain() }
-
-            println("DEBUG_NOTIFICATION: [Real-time Mapped] Danh sách Domain sau khi Map:")
-            domainList.forEachIndexed { index, domain ->
-                println("   -> Domain [$index]: ID=${domain.id}, Type=${domain.type}, Title='${domain.title}'")
-            }
-
-            domainList
         }.onStart {
-            println("DEBUG_NOTIFICATION: [Initial Fetch] Bắt đầu lấy dữ liệu lần đầu cho userId: $userId")
-
+            // Lấy dữ liệu lần đầu khi vừa mở màn hình
             val initialDto = supabase.postgrest.from("notifications")
                 .select {
                     filter { eq("receiver_id", userId) }
@@ -73,14 +68,8 @@ class NotificationRepository @Inject constructor(
                 }
                 .decodeList<NotificationDto>()
 
-            println("DEBUG_NOTIFICATION: [Initial Fetch] Danh sách DTO ban đầu thu được (${initialDto.size} mục):")
-            initialDto.forEachIndexed { index, dto ->
-                println("   -> DTO ban đầu [$index]: ID=${dto.id}, Type=${dto.type}, Title='${dto.title}', CreatedAt=${dto.createdAt}")
-            }
-
             emit(initialDto.map { it.toDomain() })
             channel.subscribe()
-            println("DEBUG_NOTIFICATION: [Real-time Subscribed] Đã kết nối channel lắng nghe real-time.")
         }
     }
 

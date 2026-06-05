@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.collections.emptyList
-import kotlin.collections.filter
 
 @HiltViewModel
 class CommentViewModel @Inject constructor(
@@ -27,22 +25,18 @@ class CommentViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    // Loading riêng cho gửi comment
     private val _isSending = MutableStateFlow(false)
     val isSending = _isSending.asStateFlow()
 
-    // Trạng thái: Người dùng đang reply comment nào?
-    // Nếu null tức là đang viết comment chính
     private val _replyingTo = MutableStateFlow<CommentUIState?>(null)
     val replyingTo = _replyingTo.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error = _error.asStateFlow()
 
     fun setReplyingTo(comment: CommentUIState?) {
         _replyingTo.value = comment
     }
-
-    // Error state
-    private val _error = MutableStateFlow<String?>(null)
-    val error = _error.asStateFlow()
 
     fun clearError() {
         _error.value = null
@@ -53,23 +47,16 @@ class CommentViewModel @Inject constructor(
             _isLoading.value = true
             try {
                 val response: List<Comment> = repository.getComments(postId, currentUserId)
-                // 1. Lọc bình luận gốc (Tầng 1)
                 val topLevelComments = response.filter { it.parentId == null }
 
                 _comments.value = topLevelComments.map { parent ->
-                    // 2. Tìm và gộp các con của nó (Tầng 2)
                     val childReplies = response.filter { it.parentId == parent.id }.map { child ->
-                        // TÌM TÊN NGƯỜI ĐƯỢC REPLY (Cha trực tiếp của reply này)
                         val replyTo = response.find { it.id == child.parentId }?.user?.fullName
-
                         mapToUIState(child, postOwnerId, replyTo, emptyList())
                     }
                     mapToUIState(parent, postOwnerId, null, childReplies)
                 }
-                Log.d(
-                    "LikeDebug",
-                    "[UI UPDATE] Đã tải xong danh sách mới từ DB. UI chuẩn bị render lại trạng thái."
-                )
+                Log.d("CommentDebug", "LOAD_COMMENTS: Đã tải xong ${response.size} mục từ DB.")
             } catch (e: Exception) {
                 _error.value = "Lỗi tải bình luận"
                 e.printStackTrace()
@@ -109,19 +96,17 @@ class CommentViewModel @Inject constructor(
         postOwnerId: String?,
         currentUserName: String
     ) {
+        Log.d("CommentDebug", "=== BẮT ĐẦU SEND_COMMENT ===")
+        Log.d("CommentDebug", "Input: postId=$postId, userId=$userId, content='$content'")
 
-        if (postId.isBlank()) {
-            _error.value = "ID bài viết không hợp lệ"
+        if (postId.isBlank() || userId.isBlank() || content.isBlank()) {
+            _error.value = "Dữ liệu bình luận không hợp lệ"
+            Log.e("CommentDebug", "Validation Failed: Có trường dữ liệu bị rỗng")
             return
         }
 
-        if (userId.isBlank()) {
-            _error.value = "Người dùng không hợp lệ"
-            return
-        }
-
-        if (content.isBlank()) {
-            _error.value = "Vui lòng nhập bình luận"
+        if (_isSending.value) {
+            Log.w("CommentDebug", "REJECTED: Hàm sendComment đang chạy ngầm, chặn click lặp từ UI")
             return
         }
 
@@ -129,67 +114,107 @@ class CommentViewModel @Inject constructor(
             _isSending.value = true
             _error.value = null
             try {
-
                 val targetComment = _replyingTo.value
-
-                // Nếu đang reply một B, parentId vẫn phải là thằng gốc (parentId của thằng con)
-                // Nếu đang reply A, parentId là ID của A
                 val actualParentId = targetComment?.parentId ?: targetComment?.id
+                val finalReceiverId = targetComment?.authorId ?: (postOwnerId ?: "")
 
-                // XÁC ĐỊNH NGƯỜI NHẬN THÔNG BÁO
-                val finalReceiverId =
-                    targetComment?.// Nếu đang reply, người nhận là chủ của bình luận đó
-                    authorId ?: (// Nếu là comment mới, người nhận là chủ bài viết
-                            postOwnerId ?: "")
+                Log.d("CommentDebug", "Luồng xử lý: parentId=$actualParentId, receiverId=$finalReceiverId")
 
-                repository.insertComment(
+                // 1. Lưu xuống DB
+                Log.d("CommentDebug", "STEP 1: Đang gọi repository.insertComment...")
+                val newCommentId = repository.insertComment(
                     postId = postId,
                     userId = userId,
                     content = content.trim(),
-                    receiverId = finalReceiverId, // Truyền ID đã xác định
+                    receiverId = finalReceiverId,
                     parentId = actualParentId
                 )
+                Log.d("CommentDebug", "STEP 1 SUCCESS: DB phản hồi sinh ra ID thật = $newCommentId")
 
-                Log.i("CommentDebug", "Gửi thành công!")
+                // 2. Khởi tạo đối tượng UI State mới
+                val newCommentUi = CommentUIState(
+                    id = newCommentId,
+                    authorId = userId,
+                    authorName = currentUserName,
+                    authorAvatar = null,
+                    content = content.trim(),
+                    timeAgo = "Vừa xong",
+                    likesCount = 0,
+                    isLiked = false,
+                    isAuthor = userId == postOwnerId,
+                    parentId = actualParentId,
+                    replyToName = targetComment?.authorName,
+                    replies = emptyList()
+                )
 
-                // --- BẮT ĐẦU ĐOẠN MÃ MỚI TÍCH HỢP PUSH NOTIFICATION ---
+                // 3. KHỬ TRÙNG CỤC BỘ VÀ IN LOG ĐỐI CHIẾU
+                val currentList = _comments.value
+                Log.d("CommentDebug", "STEP 2 (Local Update): Kích thước danh sách hiện tại trên RAM = ${currentList.size}")
+                currentList.forEachIndexed { index, item ->
+                    Log.d("CommentDebug", "   -> Hiện tại [$index]: ID=${item.id}, Content='${item.content}'")
+                }
+
+                if (actualParentId == null) {
+                    val isDuplicate = !currentList.none { it.id == newCommentId }
+                    Log.d("CommentDebug", "Kiểm tra trùng ID gốc: isDuplicate=$isDuplicate (none=${currentList.none { it.id == newCommentId }})")
+
+                    if (!isDuplicate) {
+                        _comments.value = currentList + newCommentUi
+                        Log.d("CommentDebug", "-> Đã chèn cục bộ comment gốc thành công vào State.")
+                    } else {
+                        Log.w("CommentDebug", "-> BỎ QUA chèn cục bộ vì ID $newCommentId đã tồn tại sẵn trong danh sách!")
+                    }
+                } else {
+                    Log.d("CommentDebug", "Tiến hành quét danh sách để chèn Reply...")
+                    _comments.value = currentList.map { parent ->
+                        if (parent.id == actualParentId) {
+                            val isReplyDuplicate = !parent.replies.none { it.id == newCommentId }
+                            Log.d("CommentDebug", "Kiểm tra trùng Reply: isReplyDuplicate=$isReplyDuplicate")
+
+                            if (!isReplyDuplicate) {
+                                Log.d("CommentDebug", "-> Đã chèn cục bộ reply vào parent ID=${parent.id}")
+                                parent.copy(replies = parent.replies + newCommentUi)
+                            } else {
+                                Log.w("CommentDebug", "-> BỎ QUA chèn reply vì ID $newCommentId đã có trong parent.")
+                                parent
+                            }
+                        } else parent
+                    }
+                }
+
+                // Log danh sách sau cùng để kiểm tra kết quả
+                val finalSnapshot = _comments.value
+                Log.d("CommentDebug", "STEP 3 (Post-Update Snapshot): Kích thước danh sách mới = ${finalSnapshot.size}")
+                finalSnapshot.forEachIndexed { index, item ->
+                    Log.d("CommentDebug", "   -> Sau update [$index]: ID=${item.id}, Content='${item.content}'")
+                }
+
+                // 4. Bắn thông báo Push
                 if (finalReceiverId.isNotEmpty() && finalReceiverId != userId) {
-                    // Chạy background job để gọi Edge Function, tránh làm chậm UI luồng chính
                     viewModelScope.launch {
                         try {
                             val pushTitle = if (targetComment != null) "Phản hồi mới" else "Bình luận mới"
-                            val pushBody = "$currentUserName đã phản hồi: ${content.take(40)}${if (content.length > 40) "..." else ""}"
-
-                            Log.d("FCM_TRIGGER", "Đang gọi Edge Function để báo push cho user $finalReceiverId")
-
+                            val pushBody = "$currentUserName đã phản hồi: ${content.take(40)}"
                             notificationRepository.triggerPushNotification(
-                                receiverId = finalReceiverId,
-                                title = pushTitle,
-                                body = pushBody,
-                                type = "comment",
-                                postId = postId,
-                                targetId = null // Cập nhật targetId nếu cần Deep Link tới thẳng dòng comment
+                                receiverId = finalReceiverId, title = pushTitle, body = pushBody,
+                                type = "comment", postId = postId, targetId = newCommentId
                             )
                         } catch (e: Exception) {
-                            Log.e("FCM_TRIGGER", "Lỗi trigger Push", e)
+                            Log.e("CommentDebug", "Lỗi trigger Push: ${e.message}")
                         }
                     }
                 }
 
-                // Sau khi gửi thành công:
-                _replyingTo.value = null // Thoát chế độ reply
-                // Reload comments
-                loadComments(postId, postOwnerId, userId)
-
+                _replyingTo.value = null
             } catch (e: Exception) {
-                Log.e("CommentDebug", "LỖI KHI GỬI: ${e.message}", e)
+                Log.e("CommentDebug", "CRASH TẠI SEND_COMMENT: ${e.message}", e)
                 _error.value = e.message ?: "Không thể gửi bình luận"
             } finally {
                 _isSending.value = false
+                Log.d("CommentDebug", "=== KẾT THÚC LUỒNG SEND_COMMENT ===")
             }
         }
     }
-
 
     fun toggleLikeComment(
         commentId: String,
@@ -198,55 +223,54 @@ class CommentViewModel @Inject constructor(
         postOwnerId: String?,
         currentUserName: String
     ) {
-        Log.d(
-            "LikeDebug",
-            "[START] Người dùng $currentUserId thực hiện Click Like commentId: $commentId"
-        )
-        viewModelScope.launch {
-            // Tìm comment trong danh sách UI hiện tại (quét cả bình luận gốc và các phản hồi con)
-            val currentList = _comments.value
-            val targetComment = currentList.find { it.id == commentId }
-                ?: currentList.flatMap { it.replies }.find { it.id == commentId }
+        val oldComments = _comments.value
 
-            if (targetComment == null) {
-                Log.e("CommentDebug", "Không tìm thấy comment với ID: $commentId để thực hiện like")
-                return@launch
+        fun updateLikeInList(list: List<CommentUIState>): List<CommentUIState> {
+            return list.map { comment ->
+                if (comment.id == commentId) {
+                    val newIsLiked = !comment.isLiked
+                    val newLikesCount = if (newIsLiked) comment.likesCount + 1 else maxOf(0, comment.likesCount - 1)
+                    comment.copy(isLiked = newIsLiked, likesCount = newLikesCount)
+                } else if (comment.replies.isNotEmpty()) {
+                    comment.copy(replies = updateLikeInList(comment.replies))
+                } else {
+                    comment
+                }
             }
+        }
 
+        val updatedList = updateLikeInList(oldComments)
+        _comments.value = updatedList
+
+        val targetComment = updatedList.find { it.id == commentId }
+            ?: updatedList.flatMap { it.replies }.find { it.id == commentId }
+
+        if (targetComment == null) return
+
+        viewModelScope.launch {
             try {
-                Log.d("LikeDebug", "[REQUEST] Đang gửi yêu cầu toggleLike xuống Repository...")
-                // Gọi sang repository xử lý (Đã bao gồm logic gửi thông báo ở bước trước)
                 repository.toggleLike(
                     commentId = commentId,
                     userId = currentUserId,
-                    isLiked = targetComment.isLiked,
+                    isLiked = !targetComment.isLiked,
                     commentOwnerId = targetComment.authorId,
                     postId = postId
                 )
-                Log.d(
-                    "LikeDebug",
-                    "[SUCCESS] Repository xử lý thành công. Tiến hành gọi loadComments để đồng bộ..."
-                )
-                // MỞ RỘNG: Tích hợp Gửi thông báo Push khi một người like comment của bạn
-                if (!targetComment.isLiked && targetComment.authorId != currentUserId) {
-                    viewModelScope.launch {
-                        notificationRepository.triggerPushNotification(
-                            receiverId = targetComment.authorId,
-                            title = "Lượt thích mới",
-                            body = "$currentUserName đã thích bình luận của bạn",
-                            type = "like",
-                            postId = postId
-                        )
-                    }
-                }
 
-                // Tải lại danh sách bình luận để cập nhật UI mới nhất
-                loadComments(postId, postOwnerId, currentUserId)
+                if (targetComment.isLiked && targetComment.authorId != currentUserId) {
+                    notificationRepository.triggerPushNotification(
+                        receiverId = targetComment.authorId,
+                        title = "Lượt thích mới",
+                        body = "$currentUserName đã thích bình luận của bạn",
+                        type = "like",
+                        postId = postId
+                    )
+                }
             } catch (e: Exception) {
+                _comments.value = oldComments
+                _error.value = "Không thể thực hiện tương tác. Vui lòng thử lại."
                 Log.e("CommentDebug", "LỖI KHI TOGGLE LIKE: ${e.message}", e)
-                _error.value = "Không thể thực hiện tương tác"
             }
         }
     }
-
 }

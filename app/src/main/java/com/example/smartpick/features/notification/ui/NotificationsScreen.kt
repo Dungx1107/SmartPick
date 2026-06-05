@@ -23,7 +23,7 @@ import com.example.smartpick.core.ui.theme.SmartPickTheme
 @Composable
 fun NotificationsScreen(
     paddingValues: PaddingValues,
-    viewModel: NotificationViewModel = hiltViewModel(),
+    viewModel: NotificationViewModel ,
     currentUserId: String,
     onNotificationClick: (AppNotification) -> Unit = {} // Lambda nhận sự kiện click từ bên ngoài NavHost
 ) {
