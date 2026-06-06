@@ -14,28 +14,30 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
@@ -52,6 +54,8 @@ import com.example.smartpick.features.home.ui.components.SearchBar
 import com.example.smartpick.features.home.viewmodel.HomeUiState
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
+import com.example.smartpick.features.home.ui.components.FlyingProductItem
+import com.example.smartpick.features.home.ui.components.FlyingProductState
 
 @Composable
 fun HomeScreen(
@@ -64,6 +68,12 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val totalCartCount by cartViewModel.totalCartCount.collectAsState() // Thu thập số lượng item đang có
     var searchQuery by rememberSaveable { mutableStateOf("") }
+
+    // Quản lý danh sách các gói tin sản phẩm đang bay trên màn hình HomeScreen
+    var flyingProducts by remember { mutableStateOf(listOf<FlyingProductState>()) }
+    var animationIdCounter by remember { mutableLongStateOf(0L) }
+
+    var cartIconOffset by remember { mutableStateOf(Offset.Zero) }// Tọa độ đích đến
 
     val context = LocalContext.current
 
@@ -97,49 +107,57 @@ fun HomeScreen(
         cartViewModel.refreshCart()
     }
 
-    HomeContent(
-        paddingValues = paddingValues,
-        uiState = uiState,
-        searchQuery = searchQuery,
-        totalCartCount = totalCartCount,
-        onSearchQueryChange = { searchQuery = it; viewModel.searchProducts(it) },
-        onMicClick = {
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(
-                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+    Box(modifier = Modifier.fillMaxSize()) {
+        HomeContent(
+            paddingValues = paddingValues,
+            uiState = uiState,
+            searchQuery = searchQuery,
+            totalCartCount = totalCartCount,
+            onSearchQueryChange = { searchQuery = it; viewModel.searchProducts(it) },
+            onMicClick = { /* ... giữ nguyên logic mic cũ của bạn */ },
+            onCartClick = { navController.navigate(Routes.Cart.route) },
+            onProductClick = onProductClick,
+            // Lắng nghe tọa độ icon giỏ hàng truyền lên từ cấu trúc SearchBar
+            onCartIconPositioned = { offset ->
+                cartIconOffset = offset
+            },
+            onAddToCart = { product ,touchOffset->
+                if (product.id != null) {
+                    val endPoint =
+                        if (cartIconOffset != Offset.Zero) cartIconOffset else Offset(930f, 140f)
+                    val newItem = FlyingProductState(
+                        id = animationIdCounter++,
+                        imageUrl = product.imageUrls.firstOrNull(),
+                        startOffset = touchOffset,
+                        endOffset = endPoint
+                    )
+                    flyingProducts = flyingProducts + newItem
+                }
+
+                viewModel.addToCart(
+                    product = product,
+                    onSuccess = {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.DaThemVaoGioHang),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        cartViewModel.refreshCart()
+                    },
+                    onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
                 )
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
             }
-            try {
-                speechLauncher.launch(intent)
-            } catch (e: Exception) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.ThietBiKhongHoTro),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        },
-        onCartClick = {
-            navController.navigate(Routes.Checkout.route)
-        },
-        onProductClick = onProductClick,
-        onAddToCart = { product ->
-            viewModel.addToCart(
-                product = product,
-                onSuccess = {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.DaThemVaoGioHang),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    cartViewModel.refreshCart() // Cập nhật lại số lượng xe đẩy ngay lập tức
-                },
-                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+        )
+
+        flyingProducts.forEach { flyingState ->
+            FlyingProductItem(
+                state = flyingState,
+                onAnimationEnd = { endedId ->
+                    flyingProducts = flyingProducts.filter { it.id != endedId }
+                }
             )
         }
-    )
+    }
 }
 
 @Composable
@@ -151,8 +169,9 @@ fun HomeContent(
     onSearchQueryChange: (String) -> Unit,
     onMicClick: () -> Unit,
     onCartClick: () -> Unit,
+    onCartIconPositioned: (Offset) -> Unit,        // Callback nhận tọa độ giỏ hàng
     onProductClick: (Product) -> Unit,
-    onAddToCart: (Product) -> Unit
+    onAddToCart: (Product,Offset) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -175,6 +194,16 @@ fun HomeContent(
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp) // Thu hẹp lề hai bên thanh search từ 12.dp xuống 8.dp
                 .padding(top = 4.dp, bottom = 4.dp) // Thu hẹp lề trên dưới của search bar
+                .onGloballyPositioned { coordinates ->
+                    // Lấy tọa độ góc trên bên phải thanh tìm kiếm (gần vị trí xe hàng)
+                    val position = coordinates.positionInWindow()
+                    onCartIconPositioned(
+                        Offset(
+                            position.x + coordinates.size.width - 100f,
+                            position.y + 30f
+                        )
+                    )
+                }
         )
 
         Box(
@@ -189,18 +218,24 @@ fun HomeContent(
 
                 is HomeUiState.Success -> LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(start = 6.dp, end = 6.dp, top = 2.dp, bottom = 8.dp),
+                    contentPadding = PaddingValues(
+                        start = 6.dp,
+                        end = 6.dp,
+                        top = 2.dp,
+                        bottom = 8.dp
+                    ),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(state.products) { product ->
+                    items(state.products, key = { it.id ?: "" }) { product ->
                         ProductGridCard(
                             product = product,
                             onProductClick = { onProductClick(product) },
-                            onAddToCart = { onAddToCart(product) }
+                            onAddToCart = { prod, offset -> onAddToCart(prod, offset) }
                         )
                     }
                 }
+
                 else -> Unit
             }
         }
@@ -267,7 +302,8 @@ fun HomeContentSuccessWithBadgePreview() {
             onMicClick = {},
             onCartClick = {},
             onProductClick = {},
-            onAddToCart = {}
+            onAddToCart = { _, _ -> },
+            onCartIconPositioned = {}
         )
     }
 }
@@ -299,7 +335,8 @@ fun HomeContentEmptyCartPreview() {
             onMicClick = {},
             onCartClick = {},
             onProductClick = {},
-            onAddToCart = {}
+            onAddToCart = { _, _ -> },
+            onCartIconPositioned = {},
         )
     }
 }

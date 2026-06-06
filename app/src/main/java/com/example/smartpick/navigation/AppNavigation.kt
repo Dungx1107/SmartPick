@@ -1,6 +1,5 @@
 package com.example.smartpick.navigation
 
-import androidx.navigation.navDeepLink
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,8 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -30,26 +27,28 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.smartpick.core.utils.NavigationUtils.shouldShowBottomBar
-import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.auth.ui.LoginScreen
 import com.example.smartpick.features.auth.ui.SignUpScreen
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
+import com.example.smartpick.features.cart.ui.CartScreen
+import com.example.smartpick.features.cart.viewmodel.CartViewModel
 import com.example.smartpick.features.checkout.ui.CheckoutScreen
 import com.example.smartpick.features.comment.ui.CommentsScreen
 import com.example.smartpick.features.feed.ui.FeedScreen
-import com.example.smartpick.features.post_creation.ui.CreatePostScreen
 import com.example.smartpick.features.home.ui.HomeScreen
 import com.example.smartpick.features.notification.data.NotificationType
 import com.example.smartpick.features.notification.ui.NotificationsScreen
 import com.example.smartpick.features.notification.viewmodel.NotificationViewModel
+import com.example.smartpick.features.post_creation.ui.CreatePostScreen
 import com.example.smartpick.features.post_creation.ui.EditPostScreen
-import com.example.smartpick.features.profile.ui.main.ProfileScreen
-import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
-import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 import com.example.smartpick.features.product_detail.ui.ProductDetailScreen
-import com.example.smartpick.features.settings.ui.SettingsScreen
+import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
+import com.example.smartpick.features.profile.ui.main.ProfileScreen
+import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.review.ui.ReviewHubScreen
 import com.example.smartpick.features.review.ui.WriteReviewScreen
+import com.example.smartpick.features.settings.ui.SettingsScreen
 
 @Composable
 fun AppNavigation(
@@ -374,6 +373,33 @@ fun AppNavigation(
                             navController = navController
                         )
                     }
+                }
+
+                composable(route = Routes.Cart.route) {
+                    val cartViewModel: CartViewModel = hiltViewModel()
+                    val cartItems by cartViewModel.cartItems.collectAsState()
+                    val selectedIds by cartViewModel.selectedIds.collectAsState()
+
+                    CartScreen(
+                        cartItems = cartItems,
+                        selectedIds = selectedIds,
+                        onToggleSelect = { id -> cartViewModel.toggleSelection(id) },
+                        onSelectAll = { isSelectAll -> cartViewModel.selectAll(isSelectAll) },
+                        onIncrease = { item -> cartViewModel.increaseQuantity(item) },
+                        onDecrease = { item -> cartViewModel.decreaseQuantity(item) },
+                        onRemove = { id -> cartViewModel.removeItem(id) },
+                        onBack = {
+                            navController.popBackStack()     // Quay lại màn hình trước đó
+                        },
+                        onNavigateToPost = { postId ->
+                            // Điều hướng chuẩn xác về màn hình bài đăng chi tiết theo cấu trúc Routes.kt của bạn
+                            navController.navigate(Routes.PostDetail.createRoute(postId))
+                        },
+                        onCheckout = {
+                            // Điều hướng chuẩn xác sang màn hình đặt hàng theo cấu trúc Routes.kt của bạn
+                            navController.navigate(Routes.Checkout.route)
+                        }
+                    )
                 }
             }
         }

@@ -13,6 +13,7 @@ sealed class Routes(val route: String) {
     object Notifications : Routes("notifications")
     object Settings : Routes("settings")
     object Checkout : Routes("checkout")
+    object Cart : Routes("cart")
 
     object EditPost : Routes("edit_post/{postId}") {
         const val ARG_POST_ID = "postId"

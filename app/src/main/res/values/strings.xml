@@ -174,4 +174,5 @@
     <string name="DangXuatThanhCong">Đăng xuất thành công!</string>
     <string name="alert">Alert</string>
     <string name="ChiTietSanPham">Chi tiết sản phẩm</string>
+    <string name="Tong">"Tổng: "</string>
 </resources>

@@ -14,7 +14,8 @@ object NavigationUtils {
         Routes.Checkout.route,
         Routes.WriteReview.route,
         Routes.EditPost.route,
-        Routes.ProductDetail.route
+        Routes.ProductDetail.route,
+        Routes.Cart.route
     )
     fun shouldShowBottomBar(currentRoute: String?): Boolean {
         if (currentRoute == null) return true
