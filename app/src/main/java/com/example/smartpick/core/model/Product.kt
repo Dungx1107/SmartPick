@@ -17,5 +17,6 @@ data class Product(
     val stock: Int = 0,
     val soldCount: Int = 0,
     val createdAt: String? = null,
-    val postId: String? = null
+    val postId: String? = null,
+    val ownerName: String? = null
 ) : Parcelable

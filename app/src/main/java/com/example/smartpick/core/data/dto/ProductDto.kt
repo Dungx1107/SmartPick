@@ -17,5 +17,10 @@ data class ProductDto(
     @SerialName("stock") val stock: Int = 0,
     @SerialName("sold_count") val soldCount: Int = 0,
     @SerialName("created_at") val createdAt: String? = null,
-    @SerialName("post_id") val postId: String? = null
+    @SerialName("post_id") val postId: String? = null,
+    @SerialName("users") val sellerProfile: SellerProfileDto? = null
+)
+@Serializable
+data class SellerProfileDto(
+    @SerialName("full_name") val fullName: String? = null
 )

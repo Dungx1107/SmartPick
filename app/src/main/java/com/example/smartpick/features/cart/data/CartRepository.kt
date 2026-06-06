@@ -1,4 +1,3 @@
-// FILE: com/example/smartpick/features/cart/data/CartRepository.kt
 package com.example.smartpick.features.cart.data
 
 import android.util.Log
@@ -15,10 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
-// BẮT BUỘC IMPORT ĐỂ BUILD JSON THÔ
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import org.slf4j.MDC.put
 
 @Singleton
 class CartRepository @Inject constructor(
@@ -34,7 +31,7 @@ class CartRepository @Inject constructor(
         Log.d("SMARTPICK_DEBUG", "=== BẮT ĐẦU FETCH_CART_ITEMS ===")
         try {
             val response = postgrest["cart_items"]
-                .select(Columns.raw("*, products!product_id(*)")) {
+                .select(Columns.raw("*, products!product_id(*, users!owner_id(full_name))")) {
                     filter { eq("user_id", userId) }
                 }
 

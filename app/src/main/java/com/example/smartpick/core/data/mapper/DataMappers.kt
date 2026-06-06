@@ -42,7 +42,8 @@ fun ProductDto.toDomain(): Product = Product(
     stock = stock,
     soldCount = soldCount,
     createdAt = createdAt,
-    postId = postId
+    postId = postId,
+    ownerName = sellerProfile?.fullName
 )
 
 fun Product.toDto(): ProductDto = ProductDto(

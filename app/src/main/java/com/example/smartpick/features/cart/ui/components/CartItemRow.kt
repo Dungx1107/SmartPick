@@ -45,7 +45,8 @@ fun CartItemRow(
     onToggleSelect: () -> Unit,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit,
-    onNavigateToPost: () -> Unit
+    onNavigateToPost: () -> Unit,
+    onProductClick: (String) -> Unit
 ) {
     val product = item.product ?: return
 
@@ -80,7 +81,7 @@ fun CartItemRow(
             )
 
             Text(
-                text = "SmartPick Store",
+                text = item.product?.ownerName ?: "Người bán SmartPick",
                 modifier = Modifier.padding(start = 6.dp),
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
@@ -96,7 +97,11 @@ fun CartItemRow(
         }
 
         // Phần thân của Item: Ảnh, Tên, Giá, và cụm nút tăng giảm số lượng
-        Row(modifier = Modifier.fillMaxWidth()) {
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                product.id?.let { onProductClick(it) }
+            }) {
             AsyncImage(
                 model = product.imageUrls.firstOrNull(),
                 contentDescription = null,
@@ -141,6 +146,7 @@ fun CartItemRow(
                         modifier = Modifier
                             .clip(RoundedCornerShape(4.dp))
                             .background(Color(0xFFF5F5F5))
+                            .clickable(enabled = false) {}
                     ) {
                         Box(
                             modifier = Modifier
@@ -199,6 +205,7 @@ fun CartItemRowPreview() {
         onToggleSelect = {},
         onIncrease = {},
         onDecrease = {},
-        onNavigateToPost = {}
+        onNavigateToPost = {},
+        onProductClick = {}
     )
 }

@@ -398,6 +398,9 @@ fun AppNavigation(
                         onCheckout = {
                             // Điều hướng chuẩn xác sang màn hình đặt hàng theo cấu trúc Routes.kt của bạn
                             navController.navigate(Routes.Checkout.route)
+                        },
+                        onProductClick = { productId ->
+                            navController.navigate(Routes.ProductDetail.createRoute(productId))
                         }
                     )
                 }
