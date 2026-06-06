@@ -16,10 +16,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.CartItem
+import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -126,5 +128,61 @@ fun CartBottomSheet(
                 Text("Thanh toán ngay", color = MaterialTheme.colorScheme.onPrimary)
             }
         }
+    }
+}
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    name = "Cart Bottom Sheet Preview"
+)
+@Composable
+fun CartBottomSheetPreview() {
+
+    val mockItems = listOf(
+        CartItem(
+            id = "cart_1",
+            userId = "user_1",
+            productId = "prod_1",
+            quantity = 2,
+            product = Product(
+                id = "prod_1",
+                ownerId = "owner_1",
+                name = "Tai nghe Sony WH-1000XM5 Chống Ồn Chủ Động",
+                brand = "Sony",
+                category = "Phụ kiện",
+                price = 6490000.0,
+                imageUrls = listOf("https://via.placeholder.com/300"),
+                stock = 20,
+                soldCount = 1250
+            )
+        ),
+        CartItem(
+            id = "cart_2",
+            userId = "user_1",
+            productId = "prod_2",
+            quantity = 1,
+            product = Product(
+                id = "prod_2",
+                ownerId = "owner_2",
+                name = "Bàn phím cơ Keychron K2 V2 Hot Swap RGB",
+                brand = "Keychron",
+                category = "Phụ kiện",
+                price = 1850000.0,
+                imageUrls = listOf("https://via.placeholder.com/300"),
+                stock = 15,
+                soldCount = 320
+            )
+        )
+    )
+
+    SmartPickTheme {
+        CartBottomSheet(
+            cartItems = mockItems,
+            onIncrease = {},
+            onDecrease = {},
+            onDismiss = {},
+            onCheckout = {}
+        )
     }
 }

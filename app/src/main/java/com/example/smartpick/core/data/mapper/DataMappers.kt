@@ -41,7 +41,8 @@ fun ProductDto.toDomain(): Product = Product(
     status = status,
     stock = stock,
     soldCount = soldCount,
-    createdAt = createdAt
+    createdAt = createdAt,
+    postId = postId
 )
 
 fun Product.toDto(): ProductDto = ProductDto(
@@ -56,13 +57,14 @@ fun Product.toDto(): ProductDto = ProductDto(
     status = status,
     stock = stock,
     soldCount = soldCount,
-    createdAt = createdAt
+    createdAt = createdAt,
+    postId = postId
 )
 
 // --- Post Mappers ---
 fun PostDto.toDomain(): Post = Post(
     id = id,
-    userId = userId,
+    userId = userId ?: "",
     productId = productId,
     content = content,
     mediaUrls = mediaUrls,

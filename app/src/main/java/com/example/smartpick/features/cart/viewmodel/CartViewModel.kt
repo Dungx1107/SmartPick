@@ -1,5 +1,6 @@
 package com.example.smartpick.features.cart.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.CartItem
@@ -27,7 +28,6 @@ class CartViewModel @Inject constructor(
         .map { items -> items.sumOf { it.quantity } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
-    // FIX: State để phóng lỗi ra UI (hiển thị Toast)
     private val _cartError = MutableStateFlow<String?>(null)
     val cartError: StateFlow<String?> = _cartError.asStateFlow()
 
@@ -41,34 +41,43 @@ class CartViewModel @Inject constructor(
 
     fun refreshCart() {
         viewModelScope.launch {
-            val user = authRepository.getCurrentUser()
-            user?.id?.let { uid -> cartRepository.fetchCartItems(uid) }
+            try {
+                val user = authRepository.getCurrentUser()
+                user?.id?.let { uid -> cartRepository.fetchCartItems(uid) }
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "refreshCart error: ${e.message}", e)
+            }
         }
     }
 
     fun increaseQuantity(item: CartItem) {
-        // ==========================================
-        // FIX: CHỐT CHẶN TỒN KHO KHI BẤM DẤU (+)
-        // ==========================================
         val stock = item.product?.stock ?: 0
         if (item.quantity >= stock) {
             _cartError.value = "Chỉ còn $stock sản phẩm trong kho!"
-            return // Chặn không cho gọi API cộng thêm
+            return
         }
 
         viewModelScope.launch {
-            val user = authRepository.getCurrentUser()
-            if (user != null && item.id != null) {
-                cartRepository.updateCartItemQuantity(user.id, item.id!!, item.quantity + 1)
+            try {
+                val user = authRepository.getCurrentUser()
+                if (user != null && item.id != null) {
+                    cartRepository.updateCartItemQuantity(user.id, item.id!!, item.quantity + 1)
+                }
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "increaseQuantity error: ${e.message}", e)
             }
         }
     }
 
     fun decreaseQuantity(item: CartItem) {
         viewModelScope.launch {
-            val user = authRepository.getCurrentUser()
-            if (user != null && item.id != null) {
-                cartRepository.updateCartItemQuantity(user.id, item.id!!, item.quantity - 1)
+            try {
+                val user = authRepository.getCurrentUser()
+                if (user != null && item.id != null) {
+                    cartRepository.updateCartItemQuantity(user.id, item.id!!, item.quantity - 1)
+                }
+            } catch (e: Exception) {
+                Log.e("CartViewModel", "decreaseQuantity error: ${e.message}", e)
             }
         }
     }

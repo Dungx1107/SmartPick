@@ -158,7 +158,7 @@ fun AppNavigation(
                 composable(Routes.Home.route) {
                     HomeScreen(
                         navController = navController,
-                        paddingValues = PaddingValues(0.dp),
+                        paddingValues = innerPadding,
                         onProductClick = { product ->
                             if (product.id != null) {
                                 navController.navigate(Routes.ProductDetail.createRoute(product.id))
@@ -368,9 +368,7 @@ fun AppNavigation(
                         backStackEntry.arguments?.getString(Routes.ProductDetail.ARG_PRODUCT_ID)
                             ?: ""
 
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)) {
+                    Box(modifier = Modifier.fillMaxSize()) {
                         ProductDetailScreen(
                             productId = productId,
                             navController = navController

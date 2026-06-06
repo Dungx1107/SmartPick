@@ -2,9 +2,11 @@
 package com.example.smartpick.features.product_detail.ui
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -25,16 +27,15 @@ import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.*
 import com.example.smartpick.R
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.smartpick.features.product_detail.viewmodel.ProductDetailViewModel
 import com.example.smartpick.features.review.ui.components.ReviewCard
 import com.example.smartpick.features.review.ui.components.ReviewInputForm
 import com.example.smartpick.features.review.viewmodel.ReviewViewModel
 import com.example.smartpick.navigation.Routes
+import com.example.smartpick.core.model.Review
+import com.example.smartpick.core.model.ReviewUser
 
-/**
- * THÊM MỚI: Hàm bọc đóng vai trò Màn hình độc lập (Screen) để AppNavigation gọi đến.
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
     productId: String,
@@ -42,177 +43,185 @@ fun ProductDetailScreen(
     viewModel: ProductDetailViewModel = hiltViewModel(),
     reviewViewModel: ReviewViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState() // Trạng thái nạp dữ liệu sản phẩm từ ViewModel
+    val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Tự động tải thông tin sản phẩm và đánh giá tương ứng từ Supabase theo productId nhận từ Route
     LaunchedEffect(productId) {
-        viewModel.loadProductDetail(productId) // Sử dụng hàm nạp chi tiết trong ViewModel của bạn
+        viewModel.loadProductDetail(productId)
         reviewViewModel.loadReviewData(productId)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.ChiTietSanPham), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+    val postId by viewModel.postId.collectAsState()
+    val reviews by reviewViewModel.productReviews.collectAsState()
+    val canReview by reviewViewModel.canReview.collectAsState()
+    val isSubmitting by reviewViewModel.isSubmitting.collectAsState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        when {
+            uiState.isLoading -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
+            uiState.error != null -> {
+                Text(
+                    text = uiState.error ?: "Lỗi tải thông tin sản phẩm",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            uiState.product != null -> {
+                ProductDetailContent(
+                    product = uiState.product!!,
+                    postId = postId,
+                    reviews = reviews,
+                    canReview = canReview,
+                    isSubmitting = isSubmitting,
+                    isProductAvailable = viewModel.isProductAvailable(uiState.product!!),
+                    onBackClick = { navController.popBackStack() },
+                    onViewFeed = { id -> navController.navigate(Routes.PostDetail.createRoute(id)) },
+                    onAddToCart = {
+                        viewModel.addToCart(
+                            product = uiState.product!!,
+                            onSuccess = { Toast.makeText(context, context.getString(R.string.DaThemVaoGioHang), Toast.LENGTH_SHORT).show() },
+                            onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                        )
+                    },
+                    onBuyNow = {
+                        viewModel.addToCart(
+                            product = uiState.product!!,
+                            onSuccess = { navController.navigate(Routes.Checkout.route) },
+                            onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                        )
+                    },
+                    onSubmitReview = { rating, content ->
+                        reviewViewModel.submitProductReview(
+                            productId = uiState.product!!.id!!,
+                            rating = rating,
+                            content = content,
+                            onSuccess = { Toast.makeText(context, context.getString(R.string.DaGuiDanhGia), Toast.LENGTH_SHORT).show() },
+                            onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
+                        )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                uiState.error != null -> {
-                    Text(
-                        text = uiState.error ?: "Lỗi tải thông tin sản phẩm",
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-                uiState.product != null -> {
-                    // Gọi Layout nội dung gốc khi dữ liệu Product đã sẵn sàng nạp về
-                    ProductDetailContent(
-                        product = uiState.product!!,
-                        onViewFeed = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
-                        onAddToCart = {
-                            viewModel.addToCart(
-                                product = uiState.product!!,
-                                onSuccess = { Toast.makeText(context, context.getString(R.string.DaThemVaoGioHang), Toast.LENGTH_SHORT).show() },
-                                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
-                            )
-                        },
-                        onBuyNow = {
-                            // Luồng mua ngay: Lưu sản phẩm vào DB và chuyển hướng thẳng sang màn hình Thanh toán riêng biệt
-                            viewModel.addToCart(
-                                product = uiState.product!!,
-                                onSuccess = { navController.navigate(Routes.Checkout.route) },
-                                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
-                            )
-                        },
-                        viewModel = viewModel,
-                        reviewViewModel = reviewViewModel
-                    )
-                }
+                )
             }
         }
     }
 }
 
-/**
- * COMPOSABLE GỐC: Giữ nguyên cấu trúc hiển thị thông tin sản phẩm và danh sách Review của bạn.
- */
 @Composable
 fun ProductDetailContent(
     product: Product,
+    postId: String?,
+    reviews: List<Review>,
+    canReview: Boolean,
+    isSubmitting: Boolean,
+    isProductAvailable: Boolean,
+    onBackClick: () -> Unit,
     onViewFeed: (String) -> Unit,
     onAddToCart: () -> Unit,
     onBuyNow: () -> Unit,
-    viewModel: ProductDetailViewModel = hiltViewModel(),
-    reviewViewModel: ReviewViewModel = hiltViewModel()
+    onSubmitReview: (Int, String) -> Unit
 ) {
     val context = LocalContext.current
-    val postId by viewModel.postId.collectAsState()
 
-    // Review State
-    val reviews by reviewViewModel.productReviews.collectAsState()
-    val canReview by reviewViewModel.canReview.collectAsState()
-    val isSubmitting by reviewViewModel.isSubmitting.collectAsState()
-
-    // Khởi tạo dữ liệu
-    LaunchedEffect(product.id) {
-        product.id?.let {
-            viewModel.fetchPostId(it)
-            reviewViewModel.loadReviewData(it)
-        }
-    }
-
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.surface,
-        bottomBar = {
-            Surface(shadowElevation = 16.dp, color = MaterialTheme.colorScheme.surface) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = onAddToCart,
-                        modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = viewModel.isProductAvailable(product)
-                    ) {
-                        Text(stringResource(R.string.ThemGioHang), color = MaterialTheme.colorScheme.onPrimary)
-                    }
-                    Button(
-                        onClick = onBuyNow,
-                        modifier = Modifier.weight(1f).height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                        shape = RoundedCornerShape(12.dp),
-                        enabled = viewModel.isProductAvailable(product)
-                    ) {
-                        Text(stringResource(R.string.mua_ngay), color = MaterialTheme.colorScheme.onSecondary)
-                    }
-                }
-            }
-        }
-    ) { innerPadding ->
+    // Thay thế Box bằng Column tổng thể để quản lý luồng hiển thị từ trên xuống dưới
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        // Khối nội dung cuộn chiếm toàn bộ không gian phía trên
         LazyColumn(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .weight(1f),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // 1. Hình ảnh sản phẩm
+            // 1. Hình ảnh sản phẩm kèm nút Back lồng bên trong để tối ưu diện tích tràn đỉnh đầu
             item {
-                AsyncImage(
-                    model = product.imageUrls.firstOrNull(),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp)
-                        .clip(RoundedCornerShape(16.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                Spacer(modifier = Modifier.height(16.dp))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+
+                        FilledIconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.size(40.dp),
+                            shape = CircleShape,
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Quay lại"
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Text(
+                            text = "Chi tiết sản phẩm",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    AsyncImage(
+                        model = product.imageUrls.firstOrNull(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(320.dp)
+                            .padding(horizontal = 12.dp)
+                            .clip(RoundedCornerShape(20.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
             // 2. Thông tin tên và giá
             item {
-                Text(
-                    text = product.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Text(
-                        text = priceFormatted,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = AccentBlue,
-                        fontWeight = FontWeight.Bold
+                        text = product.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.ExtraBold
                     )
 
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text("Kho: ${product.stock}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
-                        Text("Đã bán: ${product.soldCount}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
+                        Text(
+                            text = priceFormatted,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = AccentBlue,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Kho: ${product.stock}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                            Text("Đã bán: ${product.soldCount}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
@@ -220,35 +229,30 @@ fun ProductDetailContent(
 
             // 3. Nút xem bài đăng Feed
             item {
-                OutlinedButton(
-                    onClick = {
-                        if (postId != null) onViewFeed(postId!!)
-                        else Toast.makeText(context, context.getString(R.string.ChuaCoBaiDangThaoLuan), Toast.LENGTH_SHORT).show()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(stringResource(R.string.XemBaiDangTrongFeed), color = MaterialTheme.colorScheme.primary)
+                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            if (postId != null) onViewFeed(postId)
+                            else Toast.makeText(context, context.getString(R.string.ChuaCoBaiDangThaoLuan), Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(stringResource(R.string.XemBaiDangTrongFeed), color = MaterialTheme.colorScheme.primary)
+                    }
                 }
-
                 HorizontalDivider(modifier = Modifier.padding(vertical = 24.dp), color = MaterialTheme.colorScheme.outlineVariant)
             }
 
-            // 4. Form viết đánh giá (Nếu đủ điều kiện)
+            // 4. Form viết đánh giá
             if (canReview) {
                 item {
-                    ReviewInputForm(
-                        isSubmitting = isSubmitting,
-                        onSubmitReview = { rating, content ->
-                            reviewViewModel.submitProductReview(
-                                productId = product.id!!,
-                                rating = rating,
-                                content = content,
-                                onSuccess = { Toast.makeText(context, context.getString(R.string.DaGuiDanhGia), Toast.LENGTH_SHORT).show() },
-                                onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
-                            )
-                        }
-                    )
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        ReviewInputForm(
+                            isSubmitting = isSubmitting,
+                            onSubmitReview = onSubmitReview
+                        )
+                    }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
@@ -258,7 +262,8 @@ fun ProductDetailContent(
                 Text(
                     text = "Đánh giá từ khách hàng (${reviews.size})",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -268,17 +273,97 @@ fun ProductDetailContent(
                     Text(
                         text = "Chưa có đánh giá nào cho sản phẩm này.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextMuted
+                        color = TextMuted,
+                        modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
             } else {
                 items(reviews) { review ->
-                    ReviewCard(review = review)
+                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        ReviewCard(review = review)
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
             }
-
-            item { Spacer(modifier = Modifier.height(32.dp)) }
         }
+
+        // Thanh mua hàng cố định nằm ngoài LazyColumn - Luôn nằm ngay trên NavigationBar ảo hệ thống
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shadowElevation = 16.dp,
+            color = MaterialTheme.colorScheme.surface
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    // Giữ khoảng đệm an toàn cho thanh điều hướng gốc hệ thống
+                    .navigationBarsPadding(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onAddToCart,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = isProductAvailable
+                ) {
+                    Text(stringResource(R.string.ThemGioHang), color = MaterialTheme.colorScheme.onPrimary)
+                }
+                Button(
+                    onClick = onBuyNow,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = isProductAvailable
+                ) {
+                    Text(stringResource(R.string.mua_ngay), color = MaterialTheme.colorScheme.onSecondary)
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true, name = "Chi Tiết Sản Phẩm - Cấu Trúc Đáy Chuẩn")
+@Composable
+fun ProductDetailContentPreview() {
+    val mockProduct = Product(
+        id = "prod_sample_01",
+        ownerId = "owner_01",
+        name = "Bàn phím cơ Custom Keychron K2 V2 Nhôm Hot-swappable Chính Hãng",
+        brand = "Keychron",
+        category = "Phụ kiện",
+        price = 1850000.0,
+        imageUrls = listOf("https://via.placeholder.com/300"),
+        stock = 15,
+        soldCount = 142
+    )
+
+    val mockReviews = listOf(
+        Review(
+            id = "rev_1",
+            userId = "user_01",
+            productId = "prod_sample_01",
+            rating = 5,
+            content = "Bàn phím gõ rất mượt, kết nối Bluetooth ổn định, giao hàng nhanh chóng.",
+            createdAt = "2026-06-06T12:00:00Z",
+            user = ReviewUser(id = "user_01", fullName = "Nguyễn Xuân Dũng", avatarUrl = null)
+        )
+    )
+
+    SmartPickTheme {
+        ProductDetailContent(
+            product = mockProduct,
+            postId = "feed_post_123",
+            reviews = mockReviews,
+            canReview = true,
+            isSubmitting = false,
+            isProductAvailable = true,
+            onBackClick = {},
+            onViewFeed = {},
+            onAddToCart = {},
+            onBuyNow = {},
+            onSubmitReview = { _, _ -> }
+        )
     }
 }

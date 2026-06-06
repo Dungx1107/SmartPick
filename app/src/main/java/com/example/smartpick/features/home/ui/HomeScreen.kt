@@ -9,30 +9,29 @@ import android.speech.RecognizerIntent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.smartpick.core.model.Product
 import com.example.smartpick.R
+import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.cart.viewmodel.CartViewModel
 import com.example.smartpick.features.home.ui.components.ProductGridCard
@@ -69,21 +68,29 @@ fun HomeScreen(
     val context = LocalContext.current
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        val launcher =
+            rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
         LaunchedEffect(Unit) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
 
-    val speechLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val text = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0) ?: ""
-            searchQuery = text
-            viewModel.searchProducts(text)
+    val speechLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val text =
+                    result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
+                        ?: ""
+                searchQuery = text
+                viewModel.searchProducts(text)
+            }
         }
-    }
 
     // Làm mới trạng thái số lượng xe đẩy liên tục khi quay lại màn hình
     LaunchedEffect(Unit) {
@@ -98,17 +105,23 @@ fun HomeScreen(
         onSearchQueryChange = { searchQuery = it; viewModel.searchProducts(it) },
         onMicClick = {
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                )
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
             }
             try {
                 speechLauncher.launch(intent)
             } catch (e: Exception) {
-                Toast.makeText(context, context.getString(R.string.ThietBiKhongHoTro), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.ThietBiKhongHoTro),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         },
         onCartClick = {
-            // Khi nhấn vào xe đẩy trên cùng, chuyển thẳng sang màn hình Checkout riêng biệt
             navController.navigate(Routes.Checkout.route)
         },
         onProductClick = onProductClick,
@@ -116,7 +129,11 @@ fun HomeScreen(
             viewModel.addToCart(
                 product = product,
                 onSuccess = {
-                    Toast.makeText(context, context.getString(R.string.DaThemVaoGioHang), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.DaThemVaoGioHang),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     cartViewModel.refreshCart() // Cập nhật lại số lượng xe đẩy ngay lập tức
                 },
                 onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
@@ -137,56 +154,54 @@ fun HomeContent(
     onProductClick: (Product) -> Unit,
     onAddToCart: (Product) -> Unit
 ) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-                    end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = innerPadding.calculateBottomPadding()
-                )
-        ) {
-            // Thanh công cụ đỉnh đầu gộp chung SearchBar và Xe đẩy hàng
-            SearchBar(
-                query = searchQuery,
-                onQueryChange = onSearchQueryChange,
-                onMicClick = onMicClick,
-                totalCartCount = totalCartCount, // Đẩy biến số lượng xuống UI Component
-                onCartClick = onCartClick,       // Sự kiện khi nhấn xe đẩy
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp) // Cân đối lề khoảng cách viền màn hình
-                    .padding(top = 8.dp, bottom = 4.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(
+                start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
+                end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
+                top = paddingValues.calculateTopPadding(),      // Đẩy SearchBar xuống dưới StatusBar chuẩn
+                bottom = paddingValues.calculateBottomPadding() // Đẩy Grid sản phẩm lên trên MainBottomBar chuẩn
             )
+    ) {
+        SearchBar(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+            onMicClick = onMicClick,
+            totalCartCount = totalCartCount,
+            onCartClick = onCartClick,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp) // Thu hẹp lề hai bên thanh search từ 12.dp xuống 8.dp
+                .padding(top = 4.dp, bottom = 4.dp) // Thu hẹp lề trên dưới của search bar
+        )
 
-            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                when (val state = uiState) {
-                    is HomeUiState.Loading -> CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            when (val state = uiState) {
+                is HomeUiState.Loading -> CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
 
-                    is HomeUiState.Success -> LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(state.products) { product ->
-                            ProductGridCard(
-                                product = product,
-                                onProductClick = { onProductClick(product) },
-                                onAddToCart = { onAddToCart(product) }
-                            )
-                        }
+                is HomeUiState.Success -> LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(start = 6.dp, end = 6.dp, top = 2.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    items(state.products) { product ->
+                        ProductGridCard(
+                            product = product,
+                            onProductClick = { onProductClick(product) },
+                            onAddToCart = { onAddToCart(product) }
+                        )
                     }
-                    else -> Unit
                 }
+                else -> Unit
             }
         }
     }

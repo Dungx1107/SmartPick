@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.features.auth.data.AuthRepository
+import com.example.smartpick.features.cart.data.CartRepository
 import com.example.smartpick.features.checkout.data.OrderRepository
-import com.example.smartpick.features.home.data.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class CheckoutViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
-    private val homeRepository: HomeRepository, // Sẽ thay bằng CartRepository ở bước sau
+    private val cartRepository: CartRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -32,7 +32,7 @@ class CheckoutViewModel @Inject constructor(
 
     init {
         loadCurrentCart()
-        loadUserDefaultInfo() // FIX: Tự động gọi hàm gợi ý thông tin khi mở màn hình
+        loadUserDefaultInfo()
     }
 
     /**
@@ -42,12 +42,10 @@ class CheckoutViewModel @Inject constructor(
         viewModelScope.launch {
             val user = authRepository.getCurrentUser()
             if (user != null) {
-                // 1. Cố gắng lấy SĐT từ Profile người dùng trước
                 if (!user.phoneNumber.isNullOrBlank()) {
                     phone.value = user.phoneNumber
                 }
 
-                // 2. Tìm đơn hàng gần nhất. Nếu có, ưu tiên lấy thông tin từ đơn hàng này (vì nó là địa chỉ giao thực tế)
                 val lastOrder = orderRepository.getLastOrderInfo(user.id)
                 if (lastOrder != null) {
                     if (!lastOrder.phoneNumber.isNullOrBlank()) {
@@ -66,7 +64,8 @@ class CheckoutViewModel @Inject constructor(
             try {
                 val user = authRepository.getCurrentUser()
                 user?.id?.let { uid ->
-                    _cartItems.value = homeRepository.getCartItems(uid)
+                    // SỬA TẠI ĐÂY: Gọi sang hàm fetchCartItems của cartRepository để đồng bộ logic
+                    _cartItems.value = cartRepository.fetchCartItems(uid)
                 }
             } catch (e: Exception) {
                 _cartItems.value = emptyList()
@@ -94,7 +93,6 @@ class CheckoutViewModel @Inject constructor(
             return
         }
 
-        // Chốt chặn tồn kho
         val outOfStockItem = currentItems.find { item ->
             val stock = item.product?.stock ?: 0
             item.quantity > stock

@@ -1,5 +1,7 @@
+// FILE: com/example/smartpick/features/product_detail/viewmodel/ProductDetailViewModel.kt
 package com.example.smartpick.features.product_detail.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Product
@@ -14,15 +16,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * Định nghĩa trạng thái UI cho màn hình Chi tiết sản phẩm
- */
-data class ProductDetailUiState(
-    val isLoading: Boolean = false,
-    val product: Product? = null,
-    val error: String? = null
-)
-
 @HiltViewModel
 class ProductDetailViewModel @Inject constructor(
     private val repository: HomeRepository,
@@ -30,7 +23,6 @@ class ProductDetailViewModel @Inject constructor(
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    // Khởi tạo StateFlow để ProductDetailScreen có thể collect dữ liệu ổn định
     private val _uiState = MutableStateFlow(ProductDetailUiState())
     val uiState: StateFlow<ProductDetailUiState> = _uiState.asStateFlow()
 
@@ -47,6 +39,7 @@ class ProductDetailViewModel @Inject constructor(
                 val productData = repository.getProductById(productId)
                 if (productData != null) {
                     _uiState.update { it.copy(isLoading = false, product = productData) }
+                    fetchPostId(productId)
                 } else {
                     _uiState.update { it.copy(isLoading = false, error = "Không tìm thấy sản phẩm") }
                 }
@@ -58,7 +51,11 @@ class ProductDetailViewModel @Inject constructor(
 
     fun fetchPostId(productId: String) {
         viewModelScope.launch {
-            _postId.value = repository.getPostIdByProductId(productId)
+            Log.d("SMARTPICK_DEBUG", "--- VIEWMODEL: Bắt đầu gọi fetchPostId cho sản phẩm: $productId ---")
+            val fetchedId = repository.getPostIdByProductId(productId)
+
+            _postId.value = fetchedId
+            Log.d("SMARTPICK_DEBUG", "--- VIEWMODEL: Trạng thái lưu trữ của _postId.value hiện tại đã đổi thành: ${_postId.value} ---")
         }
     }
 
@@ -66,25 +63,45 @@ class ProductDetailViewModel @Inject constructor(
         return product.stock > 0
     }
 
-    fun addToCart(product: Product, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        if (!isProductAvailable(product)) {
-            onError("Sản phẩm này hiện đã hết hàng!")
-            return
-        }
-
+    fun addToCart(
+        product: Product,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
-            val user = authRepository.getCurrentUser()
-            if (user == null) {
-                onError("Vui lòng đăng nhập để thêm vào giỏ hàng.")
-                return@launch
-            }
+            try {
+                val user = authRepository.getCurrentUser()
+                if (user == null) {
+                    onError("Bạn cần đăng nhập để thực hiện tính năng này")
+                    return@launch
+                }
 
-            // Gọi CartRepository hoặc HomeRepository tùy thuộc vào việc đồng bộ token
-            val result = cartRepository.addToCart(user.id, product.id!!)
-            if (result.isSuccess) {
-                onSuccess()
-            } else {
-                onError(result.exceptionOrNull()?.message ?: "Lỗi hệ thống khi thêm vào giỏ hàng.")
+                if (product.id == null) {
+                    onError("Không tìm thấy ID sản phẩm")
+                    return@launch
+                }
+
+                val currentPostId = _postId.value
+
+                Log.d("SMARTPICK_DEBUG", "--- VIEWMODEL: Chuẩn bị kích hoạt toán tử addToCart từ nút bấm UI ---")
+                Log.d("SMARTPICK_DEBUG", "--- VIEWMODEL: Tham số gửi đi -> ProductId: ${product.id} | PostId lấy từ StateFlow: $currentPostId")
+
+                val result = cartRepository.addToCart(
+                    userId = user.id,
+                    productId = product.id,
+                    postId = currentPostId
+                )
+
+                if (result.isFailure) {
+                    val exception = result.exceptionOrNull()
+                    onError(exception?.message ?: "Lỗi hệ thống database")
+                } else {
+                    onSuccess()
+                }
+            } catch (e: Exception) {
+                Log.e("SMARTPICK_DEBUG", "Ngoại lệ xảy ra khi kết nối mạng/DB: ${e.message}", e)
+                e.printStackTrace()
+                onError(e.localizedMessage ?: "Ngoại lệ hệ thống")
             }
         }
     }

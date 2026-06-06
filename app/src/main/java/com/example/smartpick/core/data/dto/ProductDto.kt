@@ -16,5 +16,6 @@ data class ProductDto(
     val status: String = "available",
     @SerialName("stock") val stock: Int = 0,
     @SerialName("sold_count") val soldCount: Int = 0,
-    @SerialName("created_at") val createdAt: String? = null
+    @SerialName("created_at") val createdAt: String? = null,
+    @SerialName("post_id") val postId: String? = null
 )

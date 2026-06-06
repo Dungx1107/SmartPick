@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.features.auth.data.AuthRepository
+import com.example.smartpick.features.cart.data.CartRepository
 import com.example.smartpick.features.home.data.HomeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: HomeRepository,
+    private val cartRepository: CartRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -49,7 +51,11 @@ class HomeViewModel @Inject constructor(
         _uiState.value = HomeUiState.Success(filtered)
     }
 
-    fun addToCart(product: Product, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun addToCart(
+        product: Product,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val user = authRepository.getCurrentUser()
@@ -58,20 +64,20 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
                 if (product.id != null) {
-                    val result = repository.addToCart(user.id, product.id)
+                    val result = cartRepository.addToCart(
+                        userId = user.id,
+                        productId = product.id,
+                        postId = product.postId
+                    )
                     if (result.isSuccess) {
                         onSuccess()
                     } else {
-                        onError(result.exceptionOrNull()?.message ?: "Lỗi không xác định")
+                        onError(result.exceptionOrNull()?.message ?: "Lỗi thêm vào giỏ hàng")
                     }
                 }
             } catch (e: Exception) {
                 onError("Đã xảy ra lỗi hệ thống: ${e.message}")
             }
         }
-    }
-
-    suspend fun getPostId(productId: String): String? {
-        return repository.getPostIdByProductId(productId)
     }
 }

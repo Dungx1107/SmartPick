@@ -35,11 +35,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -47,6 +49,7 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.AccentBlue
 import com.example.smartpick.core.ui.theme.SmartPickColor
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.core.ui.theme.TextMuted
 
 @Composable
@@ -151,50 +154,63 @@ fun ProductGridCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(4.dp) // Thêm padding nhẹ để các thẻ không dính sát nhau khi lên Grid
-            .clickable { onProductClick(product) }, // THỰC THI: Truyền ngược đối tượng ra màn hình cha để chuyển cảnh
+            .padding(2.dp)
+            .clickable { onProductClick(product) },
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column {
-            Box(modifier = Modifier.fillMaxWidth().aspectRatio(1f)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+            ) {
                 AsyncImage(
                     model = product.imageUrls.firstOrNull(),
                     contentDescription = product.name,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-
-                IconButton(
-                    onClick = { onAddToCart(product) },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(4.dp)
-                        .size(30.dp)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f), CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AddShoppingCart,
-                        contentDescription = "Add to Cart",
-                        tint = AccentBlue,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
             }
 
             Column(modifier = Modifier.padding(8.dp)) {
-                Text(
-                    text = product.name,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 18.sp,
-                    modifier = Modifier.height(36.dp)
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp), // Cố định chiều cao dòng để đồng bộ các thẻ trên Grid
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
 
-                Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = product.name,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 18.sp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 4.dp)
+                    )
+
+                    // Nút thêm vào giỏ hàng nhỏ gọn, nằm gọn bên phải tên sản phẩm
+                    IconButton(
+                        onClick = { onAddToCart(product) },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AddShoppingCart,
+                            contentDescription = "Add to Cart",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .size(20.dp)
+                                .padding(bottom = 2.dp, start = 2.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -210,12 +226,49 @@ fun ProductGridCard(
                     )
 
                     Text(
-                        text = "Đã bán ${if(product.soldCount > 1000) "${product.soldCount/1000}k" else product.soldCount}",
+                        text = "Đã bán ${if (product.soldCount > 1000) "${product.soldCount / 1000}k" else product.soldCount}",
                         color = TextMuted,
                         fontSize = 11.sp
                     )
                 }
+
             }
+
+        }
+    }
+}
+
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    name = "Product Grid Card"
+)
+@Composable
+fun ProductGridCardPreview() {
+
+    val mockProduct = Product(
+        id = "prod_01",
+        ownerId = "owner_01",
+        name = "Tai nghe Bluetooth Sony WH-1000XM5 Chống Ồn Chủ Động Chính Hãng",
+        brand = "Sony",
+        category = "Phụ kiện",
+        price = 6490000.0,
+        imageUrls = listOf("https://via.placeholder.com/300"),
+        stock = 25,
+        soldCount = 1250
+    )
+
+    SmartPickTheme {
+        Box(
+            modifier = Modifier
+                .width(200.dp)
+                .padding(8.dp)
+        ) {
+            ProductGridCard(
+                product = mockProduct,
+                onProductClick = {},
+                onAddToCart = {}
+            )
         }
     }
 }
