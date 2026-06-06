@@ -127,25 +127,30 @@ fun Comment.toDto(): CommentDto = CommentDto(
     createdAt = createdAt
 )
 
-fun CartDto.toDomain(): CartItem = CartItem(
-    id = id,
-    userId = userId,
-    productId = productId,
-    quantity = quantity,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-    product = products?.toDomain()
-)
+fun CartItemDto.toDomain(): CartItem {
+    return CartItem(
+        id = this.id,
+        userId = this.userId,
+        productId = this.productId,
+        quantity = this.quantity,
+        originPostId = this.postId, // Map từ post_id (Database) sang originPostId (UI/Domain)
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt,
+        product = this.products?.toDomain() // Tự động map đối tượng sản phẩm chi tiết đi kèm nếu có
+    )
+}
 
-fun CartItem.toDto(): CartDto = CartDto(
-    id = id,
-    userId = userId,
-    productId = productId,
-    quantity = quantity,
-    createdAt = createdAt,
-    updatedAt = updatedAt,
-    products = product?.toDto()
-)
+fun CartItem.toDto(): CartItemDto {
+    return CartItemDto(
+        id = this.id,
+        userId = this.userId,
+        productId = this.productId,
+        quantity = this.quantity,
+        postId = this.originPostId, // Map ngược lại khi insert hoặc update dữ liệu lên Supabase
+        createdAt = this.createdAt,
+        updatedAt = this.updatedAt
+    )
+}
 
 // --- Review Mappers ---
 fun ReviewUserDto.toDomain(): ReviewUser = ReviewUser(

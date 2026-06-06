@@ -72,7 +72,7 @@ class CommentRepository @Inject constructor(
         // Thực hiện chèn vào Database công khai
         supabase.postgrest[TABLE_COMMENTS].insert(data)
 
-        return@withContext commentId 
+        return@withContext commentId
     }
     suspend fun toggleLike(
         commentId: String,

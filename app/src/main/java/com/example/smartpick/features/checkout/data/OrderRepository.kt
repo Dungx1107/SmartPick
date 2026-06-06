@@ -5,6 +5,8 @@ import com.example.smartpick.core.data.dto.OrderItemRequestDto
 import com.example.smartpick.core.data.dto.OrderRequestDto
 import com.example.smartpick.core.data.dto.OrderResponseDto
 import com.example.smartpick.core.model.CartItem
+import com.example.smartpick.core.model.Notification
+import com.example.smartpick.features.notification.data.NotificationRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.Dispatchers
@@ -21,16 +23,15 @@ data class LastOrderInfoDto(
     @SerialName("phone_number") val phoneNumber: String? = null,
     @SerialName("shipping_address") val shippingAddress: String? = null
 )
+
 @Singleton
 class OrderRepository @Inject constructor(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val notificationRepository: NotificationRepository
 ) {
     private val postgrest = supabase.postgrest
     private val TAG = "OrderRepository"
 
-    /**
-     * Thực hiện quy trình Transaction đặt hàng trên Supabase
-     */
     suspend fun checkout(
         userId: String,
         cartItems: List<CartItem>,
@@ -39,9 +40,11 @@ class OrderRepository @Inject constructor(
         paymentMethod: String
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            Log.d(TAG, "==== BẮT ĐẦU CHECKOUT ====")
+            Log.d(TAG, "UserId: $userId, Items count: ${cartItems.size}")
+
             if (cartItems.isEmpty()) return@withContext Result.failure(Exception("Giỏ hàng trống"))
 
-            // 1. Tính tổng tiền đơn hàng
             val totalAmount = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
             val orderRequest = OrderRequestDto(
                 userId = userId,
@@ -51,10 +54,11 @@ class OrderRepository @Inject constructor(
                 paymentMethod = paymentMethod
             )
 
-            // 2. Chèn thông tin vào bảng 'orders' và lấy thông tin phản hồi (chứa ID đơn hàng)
+            Log.d(TAG, "[Step 1] Đang chèn vào bảng orders...")
             val orderResponse = postgrest["orders"].insert(orderRequest) { select() }.decodeSingle<OrderResponseDto>()
+            Log.d(TAG, "[Step 1] Thành công! OrderId mới: ${orderResponse.id}")
 
-            // 3. Tạo danh sách các item chi tiết dựa trên ID đơn hàng vừa tạo
+            Log.d(TAG, "[Step 2] Đang chèn ${cartItems.size} items vào order_items...")
             val orderItems = cartItems.map { item ->
                 OrderItemRequestDto(
                     orderId = orderResponse.id,
@@ -64,14 +68,74 @@ class OrderRepository @Inject constructor(
                 )
             }
             postgrest["order_items"].insert(orderItems)
+            Log.d(TAG, "[Step 2] Chèn chi tiết đơn hàng thành công.")
 
-            // 4. Xóa toàn bộ giỏ hàng của user sau khi đặt hàng thành công
+            // 4. Gửi thông báo cho chủ hàng
+            Log.d(TAG, "[Step 3] Bắt đầu kích hoạt luồng thông báo cho Seller...")
+            sendOrderNotificationsToOwners(
+                cartItems,
+                orderResponse.id,
+                buyerId = userId
+            )
+
+            Log.d(TAG, "[Step 4] Xóa giỏ hàng...")
             postgrest["cart_items"].delete { filter { eq("user_id", userId) } }
 
+            Log.d(TAG, "==== CHECKOUT HOÀN TẤT THÀNH CÔNG ====")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e(TAG, "Checkout error: ${e.message}", e)
+            Log.e(TAG, "!!!! LỖI CHECKOUT: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+    private suspend fun sendOrderNotificationsToOwners(
+        cartItems: List<CartItem>,
+        orderId: String,
+        buyerId: String
+    ) {
+        try {
+            cartItems.forEach { item ->
+                val product = item.product ?: return@forEach
+                val ownerId = product.ownerId
+                if (ownerId.isBlank()) {
+                    Log.w(TAG, "CẢNH BÁO: Phát hiện sản phẩm không có ownerId. Bỏ qua.")
+                    return@forEach
+                }
+
+                val content = "Bạn có đơn hàng mới! Khách hàng vừa đặt mua sản phẩm ${product.name}."
+
+                Log.d(TAG, "--> Đang gửi thông báo tới Owner: $ownerId cho sản phẩm: ${product.name}")
+
+                // A. Gửi thông báo In-app (Lưu Database)
+                val notification = Notification(
+                    receiverId = ownerId,
+                    senderId = buyerId,
+                    type = "ORDER",
+                    title = "Đơn hàng mới",
+                    content = content,
+                    targetId = orderId
+                )
+
+                val dbResult = notificationRepository.sendNotification(notification)
+                if (dbResult.isSuccess) {
+                    Log.d(TAG, "[DB] Đã lưu thông báo vào bảng notifications thành công.")
+                } else {
+                    Log.e(TAG, "[DB] THẤT BẠI khi lưu thông báo: ${dbResult.exceptionOrNull()?.message}")
+                }
+
+                // B. Gửi Push Notification (Edge Function)
+                Log.d(TAG, "    [FCM] Đang gọi triggerPushNotification...")
+                notificationRepository.triggerPushNotification(
+                    receiverId = ownerId,
+                    title = "Đơn hàng mới",
+                    body = "Bạn vừa nhận được một đơn đặt hàng mới.",
+                    type = "order",
+                    targetId = orderId
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Lỗi trong quá trình gửi thông báo: ${e.message}", e)
         }
     }
 
@@ -80,8 +144,8 @@ class OrderRepository @Inject constructor(
             supabase.postgrest["orders"]
                 .select(columns = Columns.raw("phone_number, shipping_address")) {
                     filter { eq("user_id", userId) }
-                    order("created_at", Order.DESCENDING) // Sắp xếp mới nhất
-                    limit(1) // Chỉ lấy 1 đơn gần nhất
+                    order("created_at", Order.DESCENDING)
+                    limit(1)
                 }.decodeSingleOrNull<LastOrderInfoDto>()
         } catch (e: Exception) {
             null

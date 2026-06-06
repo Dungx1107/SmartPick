@@ -1,8 +1,7 @@
 package com.example.smartpick.features.home.data
 
 import android.util.Log
-import com.example.smartpick.core.data.dto.CartDto
-import com.example.smartpick.core.data.dto.CartItemRequest
+import com.example.smartpick.core.data.dto.CartItemDto
 import com.example.smartpick.core.data.dto.ProductDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.CartItem
@@ -49,7 +48,7 @@ class HomeRepository @Inject constructor(
         try {
             val listDto = postgrest["cart_items"].select(Columns.raw("*, products(*)")) {
                 filter { eq("user_id", userId) }
-            }.decodeList<CartDto>()
+            }.decodeList<CartItemDto>()
             listDto.map { it.toDomain() }
         } catch (e: Exception) {
             Log.e(TAG, "getCartItems error", e)
@@ -57,16 +56,25 @@ class HomeRepository @Inject constructor(
         }
     }
 
-    suspend fun addToCart(userId: String, productId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun addToCart(
+        userId: String,
+        productId: String,
+        postId: String? = null
+    ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val existingDto = postgrest["cart_items"].select {
                 filter { eq("user_id", userId); eq("product_id", productId) }
-            }.decodeSingleOrNull<CartDto>()
+            }.decodeSingleOrNull<CartItemDto>()
             if (existingDto != null) {
                 val existing = existingDto.toDomain()
                 postgrest["cart_items"].update({ set("quantity", existing.quantity + 1) }) { filter { eq("id", existing.id!!) } }
             } else {
-                val newItem = CartItemRequest(userId = userId, productId = productId, quantity = 1)
+                val newItem = CartItemDto(
+                    userId = userId,
+                    productId = productId,
+                    quantity = 1,
+                    postId = postId
+                )
                 postgrest["cart_items"].insert(newItem)
             }
             Result.success(Unit)
@@ -81,6 +89,18 @@ class HomeRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun getProductById(productId: String): Product? = withContext(Dispatchers.IO) {
+        try {
+            val dto = postgrest["products"].select {
+                filter { eq("id", productId) }
+            }.decodeSingleOrNull<ProductDto>()
+            dto?.toDomain()
+        } catch (e: Exception) {
+            Log.e(TAG, "getProductById error", e)
+            null
         }
     }
 

@@ -1,10 +1,13 @@
-package com.example.smartpick.features.product_detail.ui.components
+// FILE: com/example/smartpick/features/product_detail/ui/ProductDetailContent.kt
+package com.example.smartpick.features.product_detail.ui
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,7 +17,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.*
@@ -24,7 +29,89 @@ import com.example.smartpick.features.product_detail.viewmodel.ProductDetailView
 import com.example.smartpick.features.review.ui.components.ReviewCard
 import com.example.smartpick.features.review.ui.components.ReviewInputForm
 import com.example.smartpick.features.review.viewmodel.ReviewViewModel
+import com.example.smartpick.navigation.Routes
 
+/**
+ * THÊM MỚI: Hàm bọc đóng vai trò Màn hình độc lập (Screen) để AppNavigation gọi đến.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProductDetailScreen(
+    productId: String,
+    navController: NavController,
+    viewModel: ProductDetailViewModel = hiltViewModel(),
+    reviewViewModel: ReviewViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState() // Trạng thái nạp dữ liệu sản phẩm từ ViewModel
+    val context = LocalContext.current
+
+    // Tự động tải thông tin sản phẩm và đánh giá tương ứng từ Supabase theo productId nhận từ Route
+    LaunchedEffect(productId) {
+        viewModel.loadProductDetail(productId) // Sử dụng hàm nạp chi tiết trong ViewModel của bạn
+        reviewViewModel.loadReviewData(productId)
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.ChiTietSanPham), fontWeight = FontWeight.Bold, fontSize = 18.sp) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Quay lại")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when {
+                uiState.isLoading -> {
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                }
+                uiState.error != null -> {
+                    Text(
+                        text = uiState.error ?: "Lỗi tải thông tin sản phẩm",
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+                uiState.product != null -> {
+                    // Gọi Layout nội dung gốc khi dữ liệu Product đã sẵn sàng nạp về
+                    ProductDetailContent(
+                        product = uiState.product!!,
+                        onViewFeed = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
+                        onAddToCart = {
+                            viewModel.addToCart(
+                                product = uiState.product!!,
+                                onSuccess = { Toast.makeText(context, context.getString(R.string.DaThemVaoGioHang), Toast.LENGTH_SHORT).show() },
+                                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                            )
+                        },
+                        onBuyNow = {
+                            // Luồng mua ngay: Lưu sản phẩm vào DB và chuyển hướng thẳng sang màn hình Thanh toán riêng biệt
+                            viewModel.addToCart(
+                                product = uiState.product!!,
+                                onSuccess = { navController.navigate(Routes.Checkout.route) },
+                                onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
+                            )
+                        },
+                        viewModel = viewModel,
+                        reviewViewModel = reviewViewModel
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * COMPOSABLE GỐC: Giữ nguyên cấu trúc hiển thị thông tin sản phẩm và danh sách Review của bạn.
+ */
 @Composable
 fun ProductDetailContent(
     product: Product,
@@ -53,7 +140,6 @@ fun ProductDetailContent(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
-            // Thanh BottomBar ghim ở đáy
             Surface(shadowElevation = 16.dp, color = MaterialTheme.colorScheme.surface) {
                 Row(
                     modifier = Modifier

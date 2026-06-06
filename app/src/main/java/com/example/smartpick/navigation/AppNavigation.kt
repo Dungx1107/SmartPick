@@ -46,6 +46,7 @@ import com.example.smartpick.features.profile.ui.main.ProfileScreen
 import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.post_detail.ui.PostDetailScreen
+import com.example.smartpick.features.product_detail.ui.ProductDetailScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
 import com.example.smartpick.features.review.ui.ReviewHubScreen
 import com.example.smartpick.features.review.ui.WriteReviewScreen
@@ -113,7 +114,10 @@ fun AppNavigation(
                         unreadCount = unreadCount, // KHẮC PHỤC LỖI: Truyền unreadCount xuống MainBottomBar
                         onNavigate = { route ->
                             // Tránh điều hướng lại nếu đang ở chính màn hình đó
-                            if (currentRoute?.substringBefore("?")?.substringBefore("/") != route.substringBefore("?")?.substringBefore("/")) {
+                            if (currentRoute?.substringBefore("?")
+                                    ?.substringBefore("/") != route.substringBefore("?")
+                                    ?.substringBefore("/")
+                            ) {
                                 navController.navigate(route) {
                                     // Pop up về start destination của đồ thị để tránh tích tụ backstack
                                     popUpTo(navController.graph.findStartDestination().id) {
@@ -152,12 +156,16 @@ fun AppNavigation(
                 }
 
                 composable(Routes.Home.route) {
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-                        HomeScreen(
-                            navController = navController,
-                            paddingValues = PaddingValues(0.dp)
-                        )
-                    }
+                    HomeScreen(
+                        navController = navController,
+                        paddingValues = PaddingValues(0.dp),
+                        onProductClick = { product ->
+                            if (product.id != null) {
+                                navController.navigate(Routes.ProductDetail.createRoute(product.id))
+                            }
+                        },
+                    )
+
                 }
 
                 composable(Routes.Feed.route) {
@@ -179,9 +187,11 @@ fun AppNavigation(
                 }
 
                 composable(route = Routes.ReviewHub.route) {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
                         ReviewHubScreen(
                             paddingValues = innerPadding,
                             onNavigateToWriteReview = { productId ->
@@ -196,9 +206,11 @@ fun AppNavigation(
                 }
 
                 composable(route = Routes.Saved.route) {
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
                         SavedCollectionScreen(
                             navController = navController,
                             paddingValues = PaddingValues(0.dp)
@@ -213,9 +225,11 @@ fun AppNavigation(
                     })
                 ) { backStackEntry ->
                     val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
                         SavedCollectionScreen(
                             navController = navController,
                             initialCategory = category,
@@ -235,7 +249,12 @@ fun AppNavigation(
                                 val commentId = notification.targetId
 
                                 if (postId.isNotEmpty()) {
-                                    navController.navigate(Routes.PostDetail.createRoute(postId, commentId))
+                                    navController.navigate(
+                                        Routes.PostDetail.createRoute(
+                                            postId,
+                                            commentId
+                                        )
+                                    )
                                 }
                             }
                         }
@@ -321,13 +340,40 @@ fun AppNavigation(
 
                 composable(
                     route = Routes.EditPost.route,
-                    arguments = listOf(navArgument(Routes.EditPost.ARG_POST_ID) { type = NavType.StringType })
+                    arguments = listOf(navArgument(Routes.EditPost.ARG_POST_ID) {
+                        type = NavType.StringType
+                    })
                 ) { backStackEntry ->
-                    val postId = backStackEntry.arguments?.getString(Routes.EditPost.ARG_POST_ID) ?: ""
-                    Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+                    val postId =
+                        backStackEntry.arguments?.getString(Routes.EditPost.ARG_POST_ID) ?: ""
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)) {
                         EditPostScreen(
                             postId = postId,
                             onClose = { navController.popBackStack() }
+                        )
+                    }
+                }
+
+                composable(
+                    route = Routes.ProductDetail.route,
+                    arguments = listOf(
+                        navArgument(Routes.ProductDetail.ARG_PRODUCT_ID) {
+                            type = NavType.StringType
+                        }
+                    )
+                ) { backStackEntry ->
+                    val productId =
+                        backStackEntry.arguments?.getString(Routes.ProductDetail.ARG_PRODUCT_ID)
+                            ?: ""
+
+                    Box(modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)) {
+                        ProductDetailScreen(
+                            productId = productId,
+                            navController = navController
                         )
                     }
                 }

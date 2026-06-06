@@ -13,26 +13,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,7 +32,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -53,19 +44,14 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Product
-import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.SmartPickTheme
-import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.R
-import com.example.smartpick.features.cart.ui.CartBottomSheet
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.cart.viewmodel.CartViewModel
 import com.example.smartpick.features.home.ui.components.ProductGridCard
 import com.example.smartpick.features.home.ui.components.SearchBar
 import com.example.smartpick.features.home.viewmodel.HomeUiState
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
-import com.example.smartpick.features.product_detail.ui.components.ProductDetailContent
 import com.example.smartpick.navigation.Routes
 
 @Composable
@@ -73,52 +59,33 @@ fun HomeScreen(
     navController: NavController,
     paddingValues: PaddingValues,
     viewModel: HomeViewModel = hiltViewModel(),
-    cartViewModel: CartViewModel = hiltViewModel()
+    cartViewModel: CartViewModel = hiltViewModel(), // Khôi phục lại để lấy số lượng xe đẩy
+    onProductClick: (Product) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val cartItems by cartViewModel.cartItems.collectAsState()
-    val totalCartCount by cartViewModel.totalCartCount.collectAsState()
-
-    var showCart by rememberSaveable { mutableStateOf(false) }
-    var selectedProduct by rememberSaveable { mutableStateOf<Product?>(null) }
+    val totalCartCount by cartViewModel.totalCartCount.collectAsState() // Thu thập số lượng item đang có
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val freshSelectedProduct = remember(selectedProduct, uiState) {
-        if (uiState is HomeUiState.Success && selectedProduct != null) {
-            (uiState as HomeUiState.Success).products.find { it.id == selectedProduct?.id }
-                ?: selectedProduct
-        } else selectedProduct
-    }
-
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val launcher =
-            rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+        val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
         LaunchedEffect(Unit) {
-            if (ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
 
-    val speechLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val text =
-                    result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
-                        ?: ""
-                searchQuery = text
-                viewModel.searchProducts(text)
-            }
+    val speechLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val text = result.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0) ?: ""
+            searchQuery = text
+            viewModel.searchProducts(text)
         }
+    }
 
-    // Mỗi khi HomeScreen được quay lại, làm mới giỏ hàng để cập nhật trạng thái dữ liệu ổn định
+    // Làm mới trạng thái số lượng xe đẩy liên tục khi quay lại màn hình
     LaunchedEffect(Unit) {
         cartViewModel.refreshCart()
     }
@@ -126,18 +93,12 @@ fun HomeScreen(
     HomeContent(
         paddingValues = paddingValues,
         uiState = uiState,
-        cartItems = cartItems,
-        totalCartCount = totalCartCount,
         searchQuery = searchQuery,
-        selectedProduct = freshSelectedProduct,
-        showCart = showCart,
+        totalCartCount = totalCartCount,
         onSearchQueryChange = { searchQuery = it; viewModel.searchProducts(it) },
         onMicClick = {
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(
-                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                )
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
             }
             try {
@@ -146,81 +107,40 @@ fun HomeScreen(
                 Toast.makeText(context, context.getString(R.string.ThietBiKhongHoTro), Toast.LENGTH_SHORT).show()
             }
         },
-        onCartClick = { showCart = true },
-        onProductClick = { selectedProduct = it },
+        onCartClick = {
+            // Khi nhấn vào xe đẩy trên cùng, chuyển thẳng sang màn hình Checkout riêng biệt
+            navController.navigate(Routes.Checkout.route)
+        },
+        onProductClick = onProductClick,
         onAddToCart = { product ->
             viewModel.addToCart(
                 product = product,
                 onSuccess = {
                     Toast.makeText(context, context.getString(R.string.DaThemVaoGioHang), Toast.LENGTH_SHORT).show()
-                    cartViewModel.refreshCart()
+                    cartViewModel.refreshCart() // Cập nhật lại số lượng xe đẩy ngay lập tức
                 },
                 onError = { msg -> Toast.makeText(context, msg, Toast.LENGTH_SHORT).show() }
             )
-        },
-        onDismissSheet = { selectedProduct = null },
-        onViewFeed = { postId ->
-            selectedProduct = null
-            navController.navigate(Routes.PostDetail.createRoute(postId))
-        },
-        onBuyNow = {
-            viewModel.addToCart(
-                product = freshSelectedProduct!!,
-                onSuccess = {
-                    selectedProduct = null
-                    cartViewModel.refreshCart()
-                    navController.navigate(Routes.Checkout.route)
-                },
-                onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
-            )
-        },
-        onDismissCart = { showCart = false },
-        onIncrease = { item -> cartViewModel.increaseQuantity(item) },
-        onDecrease = { item -> cartViewModel.decreaseQuantity(item) },
-        onCheckout = { showCart = false; navController.navigate(Routes.Checkout.route) }
+        }
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeContent(
     paddingValues: PaddingValues,
     uiState: HomeUiState,
-    cartItems: List<CartItem>,
-    totalCartCount: Int,
     searchQuery: String,
-    selectedProduct: Product?,
-    showCart: Boolean,
+    totalCartCount: Int,
     onSearchQueryChange: (String) -> Unit,
     onMicClick: () -> Unit,
     onCartClick: () -> Unit,
     onProductClick: (Product) -> Unit,
-    onAddToCart: (Product) -> Unit,
-    onDismissSheet: () -> Unit,
-    onViewFeed: (String) -> Unit,
-    onBuyNow: () -> Unit,
-    onDismissCart: () -> Unit,
-    onIncrease: (CartItem) -> Unit,
-    onDecrease: (CartItem) -> Unit,
-    onCheckout: () -> Unit
+    onAddToCart: (Product) -> Unit
 ) {
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCartClick,
-                containerColor = SmartPickColor,
-                contentColor = White
-            ) {
-                if (totalCartCount > 0) BadgedBox(badge = { Badge { Text(totalCartCount.toString()) } }) {
-                    Icon(Icons.Default.ShoppingCart, null)
-                }
-                else Icon(Icons.Default.ShoppingCart, null)
-            }
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -232,21 +152,20 @@ fun HomeContent(
                     bottom = innerPadding.calculateBottomPadding()
                 )
         ) {
+            // Thanh công cụ đỉnh đầu gộp chung SearchBar và Xe đẩy hàng
             SearchBar(
                 query = searchQuery,
                 onQueryChange = onSearchQueryChange,
                 onMicClick = onMicClick,
+                totalCartCount = totalCartCount, // Đẩy biến số lượng xuống UI Component
+                onCartClick = onCartClick,       // Sự kiện khi nhấn xe đẩy
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 0.dp)
-                    .padding(top = 4.dp, bottom = 4.dp)
+                    .padding(horizontal = 12.dp) // Cân đối lề khoảng cách viền màn hình
+                    .padding(top = 8.dp, bottom = 4.dp)
             )
 
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center)
@@ -254,12 +173,7 @@ fun HomeContent(
 
                     is HomeUiState.Success -> LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(
-                            start = 8.dp,
-                            end = 8.dp,
-                            top = 0.dp,
-                            bottom = 16.dp
-                        ),
+                        contentPadding = PaddingValues(start = 8.dp, end = 8.dp, top = 4.dp, bottom = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -271,41 +185,16 @@ fun HomeContent(
                             )
                         }
                     }
-
                     else -> Unit
                 }
             }
         }
     }
-
-    if (selectedProduct != null) {
-        ModalBottomSheet(
-            onDismissRequest = onDismissSheet,
-            modifier = Modifier.fillMaxHeight(0.9f)
-        ) {
-            ProductDetailContent(
-                product = selectedProduct,
-                onViewFeed = onViewFeed,
-                onAddToCart = { onAddToCart(selectedProduct) },
-                onBuyNow = onBuyNow
-            )
-        }
-    }
-
-    if (showCart) {
-        CartBottomSheet(
-            cartItems = cartItems,
-            onDismiss = onDismissCart,
-            onIncrease = onIncrease,
-            onDecrease = onDecrease,
-            onCheckout = onCheckout
-        )
-    }
 }
 
-@Preview(showBackground = true, showSystemUi = true, name = "Trạng Thái Danh Sách Sản Phẩm")
+@Preview(showBackground = true, showSystemUi = true, name = "Giao Diện Trang Chủ Có Hàng Trong Giỏ")
 @Composable
-fun HomeContentSuccessPreview() {
+fun HomeContentSuccessWithBadgePreview() {
     val mockProducts = listOf(
         Product(
             id = "prod_01",
@@ -316,7 +205,7 @@ fun HomeContentSuccessPreview() {
             price = 6490000.0,
             imageUrls = listOf("https://via.placeholder.com/150"),
             stock = 5,
-            soldCount = 1250 // Kiểm tra hiển thị định dạng rút gọn (1k)
+            soldCount = 1250
         ),
         Product(
             id = "prod_02",
@@ -355,81 +244,47 @@ fun HomeContentSuccessPreview() {
 
     SmartPickTheme {
         HomeContent(
-            paddingValues = PaddingValues(top = 56.dp), // Giả lập lề TopBar hệ thống
+            paddingValues = PaddingValues(top = 56.dp), // Giả lập khoảng trống TopBar hệ thống
             uiState = HomeUiState.Success(products = mockProducts),
-            cartItems = emptyList(),
-            totalCartCount = 3, // Giả lập Badge giỏ hàng hiển thị số 3
             searchQuery = "",
-            selectedProduct = null,
-            showCart = false,
+            totalCartCount = 5, // Giả lập hiển thị số 5 màu đỏ trên xe đẩy hàng đỉnh đầu
             onSearchQueryChange = {},
             onMicClick = {},
             onCartClick = {},
             onProductClick = {},
-            onAddToCart = {},
-            onDismissSheet = {},
-            onViewFeed = {},
-            onBuyNow = {},
-            onDismissCart = {},
-            onIncrease = {},
-            onDecrease = {},
-            onCheckout = {}
+            onAddToCart = {}
         )
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true, name = "Trạng Thái Đang Tải (Loading)")
+@Preview(showBackground = true, showSystemUi = true, name = "Giao Diện Trang Chủ Giỏ Hàng Trống")
 @Composable
-fun HomeContentLoadingPreview() {
-    SmartPickTheme {
-        HomeContent(
-            paddingValues = PaddingValues(top = 56.dp),
-            uiState = HomeUiState.Loading,
-            cartItems = emptyList(),
-            totalCartCount = 0,
-            searchQuery = "",
-            selectedProduct = null,
-            showCart = false,
-            onSearchQueryChange = {},
-            onMicClick = {},
-            onCartClick = {},
-            onProductClick = {},
-            onAddToCart = {},
-            onDismissSheet = {},
-            onViewFeed = {},
-            onBuyNow = {},
-            onDismissCart = {},
-            onIncrease = {},
-            onDecrease = {},
-            onCheckout = {}
+fun HomeContentEmptyCartPreview() {
+    val mockProducts = listOf(
+        Product(
+            id = "prod_02",
+            ownerId = "user_01",
+            name = "Bàn phím cơ Custom Keychron K2 V2 Nhôm Hot-swappable",
+            brand = "Keychron",
+            category = "Phụ kiện",
+            price = 1850000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 12,
+            soldCount = 45
         )
-    }
-}
+    )
 
-@Preview(showBackground = true, showSystemUi = true, name = "Trạng Thái Không Có Dữ Liệu")
-@Composable
-fun HomeContentEmptyPreview() {
     SmartPickTheme {
         HomeContent(
             paddingValues = PaddingValues(top = 56.dp),
-            uiState = HomeUiState.Success(products = emptyList()),
-            cartItems = emptyList(),
-            totalCartCount = 0,
-            searchQuery = "Sản phẩm không tồn tại", // Giả lập từ khóa tìm kiếm không ra kết quả
-            selectedProduct = null,
-            showCart = false,
+            uiState = HomeUiState.Success(products = mockProducts),
+            searchQuery = "",
+            totalCartCount = 0, // Giỏ hàng trống, icon xe đẩy hiển thị dạng mờ không có chấm đỏ số lượng
             onSearchQueryChange = {},
             onMicClick = {},
             onCartClick = {},
             onProductClick = {},
-            onAddToCart = {},
-            onDismissSheet = {},
-            onViewFeed = {},
-            onBuyNow = {},
-            onDismissCart = {},
-            onIncrease = {},
-            onDecrease = {},
-            onCheckout = {}
+            onAddToCart = {}
         )
     }
 }

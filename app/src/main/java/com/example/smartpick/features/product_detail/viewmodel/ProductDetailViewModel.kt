@@ -10,18 +10,51 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/**
+ * Định nghĩa trạng thái UI cho màn hình Chi tiết sản phẩm
+ */
+data class ProductDetailUiState(
+    val isLoading: Boolean = false,
+    val product: Product? = null,
+    val error: String? = null
+)
 
 @HiltViewModel
 class ProductDetailViewModel @Inject constructor(
     private val repository: HomeRepository,
-    private val cartRepository: CartRepository, // Bổ sung
-    private val authRepository: AuthRepository  // Bổ sung
+    private val cartRepository: CartRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    // Khởi tạo StateFlow để ProductDetailScreen có thể collect dữ liệu ổn định
+    private val _uiState = MutableStateFlow(ProductDetailUiState())
+    val uiState: StateFlow<ProductDetailUiState> = _uiState.asStateFlow()
 
     private val _postId = MutableStateFlow<String?>(null)
     val postId: StateFlow<String?> = _postId.asStateFlow()
+
+    /**
+     * Hàm nạp thông tin chi tiết sản phẩm từ Supabase
+     */
+    fun loadProductDetail(productId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val productData = repository.getProductById(productId)
+                if (productData != null) {
+                    _uiState.update { it.copy(isLoading = false, product = productData) }
+                } else {
+                    _uiState.update { it.copy(isLoading = false, error = "Không tìm thấy sản phẩm") }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false, error = e.localizedMessage ?: "Lỗi tải dữ liệu") }
+            }
+        }
+    }
 
     fun fetchPostId(productId: String) {
         viewModelScope.launch {
@@ -33,9 +66,6 @@ class ProductDetailViewModel @Inject constructor(
         return product.stock > 0
     }
 
-    // ==========================================
-    // FIX: HÀM THÊM VÀO GIỎ HÀNG (CÓ CHECK KHO)
-    // ==========================================
     fun addToCart(product: Product, onSuccess: () -> Unit, onError: (String) -> Unit) {
         if (!isProductAvailable(product)) {
             onError("Sản phẩm này hiện đã hết hàng!")
@@ -49,7 +79,7 @@ class ProductDetailViewModel @Inject constructor(
                 return@launch
             }
 
-            // Gọi CartRepository để đẩy lên database
+            // Gọi CartRepository hoặc HomeRepository tùy thuộc vào việc đồng bộ token
             val result = cartRepository.addToCart(user.id, product.id!!)
             if (result.isSuccess) {
                 onSuccess()

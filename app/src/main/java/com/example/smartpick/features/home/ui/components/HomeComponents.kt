@@ -22,6 +22,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddShoppingCart
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -44,56 +47,97 @@ import com.example.smartpick.R
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.AccentBlue
 import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.SurfaceCard
 import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.TextSecondary
-import com.example.smartpick.core.ui.theme.White
 
 @Composable
 fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     onMicClick: () -> Unit,
+    totalCartCount: Int,         // Thêm tham số nhận số lượng hàng trong giỏ
+    onCartClick: () -> Unit,      // Thêm sự kiện click xe đẩy
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp) // Khoảng cách giữa ô tìm kiếm và xe đẩy
     ) {
-        Icon(Icons.Default.Search, null, tint = TextMuted, modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(8.dp))
+        // Khối ô tìm kiếm bên trái (Tự động co dãn chiếm không gian chính)
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Search, null, tint = TextMuted, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(8.dp))
 
-        Box(modifier = Modifier.weight(1f)) {
-            if (query.isEmpty()) {
-                Text(
-                    stringResource(R.string.TimKiemSanPham),
-                    color = TextMuted,
-                    style = MaterialTheme.typography.bodyMedium
+            Box(modifier = Modifier.weight(1f)) {
+                if (query.isEmpty()) {
+                    Text(
+                        stringResource(R.string.TimKiemSanPham),
+                        color = TextMuted,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                BasicTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-            BasicTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                modifier = Modifier.fillMaxWidth()
-            )
+
+            IconButton(
+                onClick = onMicClick,
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    Icons.Default.Mic,
+                    contentDescription = stringResource(R.string.TimKiemBangGiongNoi),
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
+        // Khối Xe đẩy hàng (Ghim cố định ở góc bên phải)
         IconButton(
-            onClick = onMicClick,
-            modifier = Modifier.size(24.dp)
+            onClick = onCartClick,
+            modifier = Modifier.size(40.dp)
         ) {
-            Icon(
-                Icons.Default.Mic,
-                contentDescription = stringResource(R.string.TimKiemBangGiongNoi),
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+            if (totalCartCount > 0) {
+                // Hiển thị chấm đỏ số lượng nếu giỏ hàng có đồ
+                BadgedBox(
+                    badge = {
+                        Badge(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = Color.White
+                        ) {
+                            Text(totalCartCount.toString(), fontSize = 10.sp)
+                        }
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ShoppingCart,
+                        contentDescription = "Giỏ hàng",
+                        tint = SmartPickColor,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            } else {
+                // Chỉ hiển thị icon trống nếu không có hàng
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "Giỏ hàng",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         }
     }
 }
@@ -101,13 +145,14 @@ fun SearchBar(
 @Composable
 fun ProductGridCard(
     product: Product,
-    onProductClick: (Product) -> Unit,
+    onProductClick: (Product) -> Unit, // Nhận thực thể Product đầy đủ
     onAddToCart: (Product) -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onProductClick(product) },
+            .padding(4.dp) // Thêm padding nhẹ để các thẻ không dính sát nhau khi lên Grid
+            .clickable { onProductClick(product) }, // THỰC THI: Truyền ngược đối tượng ra màn hình cha để chuyển cảnh
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
