@@ -416,7 +416,8 @@ fun AppNavigation(
 
                 composable(Routes.SellerDashboard.route) {
                     com.example.smartpick.features.seller.ui.SellerDashboardScreen(
-                        onBackClick = { navController.popBackStack() }
+                        onBackClick = { navController.popBackStack() },
+                        navController = navController
                     )
                 }
             }
