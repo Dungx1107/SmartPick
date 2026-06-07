@@ -45,7 +45,8 @@ import com.example.smartpick.features.post_detail.ui.PostDetailScreen
 import com.example.smartpick.features.product_detail.ui.ProductDetailScreen
 import com.example.smartpick.features.profile.ui.edit.EditProfileScreen
 import com.example.smartpick.features.profile.ui.main.ProfileScreen
-import com.example.smartpick.features.profile.ui.saved.SavedCollectionScreen
+import com.example.smartpick.features.profile.ui.saved.LikedPostsScreen
+import com.example.smartpick.features.profile.ui.saved.SavedOrdersScreen
 import com.example.smartpick.features.review.ui.ReviewHubScreen
 import com.example.smartpick.features.review.ui.WriteReviewScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
@@ -210,33 +211,24 @@ fun AppNavigation(
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        SavedCollectionScreen(
+                        SavedOrdersScreen(
                             navController = navController,
                             paddingValues = PaddingValues(0.dp)
                         )
                     }
                 }
-
-                composable(
-                    route = "${Routes.Saved.route}?category={category}",
-                    arguments = listOf(navArgument("category") {
-                        type = NavType.StringType; defaultValue = "Giỏ hàng"
-                    })
-                ) { backStackEntry ->
-                    val category = backStackEntry.arguments?.getString("category") ?: "Giỏ hàng"
+                composable(route = Routes.LikedPosts.route) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
-                        SavedCollectionScreen(
+                        LikedPostsScreen(
                             navController = navController,
-                            initialCategory = category,
                             paddingValues = PaddingValues(0.dp)
                         )
                     }
                 }
-
                 composable(route = Routes.Notifications.route) {
                     NotificationsScreen(
                         paddingValues = innerPadding,
