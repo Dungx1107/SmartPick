@@ -1,28 +1,33 @@
 package com.example.smartpick.features.profile.ui.main
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridOn
-import androidx.compose.material.icons.filled.Reply
-import androidx.compose.material.icons.filled.Storefront
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.ReactionType
@@ -34,9 +39,9 @@ fun ProfileContent(
     user: User?,
     posts: List<Triple<Post, User, Product?>>,
     likedPosts: List<Triple<Post, User, Product?>>,
-    sellerProducts: List<Product>,
     isLoading: Boolean,
     onEditProfile: () -> Unit,
+    onSellerDashboardClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onPostClick: (String) -> Unit,
     onProductClick: (String) -> Unit,
@@ -62,7 +67,9 @@ fun ProfileContent(
                 CustomProfileHeader(
                     user = user,
                     onEditProfile = onEditProfile,
-                    onSettingsClick = onSettingsClick
+                    onSettingsClick = onSettingsClick,
+                    onSellerDashboardClick = onSellerDashboardClick,
+                    modifier = Modifier.fillMaxWidth()
                 )
                 HorizontalDivider(
                     modifier = Modifier.padding(top = 12.dp),
@@ -88,13 +95,6 @@ fun ProfileContent(
                         Icon(
                             Icons.Default.FavoriteBorder,
                             contentDescription = "Đã thích",
-                            modifier = Modifier.padding(12.dp)
-                        )
-                    }
-                    Tab(selected = selectedTabIndex == 3, onClick = { selectedTabIndex = 3 }) {
-                        Icon(
-                            Icons.Default.Storefront,
-                            contentDescription = "Cửa hàng",
                             modifier = Modifier.padding(12.dp)
                         )
                     }
@@ -163,80 +163,12 @@ fun ProfileContent(
                                     post = post,
                                     user = author,
                                     product = product,
-                                    // ĐÃ CẬP NHẬT: Tương tự đối với các bài viết đã thích
                                     onPostClick = { clickedPostId ->
                                         if (clickedPostId.isNotEmpty()) onPostClick(clickedPostId)
                                     },
                                     onReactionClick = onReactionClick,
                                     onProductClick = { p -> p.id?.let(onProductClick) }
                                 )
-                            }
-                        }
-                    }
-                }
-
-                2 -> {
-                    if (sellerProducts.isEmpty()) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 40.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "Bạn chưa đăng tải sản phẩm nào.",
-                                    color = Color.Gray,
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
-                    } else {
-                        items(sellerProducts, key = { "product_${it.id}" }) { product ->
-                            Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { product.id?.let(onProductClick) },
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(12.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        AsyncImage(
-                                            model = product.imageUrls.firstOrNull()
-                                                ?: "https://via.placeholder.com/150",
-                                            contentDescription = null,
-                                            modifier = Modifier
-                                                .size(60.dp)
-                                                .clip(RoundedCornerShape(8.dp)),
-                                            contentScale = ContentScale.Crop
-                                        )
-                                        Spacer(modifier = Modifier.width(14.dp))
-                                        Column {
-                                            Text(
-                                                text = product.name,
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 16.sp,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                            Text(
-                                                text = "Kho: ${product.stock} | Giá: ${
-                                                    String.format(
-                                                        "%,.0f đ",
-                                                        product.price
-                                                    ).replace(",", ".")
-                                                }",
-                                                fontSize = 13.sp,
-                                                color = Color.Gray
-                                            )
-                                        }
-                                    }
-                                }
                             }
                         }
                     }

@@ -49,6 +49,7 @@ import com.example.smartpick.features.profile.ui.saved.LikedPostsScreen
 import com.example.smartpick.features.profile.ui.saved.SavedOrdersScreen
 import com.example.smartpick.features.review.ui.ReviewHubScreen
 import com.example.smartpick.features.review.ui.WriteReviewScreen
+import com.example.smartpick.features.seller.ui.SellerDashboardScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
 
 @Composable
@@ -415,7 +416,7 @@ fun AppNavigation(
                 }
 
                 composable(Routes.SellerDashboard.route) {
-                    com.example.smartpick.features.seller.ui.SellerDashboardScreen(
+                    SellerDashboardScreen(
                         onBackClick = { navController.popBackStack() },
                         navController = navController
                     )

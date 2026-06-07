@@ -45,7 +45,6 @@ fun ProfileScreen(
     val isLoading by profileViewModel.isLoading.collectAsState()
 
     val likedPosts by feedViewModel.reactedPosts.collectAsState()
-    val sellerProducts by sellerViewModel.myProducts.collectAsState()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -76,10 +75,10 @@ fun ProfileScreen(
             user = currentUser,
             posts = posts,
             likedPosts = likedPosts,
-            sellerProducts = sellerProducts,
             isLoading = isLoading,
             onEditProfile = { navController.navigate(Routes.EditProfile.route) },
             onSettingsClick = { navController.navigate(Routes.Settings.route) },
+            onSellerDashboardClick = { navController.navigate(Routes.SellerDashboard.route) },
             onPostClick = { postId -> navController.navigate(Routes.PostDetail.createRoute(postId)) },
             onProductClick = { productId -> navController.navigate(Routes.ProductDetail.createRoute(productId)) },
             onDeletePost = { postId ->
@@ -167,14 +166,14 @@ fun ProfileScreenPreview() {
             user = mockMe,
             posts = mockPosts,
             likedPosts = emptyList(),
-            sellerProducts = emptyList(),
             isLoading = false,
             onEditProfile = {},
             onSettingsClick = {},
             onPostClick = {},
             onProductClick = {},
             onDeletePost = {},
-            onReactionClick = { _, _ -> }
+            onReactionClick = { _, _ -> },
+            onSellerDashboardClick = {}
         )
     }
 }

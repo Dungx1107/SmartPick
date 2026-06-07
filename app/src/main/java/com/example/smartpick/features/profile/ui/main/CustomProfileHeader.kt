@@ -6,6 +6,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ fun CustomProfileHeader(
     user: User?,
     onEditProfile: () -> Unit,
     onSettingsClick: () -> Unit,
+    onSellerDashboardClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -41,9 +43,8 @@ fun CustomProfileHeader(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
-            // Ảnh đại diện bám sát tỷ lệ hiển thị
             AsyncImage(
                 model = user?.avatarUrl ?: "https://via.placeholder.com/150",
                 contentDescription = "Avatar",
@@ -69,21 +70,38 @@ fun CustomProfileHeader(
                         text = user?.fullName ?: "Người dùng SmartPick",
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Biểu tượng cài đặt thu gọn tối ưu không gian
-                    IconButton(
-                        onClick = onSettingsClick,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Cài đặt hệ thống",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                    // Cụm nút chức năng nhỏ gọn
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Nút Gian hàng (Seller Dashboard)
+                        IconButton(
+                            onClick = onSellerDashboardClick,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Storefront,
+                                contentDescription = "Gian hàng",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        // Nút Cài đặt (Settings) - Làm bé lại
+                        IconButton(
+                            onClick = onSettingsClick,
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Cài đặt",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
 
@@ -134,7 +152,8 @@ private fun CustomProfileHeaderPreview() {
             onSettingsClick = {},
             modifier = Modifier
                 .statusBarsPadding()
-                .background(MaterialTheme.colorScheme.background)
+                .background(MaterialTheme.colorScheme.background),
+            onSellerDashboardClick = {}
         )
     }
 }
