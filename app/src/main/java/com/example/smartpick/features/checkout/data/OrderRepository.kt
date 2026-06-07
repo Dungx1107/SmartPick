@@ -19,7 +19,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
-import kotlinx.serialization.json.put
 
 @Serializable
 data class LastOrderInfoDto(
@@ -36,7 +35,7 @@ class OrderRepository @Inject constructor(
     private val TAG = "OrderRepository"
 
     /**
-     * Hàm xử lý đặt hàng (Checkout) chính thức - Giữ nguyên giỏ hàng sau khi mua
+     * Hàm xử lý đặt hàng (Checkout) chuẩn chỉ hệ thống
      */
     suspend fun checkout(
         userId: String,
@@ -46,9 +45,7 @@ class OrderRepository @Inject constructor(
         paymentMethod: String
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "==== BẮT ĐẦU CHECKOUT TOÀN DIỆN ====")
-            Log.d(TAG, "UserId: $userId, Items count: ${cartItems.size}")
-
+            Log.d(TAG, "==== BẮT ĐẦU CHECKOUT CHUẨN CHỈ HỆ THỐNG ====")
             if (cartItems.isEmpty()) return@withContext Result.failure(Exception("Giỏ hàng trống"))
 
             // [Step 1] Khởi tạo hóa đơn tổng trong bảng orders
@@ -64,9 +61,8 @@ class OrderRepository @Inject constructor(
             Log.d(TAG, "[Step 1] Đang chèn vào bảng orders...")
             val orderResponse = postgrest["orders"].insert(orderRequest) { select() }
                 .decodeSingle<OrderResponseDto>()
-            Log.d(TAG, "[Step 1] Thành công! OrderId mới: ${orderResponse.id}")
 
-            // [Step 2] Đóng gói và chèn dữ liệu chi tiết hóa đơn vào bảng order_items
+            // [Step 2] Chèn chi tiết hóa đơn vào bảng order_items -> Kích hoạt Server Trigger tự động trừ kho hàng
             Log.d(TAG, "[Step 2] Đang chèn ${cartItems.size} items vào order_items...")
             val orderItems = cartItems.map { item ->
                 OrderItemRequestDto(
@@ -77,9 +73,8 @@ class OrderRepository @Inject constructor(
                 )
             }
             postgrest["order_items"].insert(orderItems)
-            Log.d(TAG, "[Step 2] Chèn chi tiết đơn hàng thành công.")
 
-            // [Step 3] Phát thông báo hệ thống và tin đẩy cho cả hai bên
+            // [Step 3] Điều phối thông báo và tin đẩy chuẩn chỉ cho các bên
             Log.d(TAG, "[Step 3] Bắt đầu kích hoạt luồng thông báo cho các bên...")
             sendOrderNotificationsToOwners(
                 cartItems,
@@ -87,43 +82,11 @@ class OrderRepository @Inject constructor(
                 buyerId = userId
             )
 
-            // [Step 4] Đồng bộ trừ kho và tăng số lượng bán dựa trên dữ liệu thời gian thực của Server
-            Log.d(TAG, "[Step 4] Bắt đầu cập nhật lại kho và số lượng đã bán của sản phẩm...")
-            cartItems.forEach { item ->
-                val product = item.product
-                if (product != null && !product.id.isNullOrEmpty()) {
-                    runCatching {
-                        val dbResponse = postgrest["products"].select {
-                            filter { eq("id", product.id) }
-                        }.decodeSingleOrNull<com.example.smartpick.core.data.dto.ProductDto>()
+            // [Step 4] Đã lược bỏ cập nhật kho thủ công (Server Trigger đảm nhiệm)
+            Log.d(TAG, "[Step 4] Luồng cập nhật kho tự động do Database Trigger xử lý.")
 
-                        val currentStockInDb = dbResponse?.stock ?: product.stock
-                        val currentSoldCountInDb = dbResponse?.soldCount ?: product.soldCount
-
-                        val newStock = (currentStockInDb - item.quantity).coerceAtLeast(0)
-                        val newSoldCount = currentSoldCountInDb + item.quantity
-
-                        val updateStockJson = kotlinx.serialization.json.buildJsonObject {
-                            put("stock", newStock)
-                            put("sold_count", newSoldCount)
-                        }
-
-                        postgrest["products"].update(updateStockJson) {
-                            filter { eq("id", product.id) }
-                        }
-
-                        Log.d(
-                            TAG,
-                            "    -> [SERVER UPDATE SUCCESS] Sản phẩm [${product.id}]: Tồn kho mới = $newStock, Số lượng bán mới = $newSoldCount"
-                        )
-                    }.onFailure { error ->
-                        Log.e(TAG, "Lỗi trừ kho cục bộ tại sản phẩm [${product.id}]: ${error.message}")
-                    }
-                }
-            }
-
-            // [Step 5] THEO YÊU CẦU: Không cập nhật, không xóa bất cứ thứ gì ở giỏ hàng sau khi mua thành công
-            Log.d(TAG, "[Step 5] Bỏ qua hành động dọn dẹp giỏ hàng theo thiết kế.")
+            // [Step 5] Giữ nguyên trạng thái giỏ hàng sau khi thanh toán thành công
+            Log.d(TAG, "[Step 5] Giữ nguyên trạng thái giỏ hàng theo thiết kế.")
 
             Log.d(TAG, "==== CHECKOUT HOÀN TẤT THÀNH CÔNG VÀ ĐỒNG BỘ TOÀN DIỆN ====")
             Result.success(Unit)
@@ -138,19 +101,12 @@ class OrderRepository @Inject constructor(
      */
     suspend fun getOrderHistory(userId: String): List<Order> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "==== BẮT ĐẦU LẤY LỊCH SỬ ĐƠN HÀNG NÂNG CAO ====")
-
             val response = postgrest["orders"]
                 .select(columns = Columns.raw("*, order_items(*, products(*))")) {
                     filter { eq("user_id", userId) }
                     order("created_at", SupabaseOrder.DESCENDING)
                 }
-
-            val dtoList = response.decodeList<OrderResponseDto>()
-            val ordersList = dtoList.map { it.toDomain() }
-
-            Log.d(TAG, "Lấy lịch sử đơn hàng nâng cao thành công, số lượng: ${ordersList.size}")
-            ordersList
+            response.decodeList<OrderResponseDto>().map { it.toDomain() }
         } catch (e: Exception) {
             Log.e(TAG, "!!!! LỖI LẤY LỊCH SỬ ĐƠN HÀNG: ${e.localizedMessage}", e)
             emptyList()
@@ -185,7 +141,7 @@ class OrderRepository @Inject constructor(
                 title = "Đặt hàng thành công",
                 content = buyerContent,
                 targetId = orderId,
-                postId = "00000000-0000-0000-0000-000000000000",
+                postId = null, // CHUẨN CHỈ: Người mua mua qua giỏ hàng tổng hợp, không gắn với postId cụ thể nào nên truyền null
                 createdAt = ""
             )
 
@@ -205,7 +161,6 @@ class OrderRepository @Inject constructor(
                     type = "order",
                     targetId = orderId
                 )
-                Log.d(TAG, "    [FCM BUYER SUCCESS] Đã bắn FCM cho người mua.")
             }.onFailure { fcmError ->
                 Log.w(TAG, "    [FCM BUYER LỖI] Bỏ qua lỗi gửi tin đẩy tới thiết bị Buyer: ${fcmError.localizedMessage}")
             }
@@ -214,18 +169,15 @@ class OrderRepository @Inject constructor(
             cartItems.forEach { item ->
                 val product = item.product ?: return@forEach
                 val ownerId = product.ownerId
-                if (ownerId.isBlank()) {
-                    Log.w(TAG, "CẢNH BÁO: Phát hiện sản phẩm không có ownerId. Bỏ qua.")
-                    return@forEach
-                }
+                if (ownerId.isBlank()) return@forEach
 
                 val sellerContent = "Bạn đã bán được sản phẩm '${product.name}' thuộc đơn hàng này."
-                Log.d(TAG, "--> Đang gửi thông báo tới Owner: $ownerId cho sản phẩm: ${product.name}")
 
+                // CHUẨN CHỈ: Kiểm tra mã ID bài đăng gốc chính xác, nếu trống hoặc chuỗi "null" thì gán null thực sự cho Database
                 val validPostId = if (!item.originPostId.isNullOrBlank() && item.originPostId != "null") {
                     item.originPostId
                 } else {
-                    "00000000-0000-0000-0000-000000000000"
+                    null
                 }
 
                 val sellerNotification = Notification(
@@ -236,15 +188,15 @@ class OrderRepository @Inject constructor(
                     title = "Đã bán được sản phẩm",
                     content = sellerContent,
                     targetId = orderId,
-                    postId = validPostId,
+                    postId = validPostId, // Truyền mã ID chuẩn hoặc NULL sạch sẽ lên DB
                     createdAt = ""
                 )
 
                 runCatching {
                     notificationRepository.sendNotification(sellerNotification)
-                    Log.d(TAG, "[DB] Đã lưu thông báo người bán vào bảng notifications thành công.")
+                    Log.d(TAG, "[DB SELLER] Đã lưu thông báo người bán vào bảng notifications thành công.")
                 }.onFailure { err ->
-                    Log.e(TAG, "[DB LỖI] Bỏ qua lỗi lưu thông báo Seller: ${err.message}")
+                    Log.e(TAG, "[DB SELLER LỖI] Bỏ qua lỗi lưu thông báo Seller: ${err.message}")
                 }
 
                 Log.d(TAG, "    [FCM SELLER] Đang gọi triggerPushNotification cho Seller...")
@@ -256,7 +208,6 @@ class OrderRepository @Inject constructor(
                         type = "order",
                         targetId = orderId
                     )
-                    Log.d(TAG, "    [FCM SELLER SUCCESS] Đã bắn FCM cho người bán.")
                 }.onFailure { fcmError ->
                     Log.w(TAG, "    [FCM SELLER LỖI] Bỏ qua lỗi gửi tin đẩy tới thiết bị Seller: ${fcmError.localizedMessage}")
                 }
