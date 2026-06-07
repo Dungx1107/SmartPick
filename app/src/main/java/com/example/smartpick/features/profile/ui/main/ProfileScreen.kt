@@ -88,6 +88,9 @@ fun ProfileScreen(
                     onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
                 )
             },
+            onHistoryClick = {
+                navController.navigate(Routes.Saved.route)
+            },
             onReactionClick = { postId, rType -> profileViewModel.toggleReaction(postId, rType) }
         )
     }
@@ -173,7 +176,8 @@ fun ProfileScreenPreview() {
             onProductClick = {},
             onDeletePost = {},
             onReactionClick = { _, _ -> },
-            onSellerDashboardClick = {}
+            onSellerDashboardClick = {},
+            onHistoryClick = {}
         )
     }
 }

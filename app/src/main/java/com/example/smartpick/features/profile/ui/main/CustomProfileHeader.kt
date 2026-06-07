@@ -1,10 +1,14 @@
 package com.example.smartpick.features.profile.ui.main
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ListAlt
+import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.*
@@ -29,6 +33,7 @@ fun CustomProfileHeader(
     onEditProfile: () -> Unit,
     onSettingsClick: () -> Unit,
     onSellerDashboardClick: () -> Unit,
+    onHistoryClick: () -> Unit, // Khớp nối lại tham số điều hướng lịch sử mua hàng
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -45,19 +50,42 @@ fun CustomProfileHeader(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
-            AsyncImage(
-                model = user?.avatarUrl ?: "https://via.placeholder.com/150",
-                contentDescription = "Avatar",
-                modifier = Modifier
-                    .size(76.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentScale = ContentScale.Crop
-            )
+            Box(
+                modifier = Modifier.padding(bottom = 4.dp),
+                contentAlignment = Alignment.BottomEnd // Đặt icon nằm ở góc dưới bên phải
+            ) {
+                AsyncImage(
+                    model = user?.avatarUrl ?: "https://via.placeholder.com/150",
+                    contentDescription = "Avatar",
+                    modifier = Modifier
+                        .size(76.dp)
+                        .clip(CircleShape)
+                        .background(Color.LightGray),
+                    contentScale = ContentScale.Crop
+                )
+
+                FilledIconButton(
+                    onClick = onEditProfile,
+                    modifier = Modifier
+                        .size(30.dp)
+                        .padding(2.dp),
+                    shape = CircleShape,
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Create,
+                        contentDescription = "Chỉnh sửa hồ sơ",
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Khối hiển thị thông tin và điều khiển hành động
+            // Khối bên phải: Hiển thị thông tin và nút Đơn hàng lớn
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -75,9 +103,8 @@ fun CustomProfileHeader(
                         modifier = Modifier.weight(1f)
                     )
 
-                    // Cụm nút chức năng nhỏ gọn
+                    // Cụm nút chức năng nhỏ gọn (Gian hàng & Cài đặt)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Nút Gian hàng (Seller Dashboard)
                         IconButton(
                             onClick = onSellerDashboardClick,
                             modifier = Modifier.size(32.dp)
@@ -90,7 +117,6 @@ fun CustomProfileHeader(
                             )
                         }
 
-                        // Nút Cài đặt (Settings) - Làm bé lại
                         IconButton(
                             onClick = onSettingsClick,
                             modifier = Modifier.size(32.dp)
@@ -112,9 +138,9 @@ fun CustomProfileHeader(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
-                // Nút Chỉnh sửa hồ sơ phẳng
+                // Biến đổi nút cũ thành nút Lịch sử mua hàng (Đơn hàng của bạn) dạng Container phẳng rộng rãi
                 Button(
-                    onClick = onEditProfile,
+                    onClick = onHistoryClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(34.dp),
@@ -125,7 +151,22 @@ fun CustomProfileHeader(
                     ),
                     contentPadding = PaddingValues(vertical = 0.dp)
                 ) {
-                    Text("Chỉnh sửa hồ sơ", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ListAlt,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Đơn hàng của bạn",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }
@@ -150,10 +191,11 @@ private fun CustomProfileHeaderPreview() {
             ),
             onEditProfile = {},
             onSettingsClick = {},
+            onSellerDashboardClick = {},
+            onHistoryClick = {}, // Đồng bộ tham số cho khối Preview
             modifier = Modifier
                 .statusBarsPadding()
-                .background(MaterialTheme.colorScheme.background),
-            onSellerDashboardClick = {}
+                .background(MaterialTheme.colorScheme.background)
         )
     }
 }

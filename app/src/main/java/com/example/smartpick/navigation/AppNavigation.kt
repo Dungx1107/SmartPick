@@ -340,7 +340,7 @@ fun AppNavigation(
                             navController.navigate(
                                 Routes.Checkout.createRoute(
                                     productId = productId,
-                                    quantity = 1 
+                                    quantity = 1
                                 )
                             )
                         }

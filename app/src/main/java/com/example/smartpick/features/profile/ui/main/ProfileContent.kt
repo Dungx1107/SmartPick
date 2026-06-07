@@ -47,7 +47,8 @@ fun ProfileContent(
     onProductClick: (String) -> Unit,
     onDeletePost: (String) -> Unit,
     onReactionClick: (String, ReactionType) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onHistoryClick: () -> Unit,
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
 
@@ -69,6 +70,7 @@ fun ProfileContent(
                     onEditProfile = onEditProfile,
                     onSettingsClick = onSettingsClick,
                     onSellerDashboardClick = onSellerDashboardClick,
+                    onHistoryClick = onHistoryClick,
                     modifier = Modifier.fillMaxWidth()
                 )
                 HorizontalDivider(
