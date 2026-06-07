@@ -52,7 +52,6 @@ fun AuthPrimaryButton(
     enabled: Boolean = true
 ) {
     val gradientBrush = if (enabled) {
-        // Giữ Gradient branding nhưng có thể cân nhắc dùng theme nếu cần chuyển hoàn toàn
         Brush.linearGradient(listOf(LoginBlue, LoginBlueGradientEnd))
     } else {
         SolidColor(MaterialTheme.colorScheme.surfaceVariant)

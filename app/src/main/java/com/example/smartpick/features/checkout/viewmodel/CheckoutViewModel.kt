@@ -28,6 +28,7 @@ class CheckoutViewModel @Inject constructor(
 ) : ViewModel() {
     private val targetProductId: String? = savedStateHandle[Routes.Checkout.ARG_PRODUCT_ID]
     private val targetQuantity: Int = savedStateHandle[Routes.Checkout.ARG_QUANTITY] ?: 1
+    private val cartItemIdsStr: String? = savedStateHandle[Routes.Checkout.ARG_CART_ITEM_IDS]
 
     var phone = MutableStateFlow("")
     var address = MutableStateFlow("")
@@ -48,7 +49,7 @@ class CheckoutViewModel @Inject constructor(
     init {
         loadCheckoutData()
         loadUserDefaultInfo()
-        loadOrderHistory() // THÊM: Nạp lịch sử đơn hàng ngay khi khởi tạo
+        loadOrderHistory()
     }
 
     /**
@@ -99,10 +100,24 @@ class CheckoutViewModel @Inject constructor(
                         _cartItems.value = emptyList()
                     }
                 } else {
-                    // --- LUỒNG 2: MUA TỪ GIỎ HÀNG (MẶC ĐỊNH CŨ) ---
-                    _cartItems.value = cartRepository.fetchCartItems(user.id)
+                    // --- LUỒNG 2: MUA TỪ GIỎ HÀNG (CÓ CHỌN LỌC) ---
+                    val allCartItems = cartRepository.fetchCartItems(user.id)
+
+                    if (!cartItemIdsStr.isNullOrEmpty()) {
+                        // Chuyển chuỗi "id1,id2" thành List<String> -> ["id1", "id2"]
+                        val selectedIds = cartItemIdsStr.split(",")
+
+                        // Tiến hành lọc: Chỉ giữ lại những mục có ID trùng khớp với danh sách người dùng đã tích chọn
+                        val filteredItems = allCartItems.filter { item ->
+                            selectedIds.contains(item.id)
+                        }
+                        _cartItems.value = filteredItems
+                    } else {
+                        _cartItems.value = emptyList()
+                    }
                 }
             } catch (e: Exception) {
+                e.printStackTrace()
                 _cartItems.value = emptyList()
             }
         }
@@ -137,7 +152,15 @@ class CheckoutViewModel @Inject constructor(
     fun updateAddress(value: String) { address.value = value }
     fun updatePaymentMethod(value: String) { paymentMethod.value = value }
 
+// FILE: com/example/smartpick/features/checkout/viewmodel/CheckoutViewModel.kt
+
     fun placeOrder(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        // KHẮC PHỤC LỖI NHÂN ĐÔI SỐ LƯỢNG: Kiểm tra nếu đang xử lý đơn thì chặn đứng lượt nhấn tiếp theo
+        if (_isProcessing.value) {
+            Log.d("CheckoutViewModel", "Hệ thống đang xử lý đơn hàng trước đó. Chặn click trùng lặp.")
+            return
+        }
+
         val currentPhone = phone.value
         val currentAddress = address.value
         val currentMethod = paymentMethod.value
@@ -175,7 +198,9 @@ class CheckoutViewModel @Inject constructor(
                 return@launch
             }
 
+            // Bật cờ khóa nút bấm ngay lập tức
             _isProcessing.value = true
+
             val result = orderRepository.checkout(
                 userId = user.id,
                 cartItems = currentItems,
@@ -183,6 +208,8 @@ class CheckoutViewModel @Inject constructor(
                 phone = currentPhone,
                 paymentMethod = currentMethod
             )
+
+            // Giải phóng cờ khóa sau khi Repository xử lý xong
             _isProcessing.value = false
 
             if (result.isSuccess) {

@@ -34,14 +34,17 @@ import com.example.smartpick.features.review.viewmodel.ReviewViewModel
 import com.example.smartpick.navigation.Routes
 import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.model.ReviewUser
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 
 @Composable
 fun ProductDetailScreen(
     productId: String,
     navController: NavController,
     viewModel: ProductDetailViewModel = hiltViewModel(),
-    reviewViewModel: ReviewViewModel = hiltViewModel()
+    reviewViewModel: ReviewViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
+    val currentUser by authViewModel.currentUser.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
@@ -74,8 +77,8 @@ fun ProductDetailScreen(
             }
 
             uiState.product != null -> {
-                // KHẮC PHỤC LỖI SMART CAST: Đặt biến local cố định để Kotlin Smart Cast nhận diện an toàn an toàn
                 val currentProduct = uiState.product!!
+                val currentUserId = currentUser?.id ?: ""
 
                 ProductDetailContent(
                     product = currentProduct,
@@ -83,7 +86,8 @@ fun ProductDetailScreen(
                     reviews = reviews,
                     canReview = canReview,
                     isSubmitting = isSubmitting,
-                    isProductAvailable = viewModel.isProductAvailable(currentProduct),
+                    isProductAvailable = viewModel.isProductAvailable(currentProduct)
+                            && currentProduct.ownerId != currentUserId,
                     onBackClick = { navController.popBackStack() },
                     onViewFeed = { id -> navController.navigate(Routes.PostDetail.createRoute(id)) },
                     onAddToCart = {
@@ -101,7 +105,6 @@ fun ProductDetailScreen(
                             }
                         )
                     },
-                    // FIX LỖI FUNCTION MISMATCH: Truyền đúng số lượng được chọn từ giao diện con sang
                     onBuyNow = { selectedQuantity ->
                         if (currentProduct.id != null) {
                             navController.navigate(
@@ -149,7 +152,6 @@ fun ProductDetailContent(
 ) {
     val context = LocalContext.current
 
-    // Thêm State quản lý số lượng mua ngay trực tiếp tại màn hình chi tiết sản phẩm
     var quantity by remember { mutableStateOf(1) }
 
     Column(
@@ -262,7 +264,11 @@ fun ProductDetailContent(
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Số lượng mua:", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        "Số lượng mua:",
+                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                     Spacer(modifier = Modifier.weight(1f))
 
                     Row(
@@ -276,7 +282,12 @@ fun ProductDetailContent(
                             contentPadding = PaddingValues(0.dp),
                             modifier = Modifier.width(40.dp)
                         ) {
-                            Text("-", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "-",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
 
                         Text(
@@ -291,7 +302,12 @@ fun ProductDetailContent(
                             contentPadding = PaddingValues(0.dp),
                             modifier = Modifier.width(40.dp)
                         ) {
-                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "+",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -368,46 +384,56 @@ fun ProductDetailContent(
             }
         }
 
-        // Thanh mua hàng cố định nằm ngoài LazyColumn
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shadowElevation = 16.dp,
             color = MaterialTheme.colorScheme.surface
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .navigationBarsPadding(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .navigationBarsPadding()
             ) {
-                Button(
-                    onClick = onAddToCart,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = isProductAvailable
-                ) {
+                if (product.stock > 0 && !isProductAvailable) {
                     Text(
-                        stringResource(R.string.ThemGioHang),
-                        color = MaterialTheme.colorScheme.onPrimary
+                        text = "Sản phẩm do bạn đăng bán. Không thể thực hiện mua hàng.",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(bottom = 8.dp, start = 4.dp)
                     )
                 }
-                Button(
-                    onClick = { onBuyNow(quantity) }, // ĐÃ SỬA: Truyền giá trị biến quantity động vào đây
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = isProductAvailable
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        stringResource(R.string.mua_ngay),
-                        color = MaterialTheme.colorScheme.onSecondary
-                    )
+                    Button(
+                        onClick = onAddToCart,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = isProductAvailable
+                    ) {
+                        Text(stringResource(R.string.ThemGioHang), color = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    Button(
+                        onClick = { onBuyNow(quantity) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = isProductAvailable
+                    ) {
+                        Text(
+                            stringResource(R.string.mua_ngay),
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
+                    }
                 }
             }
         }

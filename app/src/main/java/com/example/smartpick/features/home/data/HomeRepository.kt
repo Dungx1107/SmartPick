@@ -3,6 +3,7 @@ package com.example.smartpick.features.home.data
 import android.util.Log
 import com.example.smartpick.core.data.dto.PostDto
 import com.example.smartpick.core.data.dto.ProductDto
+import com.example.smartpick.features.feed.data.dto.FullPostResponse
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.Product
 import io.github.jan.supabase.SupabaseClient
@@ -20,12 +21,28 @@ class HomeRepository @Inject constructor(
     private val postgrest = supabase.postgrest
     private val TAG = "HomeRepository"
 
+    /**
+     * Lấy toàn bộ sản phẩm hiển thị trên trang chủ
+     * Giải pháp độc lập: JOIN ngược từ bảng posts để lấy kèm chính xác postId gốc, chặn đứng dữ liệu null
+     */
     suspend fun getAllProducts(): List<Product> = withContext(Dispatchers.IO) {
         try {
-            val listDto = postgrest["products"].select().decodeList<ProductDto>()
-            listDto.map { it.toDomain() }
+            Log.d(TAG, "--- START: getAllProducts kết hợp JOIN posts ---")
+
+            val response = postgrest["posts"]
+                .select(columns = Columns.raw("id, user_id, products(*)"))
+
+            val postListDto = response.decodeList<FullPostResponse>()
+
+            val productsWithPostId = postListDto.mapNotNull { postDto ->
+                val productDomain = postDto.products?.toDomain()
+                productDomain?.copy(postId = postDto.id)
+            }
+
+            Log.d(TAG, "--- SUCCESS: Đã tải ${productsWithPostId.size} sản phẩm sạch kèm postId ---")
+            productsWithPostId
         } catch (e: Exception) {
-            Log.e(TAG, "getAllProducts error", e)
+            Log.e(TAG, "!!!! LỖI nghiêm trọng tại getAllProducts: ${e.localizedMessage}", e)
             emptyList()
         }
     }
@@ -60,5 +77,4 @@ class HomeRepository @Inject constructor(
             null
         }
     }
-
 }

@@ -48,10 +48,12 @@ import com.example.smartpick.core.ui.theme.TextMuted
 fun ProductGridCard(
     product: Product,
     onProductClick: (Product) -> Unit,
+    currentUserId: String? = null,
     onAddToCart: (Product, Offset) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var cardOffsetInWindow by remember { mutableStateOf(Offset.Zero) }
+    val isOwnProduct = !currentUserId.isNullOrEmpty() && product.ownerId == currentUserId
 
     Card(
         modifier = modifier
@@ -102,27 +104,29 @@ fun ProductGridCard(
                     Box(
                         modifier = Modifier
                             .size(40.dp)
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onTap = { pressOffset ->
-                                        val absoluteTouchX = cardOffsetInWindow.x + pressOffset.x
-                                        // Tịnh tiến lùi trục Y lên trên 180px để điểm xuất hiện nằm gọn trong lòng ảnh sản phẩm vuông
-                                        val absoluteTouchY = cardOffsetInWindow.y + pressOffset.y - 180f
-
-                                        onAddToCart(product, Offset(absoluteTouchX, absoluteTouchY))
-                                    }
-                                )
+                            .pointerInput(isOwnProduct) {
+                                if (!isOwnProduct) {
+                                    detectTapGestures(
+                                        onTap = { pressOffset ->
+                                            val absoluteTouchX = cardOffsetInWindow.x + pressOffset.x
+                                            val absoluteTouchY = cardOffsetInWindow.y + pressOffset.y - 180f
+                                            onAddToCart(product, Offset(absoluteTouchX, absoluteTouchY))
+                                        }
+                                    )
+                                }
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AddShoppingCart,
-                            contentDescription = "Add to Cart",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .size(20.dp)
-                                .padding(bottom = 2.dp, start = 2.dp)
-                        )
+                        if (!isOwnProduct) {
+                            Icon(
+                                imageVector = Icons.Default.AddShoppingCart,
+                                contentDescription = "Add to Cart",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .padding(bottom = 2.dp, start = 2.dp)
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
@@ -141,11 +145,18 @@ fun ProductGridCard(
                         fontSize = 15.sp
                     )
 
-                    Text(
-                        text = "Đã bán ${if (product.soldCount > 1000) "${product.soldCount / 1000}k" else product.soldCount}",
-                        color = TextMuted,
-                        fontSize = 11.sp
-                    )
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Kho: ${product.stock}",
+                            color = TextMuted,
+                            fontSize = 10.sp
+                        )
+                        Text(
+                            text = "Đã bán ${if (product.soldCount > 1000) "${product.soldCount / 1000}k" else product.soldCount}", //
+                            color = TextMuted,
+                            fontSize = 10.sp
+                        )
+                    }
                 }
             }
         }

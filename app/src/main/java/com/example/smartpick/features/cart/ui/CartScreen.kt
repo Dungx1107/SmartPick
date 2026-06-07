@@ -49,7 +49,7 @@ fun CartScreen(
     onRemove: (String) -> Unit,
     onBack: () -> Unit,
     onNavigateToPost: (String) -> Unit,
-    onCheckout: () -> Unit,
+    onCheckout: (List<String>) -> Unit,
     onProductClick: (String) -> Unit
 ) {
     var isEditMode by rememberSaveable { mutableStateOf(false) }
@@ -95,7 +95,11 @@ fun CartScreen(
                 cartItems = cartItems,
                 selectedIds = selectedIds,
                 onSelectAll = onSelectAll,
-                onCheckout = onCheckout,
+                onCheckout = {
+                    if (selectedIds.isNotEmpty()) {
+                        onCheckout(selectedIds.toList())
+                    }
+                },
                 isEditMode = isEditMode,
                 onDeleteSelected = {
                     cartItems.filter { selectedIds.contains(it.id) }.forEach {

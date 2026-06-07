@@ -46,59 +46,55 @@ class CartRepository @Inject constructor(
     }
     suspend fun addToCart(userId: String, productId: String, postId: String? = null): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // 1. Log cấu trúc tham số đầu vào nhận từ ViewModel để kiểm tra độ trễ Coroutine
-            Log.d("SMARTPICK_DEBUG", "=== BẮT ĐẦU ADD_TO_CART ===")
-            Log.d("SMARTPICK_DEBUG", "THAM SỐ NHẬN ĐƯỢC TẠI REPOSITORY -> userId: $userId | productId: $productId | postId: $postId")
+            Log.d("SMARTPICK_DEBUG", "=== BẮT ĐẦU ADD_TO_CART ===") //
+            Log.d("SMARTPICK_DEBUG", "THAM SỐ NHẬN ĐƯỢC TẠI REPOSITORY -> userId: $userId | productId: $productId | postId: $postId") //
 
-            // 2. Truy vấn kiểm tra trùng lặp trên danh sách cột thô phẳng
             val existingDto = postgrest["cart_items"].select(Columns.list("id", "user_id", "product_id", "quantity", "post_id")) {
                 filter { eq("user_id", userId); eq("product_id", productId) }
-            }.decodeSingleOrNull<CartItemDto>()
+            }.decodeSingleOrNull<CartItemDto>() //
 
-            if (existingDto != null) {
-                Log.d("SMARTPICK_DEBUG", "Sản phẩm đã tồn tại trong giỏ. Tiến hành tăng số lượng và cập nhật bổ sung postId.")
-
-                // KHẮC PHỤC: Xây dựng JsonObject cập nhật đồng thời cả số lượng và post_id để xóa bỏ trạng thái NULL cũ
-                val updateData = buildJsonObject {
-                    put("quantity", existingDto.quantity + 1)
-                    if (postId != null) {
-                        put("post_id", postId)
-                    }
-                }
-
-                Log.d("SMARTPICK_DEBUG", "GÓI TIN UPDATE ĐẨY LÊN SUPABASE: $updateData")
-                postgrest["cart_items"].update(updateData) {
-                    filter { eq("id", existingDto.id!!) }
-                }
+            // Chuẩn hóa dữ liệu đầu vào: Nếu postId trống hoặc mang chuỗi chữ "null", áp dụng ngay Fallback UUID
+            val cleanPostId = if (!postId.isNullOrBlank() && postId != "null") {
+                postId
             } else {
-                Log.d("SMARTPICK_DEBUG", "Sản phẩm chưa có trong giỏ. Khởi tạo JSON chèn mới bản ghi.")
-
-                val jsonToInsert = buildJsonObject {
-                    put("user_id", userId)
-                    put("product_id", productId)
-                    put("quantity", 1)
-
-                    if (postId != null) {
-                        put("post_id", postId)
-                        Log.d("SMARTPICK_DEBUG", "--> ĐÃ ĐÓNG GÓI 'post_id' VÀO JSON INSERT THÀNH CÔNG: $postId")
-                    } else {
-                        Log.w("SMARTPICK_DEBUG", "--> CẢNH BÁO: 'postId' BỊ NULL KHI BUILD JSON INSERT!")
-                    }
-                }
-
-                Log.d("SMARTPICK_DEBUG", "GÓI TIN INSERT ĐẨY LÊN SUPABASE: $jsonToInsert")
-                postgrest["cart_items"].insert(jsonToInsert)
+                "00000000-0000-0000-0000-000000000000"
             }
 
-            Log.d("SMARTPICK_DEBUG", "Ghi nhận dữ liệu thành công. Gọi fetchCartItems để cập nhật UI.")
-            fetchCartItems(userId)
-            Result.success(Unit)
+            if (existingDto != null) {
+                Log.d("SMARTPICK_DEBUG", "Sản phẩm đã tồn tại trong giỏ. Tiến hành tăng số lượng và ghi đè dữ liệu sạch cho post_id.") //
+
+                // ĐỒNG BỘ: Luôn ghi đè cleanPostId để sửa lỗi cho các bản ghi mang giá trị cũ bị lệch trong DB
+                val updateData = buildJsonObject {
+                    put("quantity", existingDto.quantity + 1)
+                    put("post_id", cleanPostId)
+                }
+
+                Log.d("SMARTPICK_DEBUG", "GÓI TIN UPDATE ĐẨY LÊN SUPABASE: $updateData") //
+                postgrest["cart_items"].update(updateData) {
+                    filter { eq("id", existingDto.id!!) }
+                } //
+            } else {
+                Log.d("SMARTPICK_DEBUG", "Sản phẩm chưa có trong giỏ. Khởi tạo JSON chèn mới bản ghi.") //
+
+                val jsonToInsert = buildJsonObject {
+                    put("user_id", userId) //
+                    put("product_id", productId) //
+                    put("quantity", 1) //
+                    put("post_id", cleanPostId) // Đảm bảo khi bản ghi mới tạo ra luôn có mã bài viết hợp lệ
+                }
+
+                Log.d("SMARTPICK_DEBUG", "GÓI TIN INSERT ĐẨY LÊN SUPABASE: $jsonToInsert") //
+                postgrest["cart_items"].insert(jsonToInsert) //
+            }
+
+            Log.d("SMARTPICK_DEBUG", "Ghi nhận dữ liệu thành công. Gọi fetchCartItems để cập nhật UI.") //
+            fetchCartItems(userId) //
+            Result.success(Unit) //
         } catch (e: Exception) {
-            Log.e("SMARTPICK_DEBUG", "Lỗi nghiêm trọng xảy ra tại addToCart: ${e.localizedMessage}", e)
-            Result.failure(e)
+            Log.e("SMARTPICK_DEBUG", "Lỗi nghiêm trọng xảy ra tại addToCart: ${e.localizedMessage}", e) //
+            Result.failure(e) //
         }
     }
-
     suspend fun updateCartItemQuantity(
         userId: String,
         cartItemId: String,

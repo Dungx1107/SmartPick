@@ -2,7 +2,6 @@ package com.example.smartpick.features.home.ui
 
 import android.Manifest
 import android.app.Activity
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.speech.RecognizerIntent
@@ -25,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,30 +44,38 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import com.example.smartpick.R
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.ui.theme.SmartPickTheme
+import com.example.smartpick.features.auth.viewmodel.AuthViewModel
 import com.example.smartpick.features.cart.viewmodel.CartViewModel
+import com.example.smartpick.features.home.ui.components.FlyingProductItem
+import com.example.smartpick.features.home.ui.components.FlyingProductState
 import com.example.smartpick.features.home.ui.components.ProductGridCard
 import com.example.smartpick.features.home.ui.components.SearchBar
 import com.example.smartpick.features.home.viewmodel.HomeUiState
 import com.example.smartpick.features.home.viewmodel.HomeViewModel
 import com.example.smartpick.navigation.Routes
-import com.example.smartpick.features.home.ui.components.FlyingProductItem
-import com.example.smartpick.features.home.ui.components.FlyingProductState
 
 @Composable
 fun HomeScreen(
     navController: NavController,
     paddingValues: PaddingValues,
     viewModel: HomeViewModel = hiltViewModel(),
-    cartViewModel: CartViewModel = hiltViewModel(), // Khôi phục lại để lấy số lượng xe đẩy
+    cartViewModel: CartViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     onProductClick: (Product) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val totalCartCount by cartViewModel.totalCartCount.collectAsState() // Thu thập số lượng item đang có
+    val totalCartCount by cartViewModel.totalCartCount.collectAsState()
     var searchQuery by rememberSaveable { mutableStateOf("") }
+
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val currentUserId = currentUser?.id ?: ""
 
     // Quản lý danh sách các gói tin sản phẩm đang bay trên màn hình HomeScreen
     var flyingProducts by remember { mutableStateOf(listOf<FlyingProductState>()) }
@@ -105,6 +113,19 @@ fun HomeScreen(
     // Làm mới trạng thái số lượng xe đẩy liên tục khi quay lại màn hình
     LaunchedEffect(Unit) {
         cartViewModel.refreshCart()
+        searchQuery = ""
+        viewModel.fetchProducts()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.fetchProducts()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -121,6 +142,7 @@ fun HomeScreen(
             onCartIconPositioned = { offset ->
                 cartIconOffset = offset
             },
+            currentUserId = currentUserId,
             onAddToCart = { product ,touchOffset->
                 if (product.id != null) {
                     val endPoint =
@@ -171,7 +193,8 @@ fun HomeContent(
     onCartClick: () -> Unit,
     onCartIconPositioned: (Offset) -> Unit,        // Callback nhận tọa độ giỏ hàng
     onProductClick: (Product) -> Unit,
-    onAddToCart: (Product,Offset) -> Unit
+    onAddToCart: (Product,Offset) -> Unit,
+    currentUserId: String,
 ) {
     Column(
         modifier = Modifier
@@ -195,7 +218,6 @@ fun HomeContent(
                 .padding(horizontal = 8.dp) // Thu hẹp lề hai bên thanh search từ 12.dp xuống 8.dp
                 .padding(top = 4.dp, bottom = 4.dp) // Thu hẹp lề trên dưới của search bar
                 .onGloballyPositioned { coordinates ->
-                    // Lấy tọa độ góc trên bên phải thanh tìm kiếm (gần vị trí xe hàng)
                     val position = coordinates.positionInWindow()
                     onCartIconPositioned(
                         Offset(
@@ -230,6 +252,7 @@ fun HomeContent(
                     items(state.products, key = { it.id ?: "" }) { product ->
                         ProductGridCard(
                             product = product,
+                            currentUserId = currentUserId,
                             onProductClick = { onProductClick(product) },
                             onAddToCart = { prod, offset -> onAddToCart(prod, offset) }
                         )
@@ -303,7 +326,8 @@ fun HomeContentSuccessWithBadgePreview() {
             onCartClick = {},
             onProductClick = {},
             onAddToCart = { _, _ -> },
-            onCartIconPositioned = {}
+            onCartIconPositioned = {},
+            currentUserId = ""
         )
     }
 }
@@ -337,6 +361,7 @@ fun HomeContentEmptyCartPreview() {
             onProductClick = {},
             onAddToCart = { _, _ -> },
             onCartIconPositioned = {},
+            currentUserId = ""
         )
     }
 }

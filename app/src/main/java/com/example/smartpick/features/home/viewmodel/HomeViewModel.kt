@@ -31,7 +31,7 @@ class HomeViewModel @Inject constructor(
 
     fun fetchProducts() {
         viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
+//            _uiState.value = HomeUiState.Loading
             try {
                 val products = repository.getAllProducts()
                 allProductsList = products
@@ -43,12 +43,12 @@ class HomeViewModel @Inject constructor(
     }
 
     fun searchProducts(query: String) {
-        val filtered = if (query.isBlank()) {
-            allProductsList
+        if (query.isBlank()) {
+            _uiState.value = HomeUiState.Success(allProductsList)
         } else {
-            allProductsList.filter { it.name.contains(query, ignoreCase = true) }
+            val filtered = allProductsList.filter { it.name.contains(query, ignoreCase = true) }
+            _uiState.value = HomeUiState.Success(filtered)
         }
-        _uiState.value = HomeUiState.Success(filtered)
     }
 
     fun addToCart(
@@ -64,6 +64,7 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
                 if (product.id != null) {
+
                     val result = cartRepository.addToCart(
                         userId = user.id,
                         productId = product.id,

@@ -281,6 +281,11 @@ fun AppNavigation(
                         navArgument(Routes.Checkout.ARG_QUANTITY) {
                             type = NavType.IntType
                             defaultValue = 1
+                        },
+                        navArgument(Routes.Checkout.ARG_CART_ITEM_IDS) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
                         }
                     )
                 ) { backStackEntry ->
@@ -288,12 +293,16 @@ fun AppNavigation(
                         backStackEntry.arguments?.getString(Routes.Checkout.ARG_PRODUCT_ID)
                     val quantity =
                         backStackEntry.arguments?.getInt(Routes.Checkout.ARG_QUANTITY) ?: 1
+                    val cartItemIds =
+                        backStackEntry.arguments?.getString(Routes.Checkout.ARG_CART_ITEM_IDS)
 
                     CheckoutScreen(
                         onBack = { navController.popBackStack() },
                         onNavigateToSuccess = {
                             navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") {
-                                popUpTo(Routes.Home.route) { inclusive = false } // Giữ lại trang chủ trong backstack
+                                popUpTo(Routes.Home.route) {
+                                    inclusive = false
+                                } // Giữ lại trang chủ trong backstack
                                 launchSingleTop = true
                             }
                         }
@@ -409,8 +418,11 @@ fun AppNavigation(
                         onNavigateToPost = { postId ->
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
-                        onCheckout = {
-                            navController.navigate(Routes.Checkout.createRoute())
+                        onCheckout = { selectedList ->
+                            val cartItemIdsParam = selectedList.joinToString(",")
+                            navController.navigate(
+                                Routes.Checkout.createRoute(cartItemIds = cartItemIdsParam)
+                            )
                         },
                         onProductClick = { productId ->
                             navController.navigate(Routes.ProductDetail.createRoute(productId))

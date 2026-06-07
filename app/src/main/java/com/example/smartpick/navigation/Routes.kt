@@ -16,12 +16,17 @@ sealed class Routes(val route: String) {
     object LikedPosts : Routes("liked_posts")
 
     object SellerDashboard : Routes("seller_dashboard")
-    object Checkout : Routes("checkout?productId={productId}&quantity={quantity}") {
+    object Checkout : Routes("checkout?productId={productId}&quantity={quantity}&cartItemIds={cartItemIds}") {
         const val ARG_PRODUCT_ID = "productId"
         const val ARG_QUANTITY = "quantity"
-
-        fun createRoute(productId: String? = null, quantity: Int? = null): String {
+        const val ARG_CART_ITEM_IDS = "cartItemIds"
+        fun createRoute(
+            productId: String? = null,
+            quantity: Int? = null,
+            cartItemIds: String? = null
+        ): String {
             return when {
+                cartItemIds != null -> "checkout?cartItemIds=$cartItemIds"
                 productId != null && quantity != null -> "checkout?productId=$productId&quantity=$quantity"
                 productId != null -> "checkout?productId=$productId"
                 else -> "checkout"
