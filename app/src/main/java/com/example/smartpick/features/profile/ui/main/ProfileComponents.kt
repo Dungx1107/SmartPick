@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Storefront // Bổ sung Icon Cửa hàng
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -137,11 +138,11 @@ fun ProfileHeaderCard(
     }
 }
 
-
 @Composable
 fun SettingsBentoGrid(
     onHistoryClick: () -> Unit = {},
-    onSettingsClick: () -> Unit = {}
+    onSettingsClick: () -> Unit = {},
+    onSellerDashboardClick: () -> Unit = {} // FIX: Thêm action chuyển hướng gian hàng
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -183,6 +184,17 @@ fun SettingsBentoGrid(
                 description = stringResource(R.string.GiaiDapThacMac)
             )
         }
+
+        // FIX: Thêm Tile Gian hàng nằm Full-width bên dưới
+        SettingItemCard(
+            modifier = Modifier.fillMaxWidth(),
+            icon = Icons.Default.Storefront,
+            iconBgColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f),
+            iconColor = MaterialTheme.colorScheme.error,
+            title = "Gian hàng của tôi",
+            description = "Trưng bày sản phẩm và quản lý doanh thu",
+            onClick = onSellerDashboardClick
+        )
     }
 }
 

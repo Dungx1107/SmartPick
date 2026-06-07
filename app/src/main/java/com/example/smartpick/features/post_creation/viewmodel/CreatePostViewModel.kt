@@ -15,18 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel quản lý logic tạo bài viết mới.
- *
- * Nhiệm vụ chính:
- * - Kiểm tra trạng thái đăng nhập
- * - Gửi dữ liệu bài viết lên Repository
- * - Quản lý trạng thái UI khi đăng bài
- * - Xử lý loading / success / error
- *
- * @property postCreationRepository Repository xử lý tạo bài viết
- * @property authRepository Repository quản lý đăng nhập
- */
 @HiltViewModel
 class CreatePostViewModel @Inject constructor(
     private val postCreationRepository: PostCreationRepository,
@@ -38,21 +26,12 @@ class CreatePostViewModel @Inject constructor(
         )
     val uiState = _uiState.asStateFlow()
 
-    /**
-     * Hàm tạo bài viết mới.
-     *
-     * Flow xử lý:
-     * 1. Chuyển UI sang Loading
-     * 2. Kiểm tra user đã đăng nhập chưa
-     * 3. Upload dữ liệu bài viết
-     * 4. Nếu thành công -> Success
-     * 5. Nếu lỗi -> Error
-     *
-     * @param content Nội dung bài viết
-     * @param mediaUris Danh sách ảnh/video
-     * @param product Sản phẩm đính kèm bài viết
-     * @param context Context dùng cho Toast và upload file
-     */
+    fun clearError() {
+        if (_uiState.value is CreatePostUiState.Error) {
+            _uiState.value = CreatePostUiState.Idle
+        }
+    }
+
     fun createPost(
         content: String,
         mediaUris: List<Uri>,
@@ -60,10 +39,7 @@ class CreatePostViewModel @Inject constructor(
         context: Context
     ) {
 
-        /**
-         * Coroutine chạy theo vòng đời ViewModel.
-         * Tự động hủy khi ViewModel bị destroy.
-         */
+
         viewModelScope.launch {
 
             /* Chuyển UI sang trạng thái Loading. */
