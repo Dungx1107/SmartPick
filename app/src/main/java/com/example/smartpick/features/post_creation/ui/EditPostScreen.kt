@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,8 +41,8 @@ fun EditPostScreen(
     val context = LocalContext.current
 
     var isInitialized by remember { mutableStateOf(false) }
+    var showErrorDialog by remember { mutableStateOf<String?>(null) } // Quản lý Popup lỗi cục bộ
 
-    // Các State chứa dữ liệu đang chỉnh sửa
     var content by remember { mutableStateOf("") }
     var existingUrls by remember { mutableStateOf<List<String>>(emptyList()) }
     var newUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
@@ -60,8 +61,6 @@ fun EditPostScreen(
                 if (!isInitialized) {
                     val data = (uiState as EditPostUiState.Success)
                     content = data.post.content ?: ""
-
-                    // FIX: Bỏ toán tử ?: vì post.mediaUrls đã là List<String> (non-nullable)
                     existingUrls = data.post.mediaUrls
 
                     if (data.product != null) {
@@ -69,10 +68,10 @@ fun EditPostScreen(
                         productId = data.product.id
                         productState = ProductFormState(
                             name = data.product.name,
-                            price = data.product.price.toLong().toString(), // Ép giá về chuỗi
-                            // FIX: Thêm ?: "" vì data.product.category có thể rỗng
+                            price = data.product.price.toLong().toString(),
                             category = data.product.category ?: "",
-                            brand = data.product.brand ?: ""
+                            brand = data.product.brand ?: "",
+                            stock = data.product.stock.toString() // Giữ nguyên số lượng kho
                         )
                     }
                     isInitialized = true
@@ -83,7 +82,8 @@ fun EditPostScreen(
                 onClose()
             }
             is EditPostUiState.Error -> {
-                Toast.makeText(context, (uiState as EditPostUiState.Error).message, Toast.LENGTH_SHORT).show()
+                // Bật Popup lỗi khi nhận tín hiệu từ ViewModel
+                showErrorDialog = (uiState as EditPostUiState.Error).message
             }
             else -> {}
         }
@@ -108,7 +108,8 @@ fun EditPostScreen(
                                     name = productState.name,
                                     price = productState.price.toDoubleOrNull() ?: 0.0,
                                     category = productState.category,
-                                    brand = productState.brand
+                                    brand = productState.brand,
+                                    stock = productState.stock.toIntOrNull() ?: 1
                                 )
                             } else null
 
@@ -148,7 +149,6 @@ fun EditPostScreen(
                         onContentChange = { content = it }
                     )
 
-                    // Hiển thị và cho phép XÓA ảnh cũ
                     if (existingUrls.isNotEmpty()) {
                         Text("Ảnh/Video cũ:", fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -171,7 +171,6 @@ fun EditPostScreen(
                         }
                     }
 
-                    // Khu vực THÊM ảnh/video mới (Tái sử dụng từ CreatePost)
                     Text("Thêm Ảnh/Video mới:", fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp))
                     MediaSelectionSection(
                         selectedUris = newUris,
@@ -179,7 +178,6 @@ fun EditPostScreen(
                         onMediaRemoved = { newUris = newUris - it }
                     )
 
-                    // Form chỉnh sửa Thông tin Sản phẩm
                     if (hasProduct) {
                         Spacer(modifier = Modifier.height(16.dp))
                         ProductDetailsForm(
@@ -188,6 +186,31 @@ fun EditPostScreen(
                         )
                     }
                 }
+            }
+
+            // Giao diện Popup Cảnh báo khi Sửa bài
+            if (showErrorDialog != null) {
+                AlertDialog(
+                    onDismissRequest = { showErrorDialog = null },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Cảnh báo vi phạm", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    text = {
+                        Text(showErrorDialog!!, fontSize = 16.sp)
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showErrorDialog = null }) {
+                            Text("Đã hiểu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

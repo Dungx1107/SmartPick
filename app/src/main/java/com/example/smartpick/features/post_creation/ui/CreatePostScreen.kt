@@ -30,38 +30,36 @@ fun CreatePostScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Lắng nghe trạng thái thành công để tự động đóng màn hình
     LaunchedEffect(uiState) {
         if (uiState is CreatePostUiState.Success) {
             onClose()
         }
     }
 
-    // Truyền state và callback xuống Stateless Composable
     CreatePostContent(
         currentUser = currentUser,
         uiState = uiState,
         onClose = onClose,
         onSubmit = { content, mediaUris, product ->
             viewModel.createPost(content, mediaUris, product, context)
-        }
+        },
+        onDismissError = { viewModel.clearError() } // Kết nối lệnh tắt Popup
     )
 }
 
-// ─── STATELESS COMPOSABLE (Chỉ lo hiển thị UI, không chứa ViewModel) ───
 @Composable
 fun CreatePostContent(
     currentUser: User?,
     uiState: CreatePostUiState,
     onClose: () -> Unit,
-    onSubmit: (content: String, mediaUris: List<Uri>, product: Product?) -> Unit
+    onSubmit: (content: String, mediaUris: List<Uri>, product: Product?) -> Unit,
+    onDismissError: () -> Unit = {}
 ) {
     var selectedTabIndex by rememberSaveable { mutableIntStateOf(0) }
     var content by rememberSaveable { mutableStateOf("") }
     var selectedMediaUris by rememberSaveable { mutableStateOf<List<Uri>>(emptyList()) }
     var productState by rememberSaveable { mutableStateOf(ProductFormState()) }
 
-    // Điều kiện bật/tắt nút Submit
     val isSubmitEnabled = if (selectedTabIndex == 0) {
         content.isNotBlank() || selectedMediaUris.isNotEmpty()
     } else {
@@ -85,7 +83,7 @@ fun CreatePostContent(
                             brand = productState.brand,
                             category = productState.category,
                             price = productState.price.toDoubleOrNull() ?: 0.0,
-                            stock = productState.stock.toIntOrNull() ?: 1 // FIX: Truyền dữ liệu Kho hàng vào model
+                            stock = productState.stock.toIntOrNull() ?: 1
                         )
                     } else null
 
@@ -133,7 +131,8 @@ fun CreatePostContent(
                     }
                 }
             }
-            StateOverlay(uiState)
+            // Truyền sự kiện vào StateOverlay để tắt Popup
+            StateOverlay(uiState, onDismissError)
         }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Warning // Thêm icon Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -49,7 +50,7 @@ data class ProductFormState(
     val price: String = "",
     val category: String = "",
     val brand: String = "",
-    val stock: String = "1" // FIX: Thêm trường Số lượng kho
+    val stock: String = "1"
 ): Parcelable {
     fun isValid() = name.isNotBlank()
             && price.isNotBlank()
@@ -213,13 +214,33 @@ fun ProductDetailsForm(state: ProductFormState, onStateChange: (ProductFormState
     }
 }
 
+// FIX: Biến đổi StateOverlay thành Popup Cảnh báo chuyên nghiệp
 @Composable
-fun StateOverlay(uiState: CreatePostUiState) {
+fun StateOverlay(uiState: CreatePostUiState, onDismissError: () -> Unit = {}) {
     if (uiState is CreatePostUiState.Error) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
-            Text(text = "Đã xảy ra lỗi. Vui lòng thử lại.", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 80.dp))
-        }
+        AlertDialog(
+            onDismissRequest = onDismissError,
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cảnh báo vi phạm", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+                }
+            },
+            text = {
+                Text(uiState.message, fontSize = 16.sp)
+            },
+            confirmButton = {
+                TextButton(onClick = onDismissError) {
+                    Text("Đã hiểu", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
+
     if (uiState is CreatePostUiState.Loading) {
         Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
