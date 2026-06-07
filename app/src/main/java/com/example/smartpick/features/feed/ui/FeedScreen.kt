@@ -52,7 +52,8 @@ fun FeedScreen(
     onPostClick: (String) -> Unit = {},
     onCreatePostClick: () -> Unit = {},
     onEditPostClick: (String) -> Unit = {},
-    onProductClick: (Product) -> Unit = {} // FIX: Mở cổng kết nối sang Thanh toán
+    onProductClick: (Product) -> Unit = {} ,
+
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentUser by authViewModel.currentUser.collectAsState()

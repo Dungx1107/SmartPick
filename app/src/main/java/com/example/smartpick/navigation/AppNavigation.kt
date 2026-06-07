@@ -130,6 +130,9 @@ fun AppNavigation(
                                     restoreState = true
                                 }
                             }
+                        },
+                        onFeedReselect = {
+                            feedScrollToTopTrigger = System.currentTimeMillis()
                         }
                     )
                 }

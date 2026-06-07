@@ -39,7 +39,8 @@ import com.example.smartpick.R
 fun MainBottomBar(
     navController: NavController,
     unreadCount: Int,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onFeedReselect: () -> Unit = {}
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -47,7 +48,8 @@ fun MainBottomBar(
     MainBottomBarContent(
         currentRoute = currentRoute,
         unreadCount = unreadCount,
-        onNavigate = onNavigate
+        onNavigate = onNavigate,
+        onFeedReselect = onFeedReselect
     )
 }
 
@@ -55,7 +57,8 @@ fun MainBottomBar(
 fun MainBottomBarContent(
     currentRoute: String?,
     unreadCount: Int,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onFeedReselect: () -> Unit
 ) {
     data class NavItem(
         val selectedIcon: ImageVector,
@@ -136,7 +139,11 @@ fun MainBottomBarContent(
                     },
                     label = { Text(item.label, fontSize = 10.sp) },
                     selected = selected,
-                    onClick = { onNavigate(item.route) },
+                    onClick = { if (selected && item.route == Routes.Feed.route) {
+                        onFeedReselect() // Nếu đang ở Feed mà ấn tiếp thì cuộn lên đầu
+                    } else {
+                        onNavigate(item.route) // Chuyển màn hình thông thường
+                    } },
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
                         selectedTextColor = MaterialTheme.colorScheme.primary,
@@ -156,6 +163,7 @@ fun MainBottomBarPreview() {
     MainBottomBarContent(
         currentRoute = Routes.Home.route,
         unreadCount = 5,
-        onNavigate = {}
+        onNavigate = {},
+        onFeedReselect = {}
     )
 }
