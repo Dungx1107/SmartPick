@@ -60,6 +60,7 @@ fun PostDetailScreen(
     commentViewModel: CommentViewModel = hiltViewModel(),
     feedViewModel: FeedViewModel = hiltViewModel(),
     onBackClick: () -> Unit,
+    onBuyNow: (String) -> Unit,
     onCommentClick: ((String, String?) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -137,6 +138,9 @@ fun PostDetailScreen(
                 )
             }
         },
+        onBuyNowClick = { productId ->
+            onBuyNow(productId)
+        },
         onReplyCommentClick = { comment -> commentViewModel.setReplyingTo(comment) },
         onCancelReply = { commentViewModel.setReplyingTo(null) },
         onRetry = { uiState.post?.id?.let { viewModel.loadPostDetail(it) } },
@@ -162,6 +166,7 @@ fun PostDetailContent(
     onCancelReply: () -> Unit,
     onRetry: () -> Unit,
     onCommentClick: (String, String?) -> Unit,
+    onBuyNowClick: (String) -> Unit
 ) {
     var commentText by remember { mutableStateOf("") }
     var showReactionPopup by remember { mutableStateOf(false) }
@@ -397,7 +402,9 @@ fun PostDetailContent(
                                 item {
                                     ProductHighlightCard(
                                         product = product,
-                                        onClick = { })
+                                        onClick = {
+                                            product.id?.let { onBuyNowClick(it) }
+                                        })
                                 }
                             }
                         }
@@ -450,7 +457,14 @@ fun PostDetailContent(
                                         PostActionButton(
                                             icon = Icons.Outlined.ChatBubbleOutline,
                                             text = stringResource(R.string.BinhLuan),
-                                            onClick = { post.let { onCommentClick(it.id.toString(), it.userId) } },
+                                            onClick = {
+                                                post.let {
+                                                    onCommentClick(
+                                                        it.id.toString(),
+                                                        it.userId
+                                                    )
+                                                }
+                                            },
                                             modifier = Modifier.weight(1f)
                                         )
                                         PostActionButton(
@@ -583,7 +597,12 @@ fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
                 Text(product.name, fontWeight = FontWeight.Bold, fontSize = 15.sp, maxLines = 1)
                 Text("${product.price}đ", color = SmartPickColor, fontWeight = FontWeight.Bold)
                 if (isOutOfStock) {
-                    Text("Đã hết hàng", color = MaterialTheme.colorScheme.error, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        "Đã hết hàng",
+                        color = MaterialTheme.colorScheme.error,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 } else {
                     Text("Kho: ${product.stock}", color = TextMuted, fontSize = 11.sp)
                 }
@@ -599,7 +618,11 @@ fun ProductHighlightCard(product: Product, onClick: () -> Unit) {
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(if (isOutOfStock) "Hết hàng" else "Mua ngay", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    if (isOutOfStock) "Hết hàng" else "Mua ngay",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

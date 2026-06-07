@@ -334,7 +334,17 @@ fun AppNavigation(
                         }
                     )
                 ) {
-                    PostDetailScreen(onBackClick = { navController.popBackStack() })
+                    PostDetailScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onBuyNow = { productId ->
+                            navController.navigate(
+                                Routes.Checkout.createRoute(
+                                    productId = productId,
+                                    quantity = 1 
+                                )
+                            )
+                        }
+                    )
                 }
 
                 composable(route = Routes.CreatePost.route) {
