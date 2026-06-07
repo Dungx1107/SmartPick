@@ -197,12 +197,16 @@ fun AppNavigation(
                             .padding(innerPadding)
                     ) {
                         ReviewHubScreen(
+                            viewModel = hiltViewModel(),
                             paddingValues = innerPadding,
                             onNavigateToWriteReview = { productId ->
                                 navController.navigate(
-                                    Routes.WriteReview.createRoute(
-                                        productId
-                                    )
+                                    Routes.WriteReview.createRoute(productId)
+                                )
+                            },
+                            onNavigateToProductDetail = { productId ->
+                                navController.navigate(
+                                    Routes.ProductDetail.createRoute(productId)
                                 )
                             }
                         )

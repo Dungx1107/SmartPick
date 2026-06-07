@@ -19,7 +19,13 @@ import javax.inject.Singleton
 class SellerRepository @Inject constructor(
     private val supabase: SupabaseClient
 ) {
-    // DTO để lấy thông tin đơn hàng đã bán (Join bảng order_items và products)
+    // BỔ SUNG: DTO nhỏ để bóc tách cột status từ bảng orders dưới Database
+    @Serializable
+    data class OrderStatusDto(
+        val status: String = ""
+    )
+
+    // DTO để lấy thông tin đơn hàng đã bán (Đã bổ sung trường orders để ánh xạ dữ liệu)
     @Serializable
     data class SoldOrderItemDto(
         val id: String,
@@ -28,7 +34,9 @@ class SellerRepository @Inject constructor(
         val quantity: Int,
         @SerialName("price_at_purchase") val priceAtPurchase: Double,
         @SerialName("created_at") val createdAt: String? = null,
-        val products: ProductDto? = null
+        val products: ProductDto? = null,
+        // BỔ SUNG TRƯỜNG NÀY: Khớp với cấu trúc dữ liệu trả về khi nhúng orders!inner(*)
+        val orders: OrderStatusDto? = null
     )
 
     // Lấy danh sách sản phẩm người dùng ĐANG BÁN
@@ -46,18 +54,30 @@ class SellerRepository @Inject constructor(
         }
     }
 
-    // Lấy danh sách đơn hàng KHÁCH ĐÃ MUA của người bán này
     suspend fun getSoldOrders(sellerId: String): List<SoldOrderItemDto> = withContext(Dispatchers.IO) {
         try {
-            // Dùng inner join để chỉ lấy các order_items thuộc về product do seller này làm chủ
+            Log.d("SELLER_DEBUG", "--- BẮT ĐẦU TRUY VẤN DOANH THU ---")
+            Log.d("SELLER_DEBUG", "Mã người bán (SellerID): $sellerId")
+
             val response = supabase.postgrest["order_items"]
-                .select(columns = Columns.raw("*, products!inner(*)")) {
-                    filter { eq("products.owner_id", sellerId) }
+                .select(columns = Columns.raw("*, products!inner(*), orders!inner(*)")) {
+                    filter {
+                        eq("products.owner_id", sellerId)
+                        eq("orders.status", "completed")
+                    }
                     order("created_at", Order.DESCENDING)
                 }
-            response.decodeList<SoldOrderItemDto>()
+
+            // KHẮC PHỤC LỖI: Thay .body bằng .data để lấy chính xác chuỗi JSON thô từ Supabase Client
+            val rawJson = response.data
+            Log.d("SELLER_DEBUG", "JSON thô từ Database: $rawJson")
+
+            val decodedList = response.decodeList<SoldOrderItemDto>()
+            Log.d("SELLER_DEBUG", "Số lượng dòng đơn hàng parse thành công: ${decodedList.size}")
+
+            decodedList
         } catch (e: Exception) {
-            Log.e("SELLER_REPO", "Lỗi lấy đơn đã bán: ${e.message}")
+            Log.e("SELLER_DEBUG", "CRITICAL ERROR tại SellerRepository: ${e.message}", e)
             emptyList()
         }
     }

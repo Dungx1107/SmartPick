@@ -158,6 +158,7 @@ fun ProductDetailContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            .windowInsetsPadding(WindowInsets.ime)
     ) {
         LazyColumn(
             modifier = Modifier
@@ -377,7 +378,7 @@ fun ProductDetailContent(
             } else {
                 items(reviews) { review ->
                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        ReviewCard(review = review)
+                        ReviewCard(review = review, onProductClick = {})
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
@@ -418,7 +419,10 @@ fun ProductDetailContent(
                         shape = RoundedCornerShape(12.dp),
                         enabled = isProductAvailable
                     ) {
-                        Text(stringResource(R.string.ThemGioHang), color = MaterialTheme.colorScheme.onPrimary)
+                        Text(
+                            stringResource(R.string.ThemGioHang),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                     Button(
                         onClick = { onBuyNow(quantity) },

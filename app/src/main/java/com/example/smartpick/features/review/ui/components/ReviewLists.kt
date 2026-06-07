@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.Review
-import com.example.smartpick.core.ui.theme.AccentBlue
 import com.example.smartpick.core.ui.theme.TextMuted
 
 @Composable
@@ -40,24 +39,42 @@ fun PendingReviewList(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(12.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         AsyncImage(
                             model = product.imageUrls.firstOrNull(),
                             contentDescription = null,
-                            modifier = Modifier.size(80.dp).clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(product.name, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis, fontSize = 14.sp)
-                            val priceFormatted = String.format("%,.0f đ", product.price).replace(",", ".")
-                            Text(priceFormatted, color = AccentBlue, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(
+                                text = product.name,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Mã đơn: ${product.id?.take(8) ?: ""}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextMuted
+                            )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
                         Button(
-                            onClick = { onReviewClick(product.id ?: "") },
+                            onClick = { product.id?.let { onReviewClick(it) } },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(8.dp)
                         ) {
@@ -73,6 +90,7 @@ fun PendingReviewList(
 @Composable
 fun CompletedReviewList(
     reviews: List<Review>,
+    onProductClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (reviews.isEmpty()) {
@@ -83,9 +101,11 @@ fun CompletedReviewList(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Tái sử dụng trực tiếp ReviewCard từ file ReviewCard.kt bạn đã định nghĩa
             items(reviews) { review ->
-                ReviewCard(review = review)
+                ReviewCard(
+                    review = review,
+                    onProductClick = onProductClick
+                )
             }
         }
     }
@@ -100,7 +120,7 @@ fun EmptyState(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.History, null, modifier = Modifier.size(64.dp), tint = TextMuted)
             Spacer(Modifier.height(16.dp))
-            Text(message, color = TextMuted)
+            Text(text = message, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
         }
     }
 }

@@ -12,18 +12,30 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.features.seller.viewmodel.SellerStats
+import java.text.NumberFormat
+import java.util.Locale
 
 @Composable
 fun RevenueTab(stats: SellerStats) {
+    // Hàm định dạng tiền tệ nội bộ sang cấu trúc VND (Ví dụ: 100,000 đ)
+    val formattedRevenue = try {
+        val formatter = NumberFormat.getCurrencyInstance(Locale("vi", "VN"))
+        formatter.format(stats.totalRevenue)
+    } catch (e: Exception) {
+        "${stats.totalRevenue} đ"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
+        // Card hiển thị Tổng doanh thu lớn
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -36,30 +48,28 @@ fun RevenueTab(stats: SellerStats) {
                 Icon(
                     imageVector = Icons.Default.MonetizationOn,
                     contentDescription = null,
-                    tint = Color(0xFF2EC4B6),
-                    modifier = Modifier.size(48.dp)
+                    tint = Color(0xFF0EA5E9),
+                    modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
+                    Text(text = "Tổng doanh thu", fontSize = 14.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    // Sử dụng chuỗi tiền tệ đã được format chuẩn hóa
                     Text(
-                        text = "Tổng doanh thu tích lũy",
-                        fontSize = 14.sp,
-                        color = Color(0xFF118A7E),
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = stats.totalRevenue.formatCurrency(),
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Black,
-                        color = Color(0xFF0F5132)
+                        text = formattedRevenue,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A)
                     )
                 }
             }
         }
 
+        // Row chứa 2 ô thống kê nhỏ phía dưới
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             StatSummaryCard(
                 title = "Tổng số đơn",
@@ -105,5 +115,22 @@ private fun StatSummaryCard(
             Text(text = title, fontSize = 13.sp, color = Color.Gray)
             Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Giao diện Tổng hợp Doanh thu")
+@Composable
+fun RevenueTabPreview() {
+    val mockStats = SellerStats(
+        totalRevenue = 28450000.0,
+        totalOrders = 86,
+        totalProductsSold = 315
+    )
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        RevenueTab(stats = mockStats)
     }
 }
