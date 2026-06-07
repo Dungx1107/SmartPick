@@ -3,36 +3,39 @@
 ## CHƯƠNG 4: ĐÁNH GIÁ VÀ KIỂM THỬ
 
 ### 4.1. Kịch bản kiểm thử (Test Cases)
-Để đảm bảo ứng dụng vận hành ổn định, chúng tôi tập trung vào kiểm thử các chức năng cốt lõi.
+Để đảm bảo tính ổn định và độ tin cậy của hệ thống, đặc biệt là các tính năng tích hợp AI, dự án đã thực hiện kiểm thử trên các kịch bản sau:
 
-#### 4.1.1. Kiểm thử chức năng Giỏ hàng (Cart Testing)
-| Bước thực hiện | Kết quả mong đợi | Trạng thái |
-| :--- | :--- | :--- |
-| Nhấn nút "+" tại một sản phẩm | Số lượng tăng lên 1, tổng tiền cập nhật ngay lập tức. | Thành công |
-| Nhấn nút "-" khi số lượng bằng 1 | Sản phẩm được hỏi để xóa hoặc tự động xóa khỏi giỏ. | Thành công |
-| Nhấn "Thanh toán" | Chuyển hướng đúng sang màn hình Checkout với đủ dữ liệu. | Thành công |
+#### 4.1.1. Kiểm thử Logic Kiểm duyệt (Moderation Logic)
+- **Input:** Một bình luận chứa từ ngữ thô tục hoặc nhạy cảm.
+- **Hành động:** Gọi `checkTextContent` từ `ModerationService`.
+- **Kết quả:** Gemini AI trả về "TOXIC", hệ thống chặn hiển thị và cảnh báo người dùng.
 
-#### 4.1.2. Kiểm thử luồng Bài viết đã thích (Saved Posts Testing)
-- **Dữ liệu đầu vào:** Danh sách các bài viết đã được người dùng nhấn Like.
-- **Hành động:** Truy cập tab "Bài viết đã thích" trong màn hình Saved.
-- **Kết quả:** `isReactedLoading` hiển thị indicator, sau đó render đúng danh sách `reactedPosts` từ ViewModel.
+#### 4.1.2. Kiểm thử Quy trình Mua hàng (Purchase Flow)
+- **Luồng:** `Product Detail` -> `Add to Cart` -> `Checkout`.
+- **Dữ liệu:** Kiểm tra tính chính xác của tổng tiền, số lượng sản phẩm và thông tin vận chuyển được lưu vào bảng `orders`.
+- **Kết quả:** Đơn hàng được tạo thành công, `cart_items` liên quan được dọn dẹp và thông báo realtime được gửi tới người bán.
 
-### 4.2. Đánh giá hiệu năng và giao diện
-- **Giao diện:** Sử dụng công cụ Preview của Jetpack Compose (như đã demo trong `SavedCollectionContentReactedPreview`) giúp kiểm tra hiển thị trên nhiều kích thước màn hình mà không cần chạy máy ảo.
-- **Hiệu năng:** Việc sử dụng `collectAsState` giúp UI chỉ recompose khi dữ liệu thực sự thay đổi, giảm thiểu giật lag.
-- **Tính năng AI:** Tốc độ phản hồi của Gemini 1.5 Flash đạt mức ổn định (dưới 2 giây cho một yêu cầu tư vấn).
+#### 4.1.3. Kiểm thử Tính nhất quán Media (Media Consistency)
+- **Hành động:** Upload nhiều ảnh cùng lúc cho một bài viết Review.
+- **Kết quả:** Các tệp được lưu trữ đúng cấu trúc trong Supabase Storage (`post_media/user_id/...`), URL được cập nhật chính xác vào bảng `posts`.
+
+### 4.2. Đánh giá hiệu năng và Giao diện
+- **Giao diện:** Sử dụng Jetpack Compose giúp UI cực kỳ mượt mà, phản hồi ngay lập tức với các thay đổi trạng thái (State).
+- **Hiệu năng:** Tận dụng `async/await` của Coroutines để xử lý song song các yêu cầu AI và mạng, giảm thiểu thời gian chờ của người dùng xuống mức tối đa (thường dưới 3 giây cho một luồng đăng bài phức tạp).
+- **Tính an toàn:** Row Level Security (RLS) của Supabase bảo vệ dữ liệu người dùng ở mức database, ngăn chặn truy cập trái phép hiệu quả.
 
 ## CHƯƠNG 5: KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
 
 ### 5.1. Kết quả đạt được
-- Hoàn thiện hệ thống quản lý mua sắm cá nhân hóa (Saved Screen).
-- Tích hợp thành công luồng dữ liệu từ Supabase Realtime vào UI Compose.
-- Đảm bảo tính nhất quán về dữ liệu giữa Giỏ hàng, Đơn hàng và Feed.
+- Xây dựng thành công ứng dụng Android Social E-commerce hiện đại, ổn định.
+- Tích hợp AI một cách thực tế vào quy trình nghiệp vụ (không chỉ là demo chatbot).
+- Hệ thống Realtime mang lại trải nghiệm tương tác sống động như các mạng xã hội hàng đầu.
 
 ### 5.2. Hướng phát triển tiếp theo
-- **Mở rộng tính năng Saved:** Cho phép người dùng tạo các thư mục lưu trữ tùy chỉnh (Collections).
-- **Thanh toán trực tuyến:** Tích hợp SDK của VNPay hoặc Momo thay vì chỉ quản lý đơn hàng nội bộ.
-- **Gợi ý thông minh:** Sử dụng AI để gợi ý các bài viết Review dựa trên lịch sử mua hàng trong tab "Lịch sử mua hàng".
+- **Cá nhân hóa (Personalization):** Xây dựng thuật toán gợi ý sản phẩm dựa trên sở thích và hành vi của người dùng.
+- **Mở rộng Thanh toán:** Tích hợp các ví điện tử (Momo, ZaloPay) và cổng thanh toán ngân hàng.
+- **Livestream Review:** Cho phép người dùng livestream để review sản phẩm trực tiếp, tích hợp giỏ hàng ngay trong luồng live.
+- **Hỗ trợ Đa nền tảng:** Chuyển đổi một phần logic sang Kotlin Multiplatform (KMP) để phát triển phiên bản iOS.
 
 ---
-*Báo cáo được trích xuất từ tài liệu kỹ thuật dự án SmartPick.*
+*Báo cáo được hoàn thiện vào tháng 12/2024 bởi Team SmartPick.*
