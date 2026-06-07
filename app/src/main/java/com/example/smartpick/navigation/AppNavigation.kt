@@ -274,14 +274,31 @@ fun AppNavigation(
                         onReviewSubmitted = { navController.popBackStack() })
                 }
 
-                composable(route = Routes.Checkout.route) {
+                composable(
+                    route = Routes.Checkout.route,
+                    arguments = listOf(
+                        navArgument(Routes.Checkout.ARG_PRODUCT_ID) {
+                            type = NavType.StringType
+                            nullable = true
+                            defaultValue = null
+                        },
+                        navArgument(Routes.Checkout.ARG_QUANTITY) {
+                            type = NavType.IntType
+                            defaultValue = 1
+                        }
+                    )
+                ) { backStackEntry ->
+                    val productId =
+                        backStackEntry.arguments?.getString(Routes.Checkout.ARG_PRODUCT_ID)
+                    val quantity =
+                        backStackEntry.arguments?.getInt(Routes.Checkout.ARG_QUANTITY) ?: 1
+
                     CheckoutScreen(
                         onBack = { navController.popBackStack() },
                         onNavigateToSuccess = {
-                            navController.navigate(Routes.Saved.route) {
-                                popUpTo(
-                                    Routes.Home.route
-                                )
+                            navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") {
+                                popUpTo(Routes.Home.route) { inclusive = false } // Giữ lại trang chủ trong backstack
+                                launchSingleTop = true
                             }
                         }
                     )
@@ -345,9 +362,11 @@ fun AppNavigation(
                 ) { backStackEntry ->
                     val postId =
                         backStackEntry.arguments?.getString(Routes.EditPost.ARG_POST_ID) ?: ""
-                    Box(modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
                         EditPostScreen(
                             postId = postId,
                             onClose = { navController.popBackStack() }
@@ -392,12 +411,10 @@ fun AppNavigation(
                             navController.popBackStack()     // Quay lại màn hình trước đó
                         },
                         onNavigateToPost = { postId ->
-                            // Điều hướng chuẩn xác về màn hình bài đăng chi tiết theo cấu trúc Routes.kt của bạn
                             navController.navigate(Routes.PostDetail.createRoute(postId))
                         },
                         onCheckout = {
-                            // Điều hướng chuẩn xác sang màn hình đặt hàng theo cấu trúc Routes.kt của bạn
-                            navController.navigate(Routes.Checkout.route)
+                            navController.navigate(Routes.Checkout.createRoute())
                         },
                         onProductClick = { productId ->
                             navController.navigate(Routes.ProductDetail.createRoute(productId))

@@ -191,12 +191,18 @@ fun Review.toDto(): ReviewResponseDto = ReviewResponseDto(
 )
 
 // --- Order Mappers ---
-fun OrderResponseDto.toDomain(): Order = Order(
-    id = id,
-    totalAmount = totalAmount,
-    status = status,
-    createdAt = createdAt
-)
+fun OrderResponseDto.toDomain(): Order {
+    return Order(
+        id = this.id,
+        userId = this.userId,
+        totalAmount = this.totalAmount,
+        shippingAddress = this.shippingAddress,
+        phoneNumber = this.phoneNumber,
+        paymentMethod = this.paymentMethod,
+        status = this.status,
+        createdAt = this.createdAt
+    )
+}
 
 // --- Complex Mapping (Feature specific) ---
 fun FullPostResponse.toPostDomain(): Post {

@@ -16,6 +16,10 @@ data class OrderRequestDto(
 @Serializable
 data class OrderResponseDto(
     val id: String,
+    @SerialName("user_id") val userId: String? = null, // Bổ sung để đồng bộ nếu DB trả về
+    @SerialName("shipping_address") val shippingAddress: String? = null,
+    @SerialName("phone_number") val phoneNumber: String? = null,
+    @SerialName("payment_method") val paymentMethod: String? = null,
     @SerialName("total_amount") val totalAmount: Double = 0.0,
     val status: String = "completed",
     @SerialName("created_at") val createdAt: String = ""

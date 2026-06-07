@@ -4,19 +4,21 @@ import android.util.Log
 import com.example.smartpick.core.data.dto.OrderItemRequestDto
 import com.example.smartpick.core.data.dto.OrderRequestDto
 import com.example.smartpick.core.data.dto.OrderResponseDto
+import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.model.CartItem
 import com.example.smartpick.core.model.Notification
+import com.example.smartpick.core.model.Order
 import com.example.smartpick.features.notification.data.NotificationRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.postgrest
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.Order as SupabaseOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerialName
-import io.github.jan.supabase.postgrest.query.Columns
-import io.github.jan.supabase.postgrest.query.Order
 
 @Serializable
 data class LastOrderInfoDto(
@@ -70,7 +72,7 @@ class OrderRepository @Inject constructor(
             postgrest["order_items"].insert(orderItems)
             Log.d(TAG, "[Step 2] Chèn chi tiết đơn hàng thành công.")
 
-            // 4. Gửi thông báo cho chủ hàng
+            // Gửi thông báo cho chủ hàng
             Log.d(TAG, "[Step 3] Bắt đầu kích hoạt luồng thông báo cho Seller...")
             sendOrderNotificationsToOwners(
                 cartItems,
@@ -78,14 +80,42 @@ class OrderRepository @Inject constructor(
                 buyerId = userId
             )
 
-            Log.d(TAG, "[Step 4] Xóa giỏ hàng...")
-            postgrest["cart_items"].delete { filter { eq("user_id", userId) } }
+            // ĐÃ LOẠI BỎ hoàn toàn Step 4 (Xóa giỏ hàng) theo yêu cầu của bạn.
+            Log.d(TAG, "[Step 4] Giữ nguyên dữ liệu giỏ hàng hệ thống.")
 
             Log.d(TAG, "==== CHECKOUT HOÀN TẤT THÀNH CÔNG ====")
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "!!!! LỖI CHECKOUT: ${e.message}", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Hàm lấy lịch sử mua hàng từ bảng orders của Supabase
+     */
+    suspend fun getOrderHistory(userId: String): List<Order> = withContext(Dispatchers.IO) {
+        try {
+            Log.d(TAG, "==== BẮT ĐẦU LẤY LỊCH SỬ ĐƠN HÀNG ====")
+
+            // 1. Thực hiện truy vấn dữ liệu từ bảng orders
+            val response = postgrest["orders"]
+                .select {
+                    filter { eq("user_id", userId) }
+                    order("created_at", SupabaseOrder.DESCENDING)
+                }
+
+            // 2. Decode dữ liệu thô thông qua lớp DTO đã có tính năng @Serializable
+            val dtoList = response.decodeList<OrderResponseDto>()
+
+            // 3. Chuyển đổi toàn bộ danh sách DTO sang danh sách Model Domain
+            val ordersList = dtoList.map { it.toDomain() }
+
+            Log.d(TAG, "Lấy lịch sử đơn hàng thành công, số lượng: ${ordersList.size}")
+            ordersList
+        } catch (e: Exception) {
+            Log.e(TAG, "!!!! LỖI LẤY LỊCH SỬ ĐƠN HÀNG: ${e.localizedMessage}", e)
+            emptyList()
         }
     }
 
@@ -107,7 +137,6 @@ class OrderRepository @Inject constructor(
 
                 Log.d(TAG, "--> Đang gửi thông báo tới Owner: $ownerId cho sản phẩm: ${product.name}")
 
-                // A. Gửi thông báo In-app (Lưu Database)
                 val notification = Notification(
                     receiverId = ownerId,
                     senderId = buyerId,
@@ -124,7 +153,6 @@ class OrderRepository @Inject constructor(
                     Log.e(TAG, "[DB] THẤT BẠI khi lưu thông báo: ${dbResult.exceptionOrNull()?.message}")
                 }
 
-                // B. Gửi Push Notification (Edge Function)
                 Log.d(TAG, "    [FCM] Đang gọi triggerPushNotification...")
                 notificationRepository.triggerPushNotification(
                     receiverId = ownerId,
@@ -144,7 +172,7 @@ class OrderRepository @Inject constructor(
             supabase.postgrest["orders"]
                 .select(columns = Columns.raw("phone_number, shipping_address")) {
                     filter { eq("user_id", userId) }
-                    order("created_at", Order.DESCENDING)
+                    order("created_at", SupabaseOrder.DESCENDING)
                     limit(1)
                 }.decodeSingleOrNull<LastOrderInfoDto>()
         } catch (e: Exception) {

@@ -1,36 +1,29 @@
 package com.example.smartpick.features.checkout.ui
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.smartpick.core.model.CartItem
-import com.example.smartpick.core.ui.theme.AccentBlue
-import com.example.smartpick.core.ui.theme.SmartPickColor
-import com.example.smartpick.core.ui.theme.TextMuted
-import com.example.smartpick.core.ui.theme.White
 import com.example.smartpick.R
-import androidx.compose.ui.res.stringResource
+import com.example.smartpick.core.model.CartItem
+import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.checkout.viewmodel.CheckoutViewModel
 
 @Composable
 fun CheckoutScreen(
     onBack: () -> Unit,
     onNavigateToSuccess: () -> Unit,
-    viewModel: CheckoutViewModel = hiltViewModel() // Sử dụng ViewModel Checkout độc lập
+    viewModel: CheckoutViewModel = hiltViewModel()
 ) {
     val cartItems by viewModel.cartItems.collectAsState()
     val phone by viewModel.phone.collectAsState()
@@ -64,7 +57,6 @@ fun CheckoutScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutContent(
     cartItems: List<CartItem>,
@@ -81,120 +73,152 @@ fun CheckoutContent(
     val total = cartItems.sumOf { (it.product?.price ?: 0.0) * it.quantity }
     val totalFormatted = String.format("%,.0f đ", total).replace(",", ".")
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.ThanhToan), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, enabled = !isProcessing) { Icon(Icons.Default.ArrowBack, null) }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .navigationBarsPadding()
+    ) {
+        // 1. Thanh công cụ tự chế bằng Box + Row
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface)
+                .statusBarsPadding()
+        ) {
+            CustomCheckoutTopBar(
+                isProcessing = isProcessing,
+                onBack = onBack
             )
-        },
-        bottomBar = {
-            Surface(shadowElevation = 8.dp, color = MaterialTheme.colorScheme.surface) {
-                Row(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("Tổng thanh toán", fontSize = 12.sp, color = TextMuted)
-                        Text(
-                            totalFormatted,
-                            style = MaterialTheme.typography.titleLarge,
-                            color = AccentBlue,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Button(
-                        onClick = onOrderClick,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.height(50.dp).width(150.dp),
-                        enabled = !isProcessing && cartItems.isNotEmpty()
-                    ) {
-                        if (isProcessing) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-                        } else {
-                            Text("ĐẶT HÀNG", fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+        }
+
+        // 2. Nội dung cuộn ở giữa
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Thông tin nhận hàng", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = phone,
-                            onValueChange = onPhoneChange,
-                            label = { Text("Số điện thoại") },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isProcessing
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = address,
-                            onValueChange = onAddressChange,
-                            label = { Text("Địa chỉ nhận hàng") },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = !isProcessing
-                        )
-                    }
-                }
+                DeliveryInfoSection(
+                    phone = phone,
+                    address = address,
+                    isProcessing = isProcessing,
+                    onPhoneChange = onPhoneChange,
+                    onAddressChange = onAddressChange
+                )
             }
 
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Phương thức thanh toán", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = paymentMethod == "COD",
-                                onClick = { onPaymentMethodChange("COD") },
-                                enabled = !isProcessing
-                            )
-                            Text("Thanh toán khi nhận hàng (COD)", color = MaterialTheme.colorScheme.onSurface)
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(
-                                selected = paymentMethod == "CARD",
-                                onClick = { onPaymentMethodChange("CARD") },
-                                enabled = !isProcessing
-                            )
-                            Text("Thẻ tín dụng / Ghi nợ", color = MaterialTheme.colorScheme.onSurface)
-                        }
-                    }
-                }
+                PaymentMethodSection(
+                    paymentMethod = paymentMethod,
+                    isProcessing = isProcessing,
+                    onPaymentMethodChange = onPaymentMethodChange
+                )
             }
 
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Tóm tắt sản phẩm", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                        Spacer(Modifier.height(8.dp))
-                        cartItems.forEach { item ->
-                            val itemTotal = (item.product?.price ?: 0.0) * item.quantity
-                            val itemTotalFormatted = String.format("%,.0f đ", itemTotal).replace(",", ".")
-
-                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("${item.product?.name ?: "Sản phẩm"} x${item.quantity}", modifier = Modifier.weight(1f), maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(itemTotalFormatted, fontWeight = FontWeight.Medium, color = AccentBlue)
-                            }
-                        }
-                    }
-                }
+                ProductSummarySection(
+                    cartItems = cartItems
+                )
             }
         }
+
+        // 3. Thanh thanh toán dưới đáy
+        CheckoutBottomBar(
+            totalFormatted = totalFormatted,
+            isProcessing = isProcessing,
+            isCartNotEmpty = cartItems.isNotEmpty(),
+            onOrderClick = onOrderClick
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Giao diện Thanh toán - Chế độ sáng")
+@Composable
+fun CheckoutContentPreview() {
+    // Khởi tạo dữ liệu Mock đúng theo Constructor của Product.kt
+    val mockProducts = listOf(
+        Product(
+            id = "prod_001",
+            ownerId = "owner_shop_a", // Thuộc tính bắt buộc
+            name = "Áo Sơ Mi Nam Công Sở Cao Cấp", // Thuộc tính bắt buộc
+            price = 250000.0,
+            brand = "SmartPick Brand"
+        ),
+        Product(
+            id = "prod_002",
+            ownerId = "owner_shop_b", // Thuộc tính bắt buộc
+            name = "Quần Tây Âu Dáng Hàn Quốc", // Thuộc tính bắt buộc
+            price = 320000.0,
+            brand = "SmartPick Fashion"
+        )
+    )
+
+    val mockCartItems = listOf(
+        CartItem(
+            id = "cart_01",
+            userId = "user_dungnx",
+            productId = "prod_001",
+            quantity = 2,
+            product = mockProducts[0]
+        ),
+        CartItem(
+            id = "cart_02",
+            userId = "user_dungnx",
+            productId = "prod_002",
+            quantity = 1,
+            product = mockProducts[1]
+        )
+    )
+
+    SmartPickTheme {
+        CheckoutContent(
+            cartItems = mockCartItems,
+            phone = "0987654321",
+            address = "144 Xuân Thủy, Cầu Giấy, Hà Nội",
+            paymentMethod = "COD",
+            isProcessing = false,
+            onPhoneChange = {},
+            onAddressChange = {},
+            onPaymentMethodChange = {},
+            onBack = {},
+            onOrderClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Giao diện Thanh toán - Đang xử lý (Loading)")
+@Composable
+fun CheckoutContentProcessingPreview() {
+    val mockCartItems = listOf(
+        CartItem(
+            id = "cart_01",
+            userId = "user_dungnx",
+            productId = "prod_001",
+            quantity = 1,
+            product = Product(
+                id = "prod_001",
+                ownerId = "owner_shop_a",
+                name = "Giày Thể Thao Sneaker",
+                price = 450000.0
+            )
+        )
+    )
+
+    SmartPickTheme {
+        CheckoutContent(
+            cartItems = mockCartItems,
+            phone = "0123456789",
+            address = "Số 1 Đại Cồ Việt, Hai Bà Trưng, Hà Nội",
+            paymentMethod = "CARD",
+            isProcessing = true, // Trạng thái này sẽ làm nút ĐẶT HÀNG hiển thị CircularProgressIndicator
+            onPhoneChange = {},
+            onAddressChange = {},
+            onPaymentMethodChange = {},
+            onBack = {},
+            onOrderClick = {}
+        )
     }
 }

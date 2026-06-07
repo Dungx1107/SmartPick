@@ -12,8 +12,19 @@ sealed class Routes(val route: String) {
     object CreatePost : Routes("create_post")
     object Notifications : Routes("notifications")
     object Settings : Routes("settings")
-    object Checkout : Routes("checkout")
     object Cart : Routes("cart")
+    object Checkout : Routes("checkout?productId={productId}&quantity={quantity}") {
+        const val ARG_PRODUCT_ID = "productId"
+        const val ARG_QUANTITY = "quantity"
+
+        fun createRoute(productId: String? = null, quantity: Int? = null): String {
+            return when {
+                productId != null && quantity != null -> "checkout?productId=$productId&quantity=$quantity"
+                productId != null -> "checkout?productId=$productId"
+                else -> "checkout"
+            }
+        }
+    }
 
     object EditPost : Routes("edit_post/{postId}") {
         const val ARG_POST_ID = "postId"
