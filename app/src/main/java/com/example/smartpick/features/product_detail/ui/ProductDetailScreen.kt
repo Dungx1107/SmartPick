@@ -29,7 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import com.example.smartpick.features.product_detail.viewmodel.ProductDetailViewModel
 import com.example.smartpick.features.review.ui.components.ReviewCard
-import com.example.smartpick.features.review.ui.components.ReviewInputForm
 import com.example.smartpick.features.review.viewmodel.ReviewViewModel
 import com.example.smartpick.navigation.Routes
 import com.example.smartpick.core.model.Review
@@ -56,7 +55,6 @@ fun ProductDetailScreen(
     val postId by viewModel.postId.collectAsState()
     val reviews by reviewViewModel.productReviews.collectAsState()
     val canReview by reviewViewModel.canReview.collectAsState()
-    val isSubmitting by reviewViewModel.isSubmitting.collectAsState()
 
     Box(
         modifier = Modifier
@@ -85,7 +83,6 @@ fun ProductDetailScreen(
                     postId = postId,
                     reviews = reviews,
                     canReview = canReview,
-                    isSubmitting = isSubmitting,
                     isProductAvailable = viewModel.isProductAvailable(currentProduct)
                             && currentProduct.ownerId != currentUserId,
                     onBackClick = { navController.popBackStack() },
@@ -115,20 +112,9 @@ fun ProductDetailScreen(
                             )
                         }
                     },
-                    onSubmitReview = { rating, content ->
-                        reviewViewModel.submitProductReview(
-                            productId = currentProduct.id ?: "",
-                            rating = rating,
-                            content = content,
-                            onSuccess = {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.DaGuiDanhGia),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            },
-                            onError = { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
-                        )
+                    // ĐỒNG BỘ UX: Khi người dùng đủ điều kiện đánh giá ấn nút, điều hướng họ sang ReviewHub quản lý
+                    onNavigateToReviewHub = {
+                        navController.navigate(Routes.ReviewHub.route)
                     }
                 )
             }
@@ -142,16 +128,14 @@ fun ProductDetailContent(
     postId: String?,
     reviews: List<Review>,
     canReview: Boolean,
-    isSubmitting: Boolean,
     isProductAvailable: Boolean,
     onBackClick: () -> Unit,
     onViewFeed: (String) -> Unit,
     onAddToCart: () -> Unit,
     onBuyNow: (Int) -> Unit,
-    onSubmitReview: (Int, String) -> Unit
+    onNavigateToReviewHub: () -> Unit // THAY THẾ: Nhận lệnh điều hướng thay cho lambda submit review cũ
 ) {
     val context = LocalContext.current
-
     var quantity by remember { mutableStateOf(1) }
 
     Column(
@@ -257,7 +241,7 @@ fun ProductDetailContent(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // THÊM UI CHỌN SỐ LƯỢNG MUA NGAY TRỰC QUAN
+            // UI CHỌN SỐ LƯỢNG MUA NGAY
             item {
                 Row(
                     modifier = Modifier
@@ -342,14 +326,24 @@ fun ProductDetailContent(
                 )
             }
 
-            // 4. Form viết đánh giá
+            // 4. Nhắc nhở viết đánh giá chuẩn UX (Thay thế cho ô nhập liệu ReviewInputForm cũ)
             if (canReview) {
                 item {
                     Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        ReviewInputForm(
-                            isSubmitting = isSubmitting,
-                            onSubmitReview = onSubmitReview
-                        )
+                        Button(
+                            onClick = onNavigateToReviewHub,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Bạn có đơn hàng chưa đánh giá. Viết nhận xét ngay!",
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -481,13 +475,12 @@ fun ProductDetailContentPreview() {
             postId = "feed_post_123",
             reviews = mockReviews,
             canReview = true,
-            isSubmitting = false,
             isProductAvailable = true,
             onBackClick = {},
             onViewFeed = {},
             onAddToCart = {},
             onBuyNow = {},
-            onSubmitReview = { _, _ -> }
+            onNavigateToReviewHub = {}
         )
     }
 }

@@ -38,9 +38,10 @@ sealed class Routes(val route: String) {
         const val ARG_POST_ID = "postId"
         fun createRoute(postId: String) = "edit_post/$postId"
     }
-    object WriteReview : Routes("write_review/{productId}") {
+    object WriteReview : Routes("write_review/{productId}/{orderItemId}") {
         const val ARG_PRODUCT_ID = "productId"
-        fun createRoute(productId: String) = "write_review/$productId"
+        const val ARG_ORDER_ITEM_ID = "orderItemId"
+        fun createRoute(productId: String, orderItemId: String) = "write_review/$productId/$orderItemId"
     }
 
     object ProductDetail : Routes("product_detail/{productId}") {

@@ -39,7 +39,7 @@ import com.example.smartpick.features.review.viewmodel.ReviewHubViewModel
 @Composable
 fun ReviewHubScreen(
     viewModel: ReviewHubViewModel,
-    onNavigateToWriteReview: (String) -> Unit,
+    onNavigateToWriteReview: (String, String) -> Unit,
     onNavigateToProductDetail: (String) -> Unit, // BỔ SUNG: Lambda điều hướng tới trang chi tiết sản phẩm
     modifier: Modifier = Modifier,
 ) {
@@ -67,7 +67,7 @@ fun ReviewHubContent(
     productsToReview: List<Product>,
     reviewedProducts: List<Review>,
     isLoading: Boolean,
-    onNavigateToWriteReview: (String) -> Unit,
+    onNavigateToWriteReview: (String,String) -> Unit,
     onNavigateToProductDetail: (String) -> Unit, // Nhận lambda điều hướng
     modifier: Modifier = Modifier
 ) {
@@ -213,7 +213,7 @@ fun ReviewHubContentPreview() {
             productsToReview = mockProducts,
             reviewedProducts = mockReviews,
             isLoading = false,
-            onNavigateToWriteReview = {},
+            onNavigateToWriteReview = {_,_,->},
             onNavigateToProductDetail = {}
         )
     }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -29,183 +30,195 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.smartpick.R
-import com.example.smartpick.core.ui.theme.TextMuted
 import com.example.smartpick.features.review.viewmodel.ReviewViewModel
 
 /**
- * 1. MÀN HÌNH CHÍNH (WriteReviewScreen): Đóng vai trò là State Holder / Container.
- * Kết nối trực tiếp với ViewModel, quản lý trạng thái luồng và các Side Effect.
+ * 1. MÀN HÌNH CHÍNH (WriteReviewScreen): Kết nối trực tiếp với logic mạng Hệ thống thông qua ViewModel.
+ * Đã cập nhật tiếp nhận thêm tham số orderItemId truyền từ Navigation.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WriteReviewScreen(
     productId: String,
-    onBack: () -> Unit,
-    onReviewSubmitted: () -> Unit,
-    viewModel: ReviewViewModel = hiltViewModel()
+    orderItemId: String, // BỔ SUNG: Nhận mã dòng đơn hàng chi tiết
+    viewModel: ReviewViewModel,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     val isSubmitting by viewModel.isSubmitting.collectAsState()
 
-    // Kích hoạt nạp dữ liệu thông tin quyền đánh giá khi màn hình mở ra
-    LaunchedEffect(productId) {
-        viewModel.loadReviewData(productId)
-    }
-
-    WriteReviewContent(
-        isSubmitting = isSubmitting,
-        onBack = onBack,
-        onSubmitReview = { rating, content ->
-            if (content.isBlank()) {
-                Toast.makeText(context, context.getString(R.string.VuiLongVietNoiDungDanhGia), Toast.LENGTH_SHORT).show()
-            } else {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Viết Đánh Giá",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+        }
+    ) { innerPadding ->
+        WriteReviewContent(
+            isSubmitting = isSubmitting,
+            onBack = onBack,
+            onSubmitReview = { rating, content ->
+                // Truyền đầy đủ productId và orderItemId xuống ViewModel xử lý khóa lượt mua
                 viewModel.submitProductReview(
                     productId = productId,
+                    orderItemId = orderItemId, // ĐỒNG BỘ DỮ LIỆU SANG VIEWMODEL
                     rating = rating,
                     content = content,
                     onSuccess = {
-                        Toast.makeText(context, context.getString(R.string.DanhGiaThanhCong), Toast.LENGTH_SHORT).show()
-                        onReviewSubmitted()
+                        Toast.makeText(context, "Gửi đánh giá thành công!", Toast.LENGTH_SHORT).show()
+                        onBack()
                     },
                     onError = { errorMessage ->
-                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
                     }
                 )
-            }
-        }
-    )
+            },
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
 }
 
 /**
- * 2. THÀNH PHẦN NỘI DUNG GIAO DIỆN (WriteReviewContent): Thành phần giao diện thuần túy (Stateless).
- * Không phụ thuộc vào ViewModel, nhận trạng thái và phát sự kiện ngược lên thông qua Lambda function.
+ * 2. GIAO DIỆN NỘI DUNG (WriteReviewContent): Phụ trách hiển thị UI thuần túy, tách biệt logic luồng.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WriteReviewContent(
     isSubmitting: Boolean,
     onBack: () -> Unit,
-    onSubmitReview: (rating: Int, content: String) -> Unit
+    onSubmitReview: (Int, String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    var rating by remember { mutableIntStateOf(5) }
-    var content by remember { mutableStateOf("") }
+    var rating by rememberSaveable { mutableIntStateOf(5) }
+    var content by rememberSaveable { mutableStateOf("") }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.DanhGiaSanPham), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, enabled = !isSubmitting) {
-                        Icon(Icons.Default.ArrowBack, null)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface)
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            // Thẻ chọn số sao đánh giá (Rating Card)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(12.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text("Chất lượng sản phẩm", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                    Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Chất lượng sản phẩm",
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Row {
-                        repeat(5) { index ->
-                            IconButton(
-                                onClick = { if (!isSubmitting) rating = index + 1 },
-                                modifier = Modifier.size(48.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = if (index < rating) Color(0xFFFFC107) else TextMuted,
-                                    modifier = Modifier.size(40.dp)
-                                )
-                            }
+                Row {
+                    repeat(5) { index ->
+                        val starIndex = index + 1
+                        IconButton(
+                            onClick = { if (!isSubmitting) rating = starIndex },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "$starIndex Sao",
+                                modifier = Modifier.size(36.dp),
+                                tint = if (starIndex <= rating) Color(0xFFFFB300) else Color.LightGray
+                            )
                         }
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-            // Ô nhập nội dung text đánh giá (Review Text Field)
-            OutlinedTextField(
-                value = content,
-                onValueChange = { content = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
-                placeholder = { Text("Hãy chia sẻ những điều bạn thích về sản phẩm này nhé...", color = TextMuted) },
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                ),
-                maxLines = 5,
-                enabled = !isSubmitting
+        Text(
+            text = "Chia sẻ cảm nhận về sản phẩm",
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        OutlinedTextField(
+            value = content,
+            onValueChange = { content = it },
+            placeholder = { Text("Hãy chia sẻ những điều bạn thích hoặc chưa hài lòng về sản phẩm này nhé...") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            minLines = 5,
+            enabled = !isSubmitting,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
             )
+        )
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // Nút bấm gửi biểu mẫu
-            Button(
-                onClick = { onSubmitReview(rating, content) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !isSubmitting && content.isNotBlank()
-            ) {
-                if (isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Gửi Đánh Giá",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
+        Button(
+            onClick = { onSubmitReview(rating, content) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            shape = RoundedCornerShape(12.dp),
+            enabled = !isSubmitting && content.isNotBlank()
+        ) {
+            if (isSubmitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = "Gửi Đánh Giá",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
             }
         }
     }

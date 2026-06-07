@@ -49,6 +49,7 @@ import com.example.smartpick.features.profile.ui.saved.LikedPostsScreen
 import com.example.smartpick.features.profile.ui.saved.SavedOrdersScreen
 import com.example.smartpick.features.review.ui.ReviewHubScreen
 import com.example.smartpick.features.review.ui.WriteReviewScreen
+import com.example.smartpick.features.review.viewmodel.ReviewViewModel
 import com.example.smartpick.features.seller.ui.SellerDashboardScreen
 import com.example.smartpick.features.settings.ui.SettingsScreen
 
@@ -198,9 +199,9 @@ fun AppNavigation(
                     ) {
                         ReviewHubScreen(
                             viewModel = hiltViewModel(),
-                            onNavigateToWriteReview = { productId ->
+                            onNavigateToWriteReview = { productId, orderItemId ->
                                 navController.navigate(
-                                    Routes.WriteReview.createRoute(productId)
+                                    Routes.WriteReview.createRoute(productId, orderItemId)
                                 )
                             },
                             onNavigateToProductDetail = { productId ->
@@ -261,16 +262,22 @@ fun AppNavigation(
 
                 composable(
                     route = Routes.WriteReview.route,
-                    arguments = listOf(navArgument(Routes.WriteReview.ARG_PRODUCT_ID) {
-                        type = NavType.StringType
-                    })
+                    arguments = listOf(
+                        navArgument(Routes.WriteReview.ARG_PRODUCT_ID) { type = NavType.StringType },
+                        navArgument(Routes.WriteReview.ARG_ORDER_ITEM_ID) { type = NavType.StringType } // BỔ SUNG: Đăng ký tham số thứ hai
+                    )
                 ) { backStackEntry ->
-                    val productId =
-                        backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    val productId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_PRODUCT_ID) ?: ""
+                    val orderItemId = backStackEntry.arguments?.getString(Routes.WriteReview.ARG_ORDER_ITEM_ID) ?: "" // BỔ SUNG: Trích xuất orderItemId từ Arguments
+
+                    val reviewViewModel: ReviewViewModel = hiltViewModel()
+
                     WriteReviewScreen(
                         productId = productId,
-                        onBack = { navController.popBackStack() },
-                        onReviewSubmitted = { navController.popBackStack() })
+                        orderItemId = orderItemId,
+                        viewModel = reviewViewModel,
+                        onBack = { navController.popBackStack() }
+                    )
                 }
 
                 composable(

@@ -52,6 +52,7 @@ class ReviewViewModel @Inject constructor(
      */
     fun submitProductReview(
         productId: String,
+        orderItemId: String,
         rating: Int,
         content: String,
         onSuccess: () -> Unit,
@@ -74,13 +75,13 @@ class ReviewViewModel @Inject constructor(
             val result = repository.submitReview(
                 userId = user.id,
                 productId = productId,
+                orderItemId = orderItemId,
                 rating = rating,
                 content = content
             )
             _isSubmitting.value = false
 
             if (result.isSuccess) {
-                // Tải lại danh sách review mới sau khi submit thành công
                 loadReviewData(productId)
                 onSuccess()
             } else {

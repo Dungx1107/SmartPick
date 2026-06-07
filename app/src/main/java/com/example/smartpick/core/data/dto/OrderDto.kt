@@ -24,7 +24,7 @@ data class ProductMinDto(
 // 2. KHẮC PHỤC LỖI THIẾU KHAI BÁO: Thêm cấu trúc lớp phản ánh bảng order_items khi nhận về
 @Serializable
 data class OrderItemWithProductDto(
-    val id: String? = null,
+    @SerialName("id") val id: String,
     val quantity: Int,
     @SerialName("price_at_purchase") val priceAtPurchase: Double,
     val products: ProductMinDto? = null, // Nhúng object sản phẩm lồng bên trong

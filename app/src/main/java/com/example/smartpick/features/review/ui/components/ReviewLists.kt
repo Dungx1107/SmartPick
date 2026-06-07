@@ -24,7 +24,7 @@ import com.example.smartpick.core.ui.theme.TextMuted
 @Composable
 fun PendingReviewList(
     products: List<Product>,
-    onReviewClick: (String) -> Unit,
+    onReviewClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (products.isEmpty()) {
@@ -39,7 +39,10 @@ fun PendingReviewList(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(
@@ -74,11 +77,26 @@ fun PendingReviewList(
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
-                            onClick = { product.id?.let { onReviewClick(it) } },
+                            onClick = {
+                                val productId = product.id ?: ""
+                                val orderItemId = product.postId
+                                    ?: "" // Lấy mã dòng đơn hàng chi tiết đang lưu tạm ở trường postId
+
+                                if (productId.isNotEmpty() && orderItemId.isNotEmpty()) {
+                                    onReviewClick(
+                                        productId,
+                                        orderItemId
+                                    )
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Đánh giá", fontSize = 12.sp, color = MaterialTheme.colorScheme.onPrimary)
+                            Text(
+                                "Đánh giá",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onPrimary
+                            )
                         }
                     }
                 }

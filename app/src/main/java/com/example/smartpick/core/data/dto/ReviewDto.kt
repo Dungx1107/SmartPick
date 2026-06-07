@@ -14,6 +14,7 @@ data class ReviewUserDto(
 data class ReviewRequestDto(
     @SerialName("user_id") val userId: String,
     @SerialName("product_id") val productId: String,
+    @SerialName("order_item_id") val orderItemId: String,
     val rating: Int,
     val content: String
 )
@@ -23,6 +24,7 @@ data class ReviewResponseDto(
     val id: String,
     @SerialName("user_id") val userId: String,
     @SerialName("product_id") val productId: String,
+    @SerialName("order_item_id") val orderItemId: String? = null,
     val rating: Int,
     val content: String,
     @SerialName("created_at") val createdAt: String,

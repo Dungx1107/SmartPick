@@ -15,6 +15,7 @@ data class Review(
     val id: String,
     val userId: String,
     val productId: String,
+    val orderItemId: String? = null,
     val rating: Int,
     val content: String,
     val createdAt: String,
