@@ -1,50 +1,49 @@
-# Quy ước Lập trình (Coding Conventions)
+# Quy ước Lập trình (Coding Conventions) - SmartPick Project
 
-Để đảm bảo mã nguồn SmartPick luôn sạch sẽ, dễ đọc và dễ bảo trì, đội ngũ phát triển tuân thủ các quy tắc sau:
+Tài liệu này định nghĩa các tiêu chuẩn mã nguồn nhằm duy trì tính nhất quán, dễ đọc và dễ bảo trì cho dự án SmartPick.
 
-## 1. Cấu trúc Thư mục (Package Structure)
-Dự án được tổ chức theo tính năng (Feature-based structure):
-- `core/`: Chứa các thành phần dùng chung (model, network, utils).
-- `features/{feature_name}/`: Chứa mã nguồn của từng tính năng cụ thể.
-    - `ui/`: Các Composable Screen và Components.
-    - `viewmodel/`: Các ViewModel quản lý trạng thái.
-    - `data/`: Repositories và Data Sources (DTOs).
-- `navigation/`: Quản lý định tuyến và sơ đồ điều hướng.
+## 1. Nguyên tắc Chung
+- **Clean Architecture:** Phân tách rõ ràng giữa Presentation, Domain và Data.
+- **UDF (Unidirectional Data Flow):** Trạng thái đi xuống, sự kiện đi lên.
+- **SOLID & KISS:** Giữ cho mã nguồn đơn giản, trách nhiệm duy nhất.
 
-## 2. Quy tắc Đặt tên (Naming Conventions)
+## 2. Quy tắc Đặt tên
 
-### Lớp và Đối tượng (Classes & Objects)
-- Sử dụng **PascalCase**.
-- **ViewModels:** Phải kết thúc bằng `ViewModel` (Ví dụ: `AuthViewModel`).
-- **Repositories:** Phải kết thúc bằng `Repository` (Ví dụ: `FeedRepository`).
-- **Screens:** Phải kết thúc bằng `Screen` (Ví dụ: `LoginScreen`).
-- **Data Models:** Đặt tên danh từ số ít (Ví dụ: `Post`, `User`).
+### 2.1. Lớp và Đối tượng (PascalCase)
+- **ViewModel:** Phải kết thúc bằng `ViewModel` (ví dụ: `FeedViewModel`).
+- **Repository:** Phải kết thúc bằng `Repository` (ví dụ: `AuthRepository`).
+- **Screen:** Các Composable cấp màn hình kết thúc bằng `Screen` (ví dụ: `CartScreen`).
+- **Component:** Các Composable nhỏ kết thúc bằng tên linh kiện (ví dụ: `PostItem`, `StandardButton`).
+- **DTO:** Các lớp dữ liệu từ API kết thúc bằng `Dto` (ví dụ: `ProductDto`).
 
-### Hàm và Biến (Functions & Variables)
-- Sử dụng **camelCase**.
-- Hàm Composable: Phải là danh từ hoặc cụm danh từ mô tả UI (Ví dụ: `NotificationItem`).
-- Hàm xử lý sự kiện: Bắt đầu bằng `on` (Ví dụ: `onLoginClick`).
+### 2.2. Hàm và Biến (camelCase)
+- **Hàm Composable:** Phải là Danh từ (ví dụ: `ProductCard`).
+- **Hàm xử lý sự kiện:** Bắt đầu bằng `on` (ví dụ: `onAddToCartClick`).
+- **Biến trạng thái:** Nếu là Flow/MutableState, có thể dùng tiền tố `_` cho bản private (ví dụ: `_uiState`).
 
-## 3. Quy tắc Jetpack Compose (UI)
-- **Stateless Composables:** Ưu tiên tách logic quản lý state ra khỏi UI. Truyền state vào và nhận sự kiện ra qua lambdas.
-- **Preview:** Mỗi file UI nên có ít nhất một hàm `@Preview` để kiểm tra giao diện nhanh.
-- **Modifier:** Tham số `modifier` phải là tham số đầu tiên của Composable và có giá trị mặc định là `Modifier`.
-- **Remember:** Sử dụng `remember` và `rememberSaveable` đúng cách để tránh re-composition không cần thiết.
+## 3. Kiến trúc Thư mục (Feature-based)
+Dự án được tổ chức theo tính năng thay vì theo loại lớp:
+- `com.example.smartpick.features.{feature_name}`
+    - `ui/`: Chứa Screen và Components.
+    - `viewmodel/`: Chứa ViewModel.
+    - `data/`: Chứa Repository, DTOs và Mappers.
+    - `model/`: Chứa Domain models (nếu cần riêng biệt).
 
-## 4. Xử lý Dữ liệu & Bất đồng bộ
-- **Coroutines:** Luôn chỉ định rõ Dispatcher. Sử dụng `Dispatchers.IO` cho network/disk và `Dispatchers.Main` cho UI.
-- **Flow:** Sử dụng `StateFlow` trong ViewModel để quan sát trạng thái UI. Sử dụng `collectAsStateWithLifecycle()` trong Compose.
-- **Repository Pattern:** ViewModel không được gọi trực tiếp Supabase SDK, phải thông qua Repository.
+## 4. Jetpack Compose Guidelines
+- **Modifier:** Luôn là tham số đầu tiên của Composable (sau tham số bắt buộc) và có giá trị mặc định `Modifier`.
+- **State Hoisting:** Đẩy trạng thái lên cấp cao nhất có thể để linh kiện dễ tái sử dụng.
+- **Preview:** Cung cấp `@Preview` cho mọi linh kiện UI với dữ liệu mẫu (Mock data).
+- **Theme:** Sử dụng `MaterialTheme.colorScheme` và `MaterialTheme.typography` thay vì mã màu/font cứng.
 
-## 5. Xử lý Lỗi (Error Handling)
-- Sử dụng khối `try-catch` trong Repository để bắt các lỗi mạng/database.
-- Trả về `Result<T>` hoặc giá trị mặc định (null/empty list) kèm theo log lỗi.
-- Hiển thị thông báo lỗi thân thiện cho người dùng qua `Snackbar` hoặc `Toast`.
+## 5. Xử lý Dữ liệu & Mạng
+- **Coroutines:** Sử dụng `viewModelScope` cho các tác vụ trong ViewModel. Luôn chỉ định `Dispatchers.IO` cho Network/Database.
+- **Flow:** Ưu tiên sử dụng `StateFlow` để quan sát trạng thái UI.
+- **Exception Handling:** Xử lý lỗi tại tầng Repository và trả về `Result<T>` hoặc đóng gói lỗi vào UI State để hiển thị thông báo.
 
-## 6. Clean Code Principles
-- **DRY (Don't Repeat Yourself):** Tách các logic hoặc UI component dùng chung vào `core/ui` hoặc `core/utils`.
-- **SOLID:** Đảm bảo mỗi lớp chỉ thực hiện một nhiệm vụ duy nhất.
-- **KISS (Keep It Simple, Stupid):** Ưu tiên code dễ hiểu hơn code ngắn gọn nhưng phức tạp.
+## 6. Resources & Assets
+- **Strings:** Mọi chuỗi văn bản hiển thị phải đặt trong `strings.xml`.
+- **Icons:** Ưu tiên sử dụng `Icons.Rounded` hoặc `Icons.Filled` từ thư viện Material Icons.
+- **Dimensions:** Sử dụng các giá trị chuẩn (8dp, 16dp) để đảm bảo tính nhất quán của lưới (Grid).
 
 ---
-Việc tuân thủ các quy tắc này là bắt buộc đối với tất cả thành viên tham gia phát triển dự án.
+© 2024 SmartPick Development Team.

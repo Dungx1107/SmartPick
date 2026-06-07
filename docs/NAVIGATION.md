@@ -12,38 +12,44 @@ Các route được định nghĩa tập trung trong class `Routes.kt`:
 - `feed`: Bảng tin cộng đồng (Bài viết).
 - `review_hub`: Trung tâm quản lý đánh giá sản phẩm.
 - `saved`: Bộ sưu tập bài viết đã lưu.
+- `liked_posts`: Danh sách các bài viết người dùng đã thích.
 - `profile`: Trang cá nhân người dùng.
 - `edit_profile`: Chỉnh sửa thông tin cá nhân.
-- `create_post`: Màn hình tạo bài viết và sản phẩm.
+- `create_post`: Màn hình tạo bài viết và sản phẩm mới.
+- `edit_post/{postId}`: Chỉnh sửa bài viết đã đăng.
 - `notifications`: Danh sách thông báo.
-- `checkout`: Màn hình thanh toán đơn hàng.
+- `cart`: Giỏ hàng của người dùng.
+- `checkout`: Màn hình thanh toán (Hỗ trợ mua lẻ hoặc mua từ giỏ hàng).
+- `seller_dashboard`: Trang quản lý dành cho người bán.
 - `settings`: Cài đặt ứng dụng.
+- `product_detail/{productId}`: Chi tiết sản phẩm.
+- `post_detail/{postId}`: Chi tiết bài viết (Hỗ trợ nhảy đến bình luận cụ thể).
 - `write_review/{productId}`: Màn hình viết đánh giá cho sản phẩm đã mua.
-- `post_detail/{postId}`: Chi tiết bài viết.
-- `comments/{postId}/{postOwnerId}`: Danh sách bình luận.
+- `comments/{postId}/{postOwnerId}`: Danh sách bình luận của bài viết.
+- `comments_notification/{postId}`: Xem bình luận từ thông báo.
 
 ## 2. Luồng Điều hướng chính (User Flow)
 
 ### 2.1. Luồng Xác thực (Auth Flow)
 - Kiểm tra session khi khởi động.
-- `Login` -> `SignUp` hoặc ngược lại.
+- `Login` <-> `SignUp`.
 - Thành công -> Chuyển đến `Home`.
 
 ### 2.2. Luồng Mua sắm & Đánh giá (Shopping & Review Flow)
-- `Home` -> Chọn sản phẩm -> (Chuyển đến bài viết liên quan) -> Thêm vào giỏ.
-- Giỏ hàng (Dialog/Screen) -> `Checkout`.
-- `Profile` -> `ReviewHub` -> `WriteReview` (cho các sản phẩm đã mua).
+- `Home`/`Feed` -> `ProductDetail` -> Thêm vào `Cart`.
+- `Cart` -> `Checkout`.
+- `Profile` -> `ReviewHub` -> `WriteReview`.
 
 ### 2.3. Luồng Cộng đồng (Social Flow)
 - `Feed` -> `PostDetail` -> `Comments`.
-- `Feed` -> `CreatePost` (Ẩn Bottom Bar).
-- `Notifications` -> `Comments` (Deep link giả lập).
+- `Feed` -> `CreatePost`.
+- `Notifications` -> `PostDetail` hoặc `CommentsFromNotification`.
 
 ## 3. Quản lý UI
-- **Bottom Bar:** Hiển thị tại `home`, `feed`, `review_hub` (hoặc chatbot), `saved`, `profile`.
-- **Top Bar:** Thay đổi tiêu đề và action tùy theo màn hình hiện tại.
+- **Bottom Bar:** Hiển thị tại các màn hình chính: `home`, `feed`, `review_hub`, `saved`, `profile`.
+- **Top Bar:** Linh hoạt thay đổi tiêu đề và các nút chức năng (Search, Cart, Settings) tùy theo ngữ cảnh.
 
 ## 4. Đặc điểm Kỹ thuật
-- Sử dụng `popUpTo` và `launchSingleTop` để tối ưu BackStack.
-- Truyền tham số an toàn qua Route String.
-- Trạng thái điều hướng được đồng bộ với `NavController`.
+- Sử dụng **Type-safe Navigation** (bằng cách định nghĩa tham số trong Route string).
+- Tối ưu hóa BackStack với `launchSingleTop = true` và `restoreState = true`.
+- Trạng thái điều hướng được quản lý tập trung qua `NavController`.

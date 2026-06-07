@@ -1,112 +1,63 @@
 # BÁO CÁO XÂY DỰNG HỆ THỐNG CHIA SẺ VÀ GỢI Ý SẢN PHẨM THÔNG MINH - SMARTPICK
 
 **Học phần:** Phát triển ứng dụng trên thiết bị di động
-**Chức danh:** Senior Android Engineer & Technical Writer
+**Dự án:** SmartPick - Mạng xã hội & Thương mại điện tử tích hợp AI
 
 ---
 
 ## 1. ĐẶT VẤN ĐỀ
 
 ### 1.1. Bối cảnh
-Trong kỷ nguyên số, việc mua sắm không chỉ dừng lại ở giao dịch mà còn là sự trải nghiệm và chia sẻ. Người dùng có xu hướng tin tưởng vào các đánh giá, trải nghiệm thực tế từ cộng đồng hơn là các quảng cáo truyền thống. Tuy nhiên, các nền tảng hiện nay thường gặp vấn đề về tin rác (spam) và nội dung không lành mạnh.
+Trong xu thế mua sắm hiện nay, người dùng không chỉ tìm kiếm sản phẩm mà còn tìm kiếm sự tin cậy thông qua các trải nghiệm thực tế từ cộng đồng. Tuy nhiên, việc rây lọc thông tin chất lượng giữa hàng ngàn nội dung rác và ngôn từ tiêu cực là một thách thức lớn.
 
-### 1.2. Lý do chọn đề tài
-Đề tài **SmartPick** được lựa chọn nhằm kết hợp sức mạnh của mạng xã hội chia sẻ với trí tuệ nhân tạo (AI) để tạo ra một môi trường mua sắm an toàn, thông minh và mang tính cộng đồng cao.
-
-### 1.3. Mục tiêu đề tài
-- Xây dựng ứng dụng Android mượt mà, hiện đại bằng Jetpack Compose.
-- Tích hợp hệ thống Backend thời gian thực mạnh mẽ (Supabase).
-- Ứng dụng AI để kiểm duyệt nội dung tự động và tư vấn người dùng.
-- Tối ưu hóa trải nghiệm chia sẻ đa phương tiện (ảnh và video).
+### 1.2. Mục tiêu đề tài
+Xây dựng một nền tảng Android tích hợp AI giúp:
+- Tạo môi trường chia sẻ (Review) an toàn nhờ kiểm duyệt tự động.
+- Tối ưu hóa luồng mua sắm từ nội dung review đến lúc thanh toán.
+- Cung cấp trợ lý ảo hỗ trợ người dùng 24/7.
 
 ---
 
-## 2. PHÂN TÍCH YÊU CẦU
+## 2. PHÂN TÍCH & THIẾT KẾ
 
-### 2.1. Yêu cầu chức năng (Functional Requirements)
-- **Quản lý người dùng:** Đăng ký, đăng nhập (thủ công & Google), quản lý hồ sơ.
-- **Tương tác cộng đồng:** Đăng bài viết chia sẻ, bình luận đa tầng, thả tim.
-- **Quản lý sản phẩm:** Đăng bán hoặc giới thiệu sản phẩm kèm bài viết.
-- **Thông báo:** Nhận thông báo thời gian thực về tương tác và trạng thái đơn hàng.
-- **Trợ lý AI:** Chatbot tư vấn sản phẩm dựa trên nhu cầu người dùng.
-- **An toàn nội dung:** Tự động chặn ảnh/văn bản vi phạm quy chuẩn cộng đồng.
+### 2.1. Yêu cầu chức năng
+- **Xác thực:** Đăng nhập Email/Password và Google Sign-In.
+- **Cộng đồng:** Đăng bài (ảnh/video), like, comment đa tầng, thông báo realtime.
+- **Thương mại:** Quản lý sản phẩm, giỏ hàng, thanh toán và lịch sử đơn hàng.
+- **AI:** Kiểm duyệt ảnh nhạy cảm (Sightengine), lọc văn bản độc hại (Gemini) và Chatbot tư vấn.
 
-### 2.2. Yêu cầu phi chức năng (Non-functional Requirements)
-- **Hiệu năng:** Tải dữ liệu và hình ảnh nhanh, mượt mà (Lazy Loading).
-- **Bảo mật:** Xác thực đa lớp, phân quyền truy cập dữ liệu (RLS).
-- **Tính sẵn sàng:** Hệ thống hoạt động 24/7 trên nền tảng Cloud.
-- **Giao diện:** Thân thiện, tuân thủ Material Design 3.
+### 2.2. Kiến trúc Hệ thống
+Áp dụng **Clean Architecture** và **MVVM** giúp tách biệt mã nguồn thành các lớp Presentation, Domain và Data. Sử dụng **Dagger Hilt** để quản lý sự phụ thuộc.
 
 ---
 
-## 3. THIẾT KẾ HỆ THỐNG
+## 3. CÔNG NGHỆ SỬ DỤNG
 
-### 3.1. Kiến trúc phần mềm (Architecture)
-Hệ thống sử dụng kiến trúc **Clean Architecture** chia làm 3 lớp:
-1. **Presentation Layer:** Sử dụng ViewModels và StateFlow để quản lý trạng thái UI.
-2. **Domain Layer:** Chứa logic nghiệp vụ xử lý dữ liệu.
-3. **Data Layer:** Thực hiện gọi API qua Supabase SDK và các REST service.
-
-### 3.2. Thiết kế Cơ sở dữ liệu
-Hệ thống sử dụng PostgreSQL với các bảng chính:
-- `users`: Thông tin tài khoản và profile.
-- `posts`: Nội dung bài viết và đường dẫn media.
-- `products`: Thông tin chi tiết sản phẩm thương mại.
-- `comments`: Lưu trữ bình luận và phân cấp reply.
-- `notifications`: Lưu trữ và điều phối thông báo.
-
-### 3.3. Luồng hoạt động chính
-- **Luồng đăng bài:** Chọn media -> Kiểm duyệt AI (Text/Image) -> Nếu an toàn -> Upload Storage -> Lưu Database.
-- **Luồng tương tác:** User action -> Update DB -> Trigger Realtime -> Push Notification tới người nhận.
+- **Android:** Kotlin 2.0, Jetpack Compose, Coroutines, Flow.
+- **Backend:** Supabase (PostgreSQL, Auth, Storage, Realtime).
+- **AI:** Google Gemini 1.5 Flash, Sightengine Moderation.
+- **Thư viện:** Coil, Media3 ExoPlayer, Ktor, OkHttp.
 
 ---
 
-## 4. CÔNG NGHỆ SỬ DỤNG
+## 4. KẾT QUẢ ĐẠT ĐƯỢC
 
-### 4.1. Android Client
-- **Jetpack Compose:** Xây dựng UI hiện đại, giảm thiểu mã nguồn thừa.
-- **Hilt:** Tiêm phụ thuộc (DI) giúp code sạch và dễ test.
-- **Coroutines & Flow:** Xử lý bất đồng bộ mạnh mẽ, tránh block UI thread.
-- **ExoPlayer:** Hỗ trợ phát video chất lượng cao trong bài đăng.
+### 4.1. Về Kỹ thuật
+- Hoàn thiện luồng dữ liệu một chiều (UDF) mượt mà với Jetpack Compose.
+- Tích hợp thành công cơ chế kiểm duyệt AI vào luồng đăng bài, ngăn chặn nội dung xấu ngay từ nguồn.
+- Hệ thống thông báo thời gian thực hoạt động ổn định qua Supabase Realtime.
 
-### 4.2. Backend & AI Integration
-- **Supabase:** Giải pháp thay thế Firebase, cung cấp Database, Auth và Storage cực nhanh.
-- **Gemini AI:** Sử dụng model `gemini-1.5-flash` để xử lý ngôn ngữ tự nhiên và tư vấn sản phẩm.
-- **Sightengine:** Chuyên biệt cho việc nhận diện hình ảnh nhạy cảm với độ chính xác trên 95%.
-
----
-
-## 5. KẾT QUẢ ĐẠT ĐƯỢC VÀ ĐÁNH GIÁ
-
-### 5.1. Kết quả đạt được
-- Ứng dụng đã hoàn thiện các tính năng cốt lõi từ đăng nhập đến chia sẻ bài viết.
-- Tích hợp thành công AI vào luồng nghiệp vụ thực tế (không chỉ là chatbot đơn thuần).
-- Giao diện đồng nhất, mượt mà và dễ sử dụng.
-
-### 5.2. Ưu điểm
-- Kiến trúc chuẩn, dễ dàng mở rộng và bảo trì.
-- Khả năng kiểm duyệt nội dung tự động giúp giảm tải cho đội ngũ admin.
-- Sử dụng công nghệ mới nhất giúp ứng dụng nhẹ và hiệu quả.
-
-### 5.3. Hạn chế
-- Phụ thuộc vào tốc độ API của bên thứ ba (Gemini, Sightengine).
-- Chưa tích hợp thanh toán trực tiếp trong ứng dụng.
+### 4.2. Về Trải nghiệm
+- Giao diện hiện đại theo phong cách Material 3.
+- Tốc độ tải media và phản hồi AI đạt mức tối ưu.
+- Quy trình từ xem review đến mua hàng được rút ngắn và minh bạch.
 
 ---
 
-## 6. HƯỚNG PHÁT TRIỂN
+## 5. KẾT LUẬN
 
-- **E-commerce Integration:** Tích hợp cổng thanh toán (Momo, VNPay).
-- **ML Recommendation:** Xây dựng hệ thống gợi ý sản phẩm cá nhân hóa sâu.
-- **Community Features:** Thêm tính năng Livestream và Group Chat.
-- **Multi-platform:** Mở rộng lên iOS bằng Kotlin Multiplatform (KMP).
+Dự án **SmartPick** đã hoàn thành mục tiêu xây dựng một ứng dụng di động hiện đại, an toàn và thông minh. Sự kết hợp giữa công nghệ Android MAD và các dịch vụ Cloud/AI hàng đầu giúp ứng dụng có khả năng cạnh tranh và sẵn sàng cho việc đưa vào sử dụng thực tế.
 
 ---
-
-## 7. KẾT LUẬN
-
-Dự án **SmartPick** đã chứng minh được tính khả thi của việc kết hợp mạng xã hội với trí tuệ nhân tạo trên thiết bị di động. Với cấu trúc bền vững và công nghệ hiện đại, dự án hoàn toàn có thể phát triển thành một sản phẩm thương mại thực tế, góp phần làm sạch môi trường mạng và hỗ trợ người dùng mua sắm thông minh hơn.
-
----
-**Người báo cáo:** Senior Android Engineer
-**Ngày hoàn thành:** 24/05/2024
+**Người thực hiện:** Đội ngũ phát triển SmartPick
+**Ngày hoàn thành:** Tháng 12/2024

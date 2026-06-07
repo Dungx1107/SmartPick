@@ -1,104 +1,92 @@
 # Thiết kế Cơ sở dữ liệu (Database Design)
 
-SmartPick sử dụng **PostgreSQL** được cung cấp bởi Supabase. Hệ thống được thiết kế theo mô hình quan hệ (Relational Database) để đảm bảo tính toàn vẹn dữ liệu.
+SmartPick sử dụng **PostgreSQL** được cung cấp bởi nền tảng Supabase. Hệ thống được thiết kế theo mô hình quan hệ chặt chẽ, tận dụng tính năng Row Level Security (RLS) để đảm bảo an toàn dữ liệu.
 
-## 1. Sơ đồ Thực thể Quan hệ (ERD - Conceptual)
-
-Hệ thống bao gồm các bảng chính: `users`, `products`, `posts`, `comments`, `comment_likes`, `notifications`, `cart_items`, `orders`, `order_items`, và `reviews`.
-
-## 2. Chi tiết các Bảng
+## 1. Các Bảng chính
 
 ### Bảng: `users`
-Lưu trữ thông tin định danh và hồ sơ người dùng.
-- `id` (UUID, Primary Key): Liên kết trực tiếp với `auth.users` của Supabase.
-- `email` (String, Unique): Địa chỉ email của người dùng.
-- `username` (String, Unique): Tên định danh duy nhất.
-- `full_name` (String): Họ và tên đầy đủ.
-- `avatar_url` (String, Nullable): Đường dẫn ảnh đại diện trong Storage.
-- `phone_number` (String, Nullable): Số điện thoại liên lạc.
-- `created_at` (Timestamp): Thời điểm đăng ký.
+Lưu trữ thông tin định danh và hồ sơ cá nhân.
+- `id`: UUID (Primary Key, liên kết với `auth.users`).
+- `email`: Địa chỉ email.
+- `username`: Tên định danh duy nhất.
+- `full_name`: Họ và tên hiển thị.
+- `avatar_url`: Đường dẫn ảnh đại diện trong Storage.
+- `phone_number`: Số điện thoại.
+- `bio`: Giới thiệu bản thân.
+- `created_at`: Thời điểm tham gia.
 
 ### Bảng: `products`
-Lưu trữ thông tin sản phẩm.
-- `id` (UUID, Primary Key): Mã sản phẩm.
-- `owner_id` (UUID, Foreign Key -> `users.id`): Người sở hữu sản phẩm.
-- `name` (String): Tên sản phẩm.
-- `brand` (String): Thương hiệu.
-- `category` (String): Danh mục (Thiết bị, Phụ kiện, ...).
-- `price` (Numeric): Giá sản phẩm.
-- `image_urls` (Array[String]): Danh sách URL ảnh sản phẩm.
-- `video_url` (String, Nullable): URL video giới thiệu.
-- `status` (String): Trạng thái (available, sold, ...).
+Quản lý thông tin sản phẩm trong hệ thống thương mại điện tử.
+- `id`: UUID (Primary Key).
+- `owner_id`: ID người bán (liên kết với `users.id`).
+- `name`: Tên sản phẩm.
+- `brand`: Thương hiệu.
+- `category`: Danh mục sản phẩm.
+- `price`: Giá bán.
+- `description`: Mô tả chi tiết.
+- `image_urls`: Mảng các đường dẫn ảnh sản phẩm.
+- `video_url`: Đường dẫn video giới thiệu (nếu có).
+- `status`: Trạng thái (available, out_of_stock, ...).
 
 ### Bảng: `posts`
-Lưu trữ các bài viết trên bảng tin.
-- `id` (UUID, Primary Key): Mã bài viết.
-- `user_id` (UUID, Foreign Key -> `users.id`): Người đăng bài.
-- `product_id` (UUID, Foreign Key -> `products.id`, Nullable): Sản phẩm được gắn kèm bài viết.
-- `content` (Text): Nội dung mô tả/chia sẻ.
-- `media_urls` (Array[String]): Danh sách ảnh/video của bài viết.
-- `created_at` (Timestamp): Thời điểm đăng bài.
+Lưu trữ nội dung các bài viết review/chia sẻ.
+- `id`: UUID (Primary Key).
+- `user_id`: Người đăng (liên kết với `users.id`).
+- `product_id`: Sản phẩm được gắn thẻ (Nullable).
+- `content`: Nội dung bài viết.
+- `media_urls`: Mảng các đường dẫn ảnh/video của bài viết.
+- `created_at`: Thời điểm đăng bài.
 
 ### Bảng: `comments`
-Hỗ trợ bình luận đa tầng.
-- `id` (UUID, Primary Key): Mã bình luận.
-- `post_id` (UUID, Foreign Key -> `posts.id`): Bài viết được bình luận.
-- `user_id` (UUID, Foreign Key -> `users.id`): Người bình luận.
-- `parent_id` (UUID, Foreign Key -> `comments.id`, Nullable): ID của bình luận cha (dùng cho tính năng reply).
-- `content` (Text): Nội dung bình luận.
-- `created_at` (Timestamp): Thời điểm bình luận.
+Hỗ trợ thảo luận đa tầng trên bài viết.
+- `id`: UUID (Primary Key).
+- `post_id`: ID bài viết liên quan.
+- `user_id`: Người bình luận.
+- `parent_id`: ID bình luận cha (dùng cho tính năng reply - Trả lời).
+- `content`: Nội dung bình luận.
+
+### Bảng: `reactions` (hoặc `likes`)
+Lưu trữ tương tác giữa người dùng và bài viết.
+- `user_id`: ID người dùng.
+- `post_id`: ID bài viết được thích.
+- `created_at`: Thời điểm thực hiện tương tác.
 
 ### Bảng: `cart_items`
-Quản lý giỏ hàng của người dùng.
-- `id` (UUID, Primary Key).
-- `user_id` (UUID, Foreign Key -> `users.id`).
-- `product_id` (UUID, Foreign Key -> `products.id`).
-- `quantity` (Integer): Số lượng sản phẩm trong giỏ.
+Quản lý trạng thái giỏ hàng hiện tại.
+- `id`: UUID (Primary Key).
+- `user_id`: ID chủ sở hữu giỏ hàng.
+- `product_id`: ID sản phẩm.
+- `quantity`: Số lượng.
 
-### Bảng: `orders`
-Lưu trữ thông tin đơn hàng sau khi thanh toán.
-- `id` (UUID, Primary Key).
-- `user_id` (UUID, Foreign Key -> `users.id`).
-- `total_amount` (Numeric): Tổng giá trị đơn hàng.
-- `shipping_address` (Text): Địa chỉ nhận hàng.
-- `phone_number` (String): Số điện thoại nhận hàng.
-- `payment_method` (String): Phương thức thanh toán.
-- `status` (String): Trạng thái đơn hàng (mặc định: `completed`).
-- `created_at` (Timestamp).
-
-### Bảng: `order_items`
-Chi tiết các sản phẩm trong một đơn hàng.
-- `id` (UUID, Primary Key).
-- `order_id` (UUID, Foreign Key -> `orders.id`).
-- `product_id` (UUID, Foreign Key -> `products.id`).
-- `quantity` (Integer): Số lượng tại thời điểm mua.
-- `price_at_purchase` (Numeric): Giá sản phẩm tại thời điểm mua.
+### Bảng: `orders` & `order_items`
+Lưu trữ thông tin đơn hàng và chi tiết sản phẩm đã mua.
+- `orders`: Lưu thông tin tổng quan, địa chỉ giao hàng, tổng tiền và trạng thái.
+- `order_items`: Lưu chi tiết giá và số lượng từng sản phẩm tại thời điểm mua.
 
 ### Bảng: `reviews`
-Lưu trữ đánh giá của người dùng về sản phẩm đã mua.
-- `id` (UUID, Primary Key).
-- `user_id` (UUID, Foreign Key -> `users.id`).
-- `product_id` (UUID, Foreign Key -> `products.id`).
-- `rating` (Integer): Điểm đánh giá (1-5).
-- `content` (Text): Nội dung đánh giá.
-- `created_at` (Timestamp).
+Đánh giá sản phẩm từ người dùng đã mua hàng.
+- `id`, `user_id`, `product_id`.
+- `rating`: Số sao (1-5).
+- `content`: Nội dung nhận xét.
 
 ### Bảng: `notifications`
-Quản lý thông báo thời gian thực.
-- `id` (UUID, Primary Key).
-- `receiver_id` (UUID, Foreign Key -> `users.id`).
-- `sender_id` (UUID, Foreign Key -> `users.id`).
-- `post_id` (UUID, Foreign Key -> `posts.id`).
-- `type` (String): Loại thông báo (`like`, `comment`, `system`, `order`).
-- `content` (Text, Nullable).
-- `is_read` (Boolean).
-- `created_at` (Timestamp).
+Lưu trữ lịch sử thông báo.
+- `receiver_id`, `sender_id`, `post_id`.
+- `type`: Loại thông báo (like, comment, system, order).
+- `is_read`: Trạng thái đã xem.
 
-## 3. Các Ràng buộc & Logic (Constraints)
-- **RLS (Row Level Security):** Áp dụng nghiêm ngặt để bảo vệ dữ liệu cá nhân.
-- **Foreign Keys:** Đảm bảo tính toàn vẹn giữa người dùng, sản phẩm, đơn hàng và đánh giá.
-- **Triggers:** Tự động cập nhật `updated_at` hoặc gửi thông báo Realtime (nếu có).
+### Bảng: `user_push_tokens`
+Quản lý Firebase Cloud Messaging (FCM) tokens.
+- `user_id`: ID người dùng.
+- `push_token`: Token dùng để gửi thông báo đẩy.
 
-## 4. Storage Buckets
-- `avatars`: Ảnh đại diện.
-- `media`: Ảnh/Video bài viết và sản phẩm.
+## 2. Bảo mật Dữ liệu (RLS)
+Hệ thống áp dụng chính sách **Row Level Security** của PostgreSQL để:
+- Người dùng chỉ có thể sửa/xóa dữ liệu do chính họ tạo ra.
+- Dữ liệu nhạy cảm (như tokens) chỉ có thể truy cập bởi chủ sở hữu.
+- Các bảng công khai (posts, products) cho phép mọi người đọc nhưng hạn chế quyền ghi.
+
+## 3. Storage Buckets
+- `avatars`: Chứa ảnh đại diện người dùng.
+- `post_media`: Chứa ảnh và video của các bài đăng review.
+- `product_media`: Chứa ảnh/video giới thiệu sản phẩm.

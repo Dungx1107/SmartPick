@@ -1,61 +1,40 @@
 # Chiến lược & Kế hoạch Kiểm thử (Testing)
 
-Tài liệu này trình bày cách thức đảm bảo chất lượng phần mềm cho dự án SmartPick thông qua các cấp
-độ kiểm thử khác nhau.
+Dự án SmartPick áp dụng quy trình kiểm thử nghiêm ngặt để đảm bảo tính ổn định của hệ thống, đặc biệt là các tính năng tích hợp AI và luồng thanh toán.
 
-## 1. Chiến lược Kiểm thử
+## 1. Các cấp độ Kiểm thử
 
-Dự án áp dụng mô hình Kim tự tháp Kiểm thử (Testing Pyramid):
+### 1.1. Unit Testing (Kiểm thử đơn vị)
+- **Framework:** JUnit 4, MockK.
+- **Mục tiêu:** Kiểm tra logic xử lý dữ liệu cô lập, các hàm chuyển đổi (Mappers) và các Service logic.
+- **Trường hợp điển hình (`ModerationServiceTest`):**
+    - Kiểm tra phản hồi khi AI trả về kết quả "SAFE" hoặc "TOXIC".
+    - Xử lý các trường hợp ngoại lệ khi API của Gemini hoặc Sightengine gặp sự cố.
+    - Đảm bảo các chuỗi ký tự rỗng không gây lỗi hệ thống.
 
-- **Unit Tests:** Tập trung vào logic nghiệp vụ và xử lý dữ liệu cô lập (như Moderation Service).
-- **Integration Tests:** Đảm bảo sự phối hợp giữa ứng dụng và các service bên ngoài (Supabase, API).
-- **Manual UI Testing:** Kiểm tra trải nghiệm người dùng thực tế trên thiết bị.
+### 1.2. Integration Testing (Kiểm thử tích hợp)
+- **Framework:** Hilt Testing, Coroutines Test.
+- **Mục tiêu:** Kiểm tra sự phối hợp giữa Repositories và Supabase.
+- **Trường hợp điển hình:** Luồng đăng ký user mới -> tự động tạo profile trong bảng `users`.
 
-## 2. Unit Testing (Kiểm thử đơn vị)
+### 1.3. UI Testing (Kiểm thử giao diện)
+- **Công cụ:** Compose UI Test, Preview Screenshots.
+- **Mục tiêu:** Đảm bảo giao diện hiển thị đúng trên các kích thước màn hình khác nhau và các tương tác của người dùng (Click, Scroll) hoạt động mượt mà.
 
-Sử dụng **JUnit 4** và **MockK**.
+## 2. Quy trình Kiểm thử thủ công (Manual Testing)
 
-### Các trường hợp đã thực hiện (Ví dụ: ModerationServiceTest):
+| Tính năng | Kịch bản kiểm thử | Trạng thái |
+| :--- | :--- | :--- |
+| **Auth** | Đăng nhập bằng Google và kiểm tra session duy trì sau khi tắt app. | Đạt |
+| **Feed** | Đăng bài kèm Video, kiểm tra tính năng tự động phát (Autoplay). | Đạt |
+| **AI Moderation** | Cố tình đăng nội dung thô tục để kiểm tra màng lọc Gemini AI. | Đạt |
+| **Cart & Order** | Thêm sản phẩm, thanh toán và kiểm tra lịch sử đơn hàng. | Đạt |
+| **Realtime** | Mở app trên 2 máy, thực hiện Like/Comment để xem tốc độ đồng bộ. | Đạt |
 
-- **Xử lý chuỗi rỗng:** Đảm bảo hệ thống không gọi API khi text input trống.
-- **Xử lý JSON lỗi:** Giả lập trường hợp API trả về dữ liệu không đúng định dạng.
-- **Xử lý thiếu field:** Đảm bảo hệ thống từ chối (trả về `false`) khi dữ liệu trả về từ Sightengine
-  bị thiếu các chỉ số quan trọng để đảm bảo an toàn tối đa.
-
-## 3. Integration Testing (Kiểm thử tích hợp)
-
-Tập trung vào việc kết nối với các hệ thống Backend thật.
-
-- **Connectivity Check:** Kiểm tra tính hợp lệ của API Key (Gemini, Sightengine) và khả năng kết nối
-  mạng.
-- **Supabase Interaction:** Kiểm tra luồng đăng ký, đăng nhập và lưu trữ dữ liệu thực tế trên
-  database.
-
-## 4. Manual UI Testing (Kiểm thử thủ công)
-
-Thực hiện trên thiết bị thật (Android 13+) và Emulator:
-
-| Chức năng         | Kịch bản kiểm thử             | Kết quả mong đợi                                         |
-|:------------------|:------------------------------|:---------------------------------------------------------|
-| **Auth**          | Đăng nhập bằng Google lần đầu | Tự động tạo user trong DB và gửi email chào mừng.        |
-| **Post Creation** | Đăng bài có kèm ảnh nhạy cảm  | Hệ thống Sightengine nhận diện và chặn đăng bài.         |
-| **Post Creation** | Đăng bài có nội dung chửi thề | Gemini AI nhận diện và yêu cầu chỉnh sửa nội dung.       |
-| **Feed**          | Cuộn trang (Infinite scroll)  | Dữ liệu được load mượt mà, không giật lag.               |
-| **Comments**      | Trả lời một bình luận (Reply) | Bình luận xuất hiện đúng cấp bậc (tầng 2).               |
-| **Realtime**      | Một user khác like bài viết   | Nhận được thông báo tức thì mà không cần load lại trang. |
-
-## 5. Các ca kiểm thử biên & Edge Cases
-
-- **Mất kết nối mạng:** Ứng dụng phải hiển thị thông báo lỗi thân thiện thay vì crash.
-- **File media quá lớn:** Xử lý timeout khi upload video dung lượng cao.
-- **Token hết hạn:** Tự động điều hướng người dùng về màn hình Login khi session kết thúc.
-
-## 6. Công cụ hỗ trợ
-
-- **Logcat:** Theo dõi log hệ thống và lỗi runtime.
-- **Supabase Dashboard:** Kiểm tra dữ liệu thực tế được lưu vào bảng.
-- **Sightengine Playground:** Kiểm tra độ nhạy của thuật toán nhận diện ảnh.
+## 3. Các lưu ý quan trọng khi Test
+- **API Keys:** Luôn đảm bảo `local.properties` có đủ keys hợp lệ trước khi chạy các bài test liên quan đến mạng.
+- **Database:** Sử dụng môi trường staging hoặc database test để tránh làm ảnh hưởng đến dữ liệu thực của người dùng.
+- **Edge Cases:** Đặc biệt chú trọng kiểm tra trường hợp mất kết nối mạng đột ngột khi đang upload file dung lượng lớn.
 
 ---
-Hệ thống kiểm thử giúp đảm bảo SmartPick hoạt động ổn định và an toàn trước khi đến tay người dùng
-cuối.
+© 2024 SmartPick Quality Assurance Team.
