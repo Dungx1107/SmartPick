@@ -12,14 +12,8 @@ data class Order(
     val phoneNumber: String? = null,
     val paymentMethod: String? = null,
     val status: String = "completed",
-    val createdAt: String = ""
+    val createdAt: String = "",
+
+    val items: List<OrderItemWithProduct> = emptyList()
 ) : Parcelable
 
-@Parcelize
-data class OrderItem(
-    val id: String? = null,
-    val orderId: String,
-    val productId: String,
-    val quantity: Int,
-    val priceAtPurchase: Double
-) : Parcelable

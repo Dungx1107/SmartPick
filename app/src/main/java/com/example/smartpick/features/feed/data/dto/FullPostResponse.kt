@@ -1,6 +1,5 @@
 package com.example.smartpick.features.feed.data.dto
 
-import com.example.smartpick.core.data.dto.PostDto
 import com.example.smartpick.core.data.dto.ProductDto
 import com.example.smartpick.core.data.dto.UserDto
 import com.example.smartpick.core.data.dto.PostReactionDto

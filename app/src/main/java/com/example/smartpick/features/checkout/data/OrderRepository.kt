@@ -92,26 +92,26 @@ class OrderRepository @Inject constructor(
     }
 
     /**
-     * Hàm lấy lịch sử mua hàng từ bảng orders của Supabase
+     * Hàm lấy lịch sử mua hàng nâng cao kèm chi tiết sản phẩm liên kết (Tên và Ảnh)
      */
     suspend fun getOrderHistory(userId: String): List<Order> = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "==== BẮT ĐẦU LẤY LỊCH SỬ ĐƠN HÀNG ====")
+            Log.d(TAG, "==== BẮT ĐẦU LẤY LỊCH SỬ ĐƠN HÀNG NÂNG CAO ====")
 
-            // 1. Thực hiện truy vấn dữ liệu từ bảng orders
+            // 1. Thực hiện truy vấn JOIN thông qua Resource Embedding của Supabase Postgrest
             val response = postgrest["orders"]
-                .select {
+                .select(columns = Columns.raw("*, order_items(*, products(*))")) {
                     filter { eq("user_id", userId) }
                     order("created_at", SupabaseOrder.DESCENDING)
                 }
 
-            // 2. Decode dữ liệu thô thông qua lớp DTO đã có tính năng @Serializable
+            // 2. Decode chuỗi JSON lồng nhau thông qua lớp DTO cấu trúc cây mới
             val dtoList = response.decodeList<OrderResponseDto>()
 
-            // 3. Chuyển đổi toàn bộ danh sách DTO sang danh sách Model Domain
+            // 3. Chuyển đổi sang Domain Model (Hàm mở rộng .toDomain trong DataMappers.kt tự động bóc tách thông tin sản phẩm)
             val ordersList = dtoList.map { it.toDomain() }
 
-            Log.d(TAG, "Lấy lịch sử đơn hàng thành công, số lượng: ${ordersList.size}")
+            Log.d(TAG, "Lấy lịch sử đơn hàng nâng cao thành công, số lượng: ${ordersList.size}")
             ordersList
         } catch (e: Exception) {
             Log.e(TAG, "!!!! LỖI LẤY LỊCH SỬ ĐƠN HÀNG: ${e.localizedMessage}", e)
@@ -154,13 +154,17 @@ class OrderRepository @Inject constructor(
                 }
 
                 Log.d(TAG, "    [FCM] Đang gọi triggerPushNotification...")
-                notificationRepository.triggerPushNotification(
-                    receiverId = ownerId,
-                    title = "Đơn hàng mới",
-                    body = "Bạn vừa nhận được một đơn đặt hàng mới.",
-                    type = "order",
-                    targetId = orderId
-                )
+                try {
+                    notificationRepository.triggerPushNotification(
+                        receiverId = ownerId,
+                        title = "Đơn hàng mới",
+                        body = "Bạn vừa nhận được một đơn đặt hàng mới.",
+                        type = "order",
+                        targetId = orderId
+                    )
+                } catch (fcmException: Exception) {
+                    Log.w(TAG, "    [FCM] Không thể push notification: Người bán không có active token.")
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Lỗi trong quá trình gửi thông báo: ${e.message}", e)

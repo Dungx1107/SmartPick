@@ -200,7 +200,18 @@ fun OrderResponseDto.toDomain(): Order {
         phoneNumber = this.phoneNumber,
         paymentMethod = this.paymentMethod,
         status = this.status,
-        createdAt = this.createdAt
+        createdAt = this.createdAt,
+
+        items = this.orderItems.map { itemDto ->
+            OrderItemWithProduct(
+                id = itemDto.id,
+                productId = itemDto.productId ?: "",
+                quantity = itemDto.quantity,
+                priceAtPurchase = itemDto.priceAtPurchase,
+                productName = itemDto.products?.name ?: "Sản phẩm không còn tồn tại",
+                productImageUrl = itemDto.products?.imageUrls?.firstOrNull()
+            )
+        }
     )
 }
 
