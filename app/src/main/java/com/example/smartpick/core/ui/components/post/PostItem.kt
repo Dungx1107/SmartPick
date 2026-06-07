@@ -29,7 +29,7 @@ fun PostItem(
     user: User,
     currentUserId: String? = null,
     product: Product? = null,
-    onPostClick: () -> Unit = {},
+    onPostClick: (String) -> Unit = {},
     onProductClick: (Product) -> Unit = {},
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
     onShareClick: (String) -> Unit = {},
@@ -76,7 +76,7 @@ fun PostItem(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .clickable { onPostClick() },
+            .clickable { onPostClick(post.id.toString()) },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         shape = RoundedCornerShape(0.dp)
@@ -104,7 +104,10 @@ fun PostItem(
                 SharedPostCard(
                     sharedPost = post.sharedPost,
                     sharedUser = post.sharedPostUser,
-                    onPostClick = onPostClick,
+                    onPostClick = {
+                        val originalPostId = post.sharedPost.id ?: ""
+                        if (originalPostId.isNotEmpty()) onPostClick(originalPostId)
+                    },
                     onReactionClick = onReactionClick
                 )
             } else {
@@ -112,7 +115,7 @@ fun PostItem(
                     content = post.content,
                     mediaUrls = post.mediaUrls,
                     product = product,
-                    onMediaClick = { _ -> onPostClick() },
+                    onMediaClick = { _ -> onPostClick(post.id.toString()) },
                     onProductClick = onProductClick
                 )
             }
@@ -149,7 +152,7 @@ fun PostItem(
                         PostActionButton(
                             icon = Icons.Outlined.ChatBubbleOutline,
                             text = stringResource(R.string.BinhLuan),
-                            onClick = onPostClick,
+                            onClick = { onPostClick(post.id.toString()) },
                             modifier = Modifier.weight(1f)
                         )
                         PostActionButton(

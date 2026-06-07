@@ -60,8 +60,6 @@ import com.example.smartpick.core.model.User
 import com.example.smartpick.core.ui.components.ProfileAvatar
 import com.example.smartpick.core.ui.theme.SmartPickTheme
 import com.example.smartpick.features.auth.viewmodel.AuthViewModel
-import com.example.smartpick.features.profile.ui.main.CameraBadgeButton
-import com.example.smartpick.features.profile.ui.main.ProfileTextField
 import com.example.smartpick.features.profile.viewmodel.EditProfileViewModel
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.runtime.saveable.rememberSaveable
