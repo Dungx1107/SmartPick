@@ -74,6 +74,11 @@ fun ProfileScreen(
         onHistoryClick = { navController.navigate("${Routes.Saved.route}?category=Lịch sử mua hàng") { launchSingleTop = true } },
         onSettingsClick = { navController.navigate(Routes.Settings.route) },
 
+        // FIX: Kích hoạt điều hướng sang Gian hàng người bán
+        onSellerDashboardClick = {
+            navController.navigate("seller_dashboard") // Hoặc Routes.SellerDashboard.route nếu bạn đã khai báo trong Routes.kt
+        },
+
         onDeletePost = { postId ->
             profileViewModel.deletePost(
                 postId = postId,
@@ -106,7 +111,8 @@ fun ProfileContent(
     onDeletePost: (String) -> Unit = {},
     onEditPost: (String) -> Unit = {},
     onReactionClick: (String, ReactionType) -> Unit = { _, _ -> },
-    onShareClick: (String, String) -> Unit = { _, _ -> }
+    onShareClick: (String, String) -> Unit = { _, _ -> },
+    onSellerDashboardClick: () -> Unit = {}
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize()
@@ -120,7 +126,14 @@ fun ProfileContent(
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 ProfileHeaderCard(user = user, onEditProfile = onEditProfile)
                 Spacer(modifier = Modifier.height(28.dp))
-                SettingsBentoGrid(onHistoryClick = onHistoryClick, onSettingsClick = onSettingsClick)
+
+                // FIX: Truyền onSellerDashboardClick xuống SettingsBentoGrid
+                SettingsBentoGrid(
+                    onHistoryClick = onHistoryClick,
+                    onSettingsClick = onSettingsClick,
+                    onSellerDashboardClick = onSellerDashboardClick
+                )
+
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -179,24 +192,24 @@ fun ProfileContentPreview() {
         // 2. Tạo dữ liệu Sản phẩm giả lập
         val mockProduct = Product(
             id = "prod_001",
-            ownerId = "owner_456",            // Thêm trường ownerId bắt buộc[cite: 11]
+            ownerId = "owner_456",
             name = "Tai nghe chụp tai Sony WH-1000XM5",
-            brand = "Sony",                   // Thêm brand tùy chọn[cite: 11]
-            category = "Audio",               // Thêm category tùy chọn[cite: 11]
+            brand = "Sony",
+            category = "Audio",
             price = 6500000.0,
-            imageUrls = emptyList(),          // Thay thế bằng imageUrls hệ List<String>[cite: 11]
-            status = "available",             // Thuộc tính mặc định[cite: 11]
+            imageUrls = emptyList(),
+            status = "available",
             stock = 10,
             soldCount = 2
         )
 
-        // 3. Tạo danh sách Bài viết mẫu (Cấu trúc Triple tương thích với LazyColumn của bạn)
+        // 3. Tạo danh sách Bài viết mẫu
         val mockPosts = listOf(
             Triple(
                 Post(
                     id = "post_01",
                     userId = "user_123",
-                    content = "Trải nghiệm thực tế chiếc tai nghe Sony WH-1000XM5 sau 3 tháng sử dụng. Chất âm bass sâu, chống ồn chủ động đỉnh cao, cực kỳ đáng tiền cho anh em lập trình viên tập trung làm việc!",
+                    content = "Trải nghiệm thực tế chiếc tai nghe Sony WH-1000XM5...",
                     createdAt = "2026-06-06T08:00:00Z"
                 ),
                 mockUser,
@@ -206,11 +219,11 @@ fun ProfileContentPreview() {
                 Post(
                     id = "post_02",
                     userId = "user_123",
-                    content = "Hôm nay vừa setup xong giao diện mới cho app SmartPick, bỏ luôn thanh TopAppBar nhìn thoáng và cao hẳn lên, anh em thấy giao diện này ổn không?",
+                    content = "Hôm nay vừa setup xong giao diện mới...",
                     createdAt = "2026-06-05T15:30:00Z"
                 ),
                 mockUser,
-                null // Bài viết này dạng thảo luận, không gắn sản phẩm
+                null
             )
         )
 
@@ -228,7 +241,8 @@ fun ProfileContentPreview() {
             onDeletePost = {},
             onEditPost = {},
             onReactionClick = { _, _ -> },
-            onShareClick = { _, _ -> }
+            onShareClick = { _, _ -> },
+            onSellerDashboardClick = {} // Preview action trống
         )
     }
 }

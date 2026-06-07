@@ -14,6 +14,8 @@ sealed class Routes(val route: String) {
     object Settings : Routes("settings")
     object Cart : Routes("cart")
     object LikedPosts : Routes("liked_posts")
+
+    object SellerDashboard : Routes("seller_dashboard")
     object Checkout : Routes("checkout?productId={productId}&quantity={quantity}") {
         const val ARG_PRODUCT_ID = "productId"
         const val ARG_QUANTITY = "quantity"

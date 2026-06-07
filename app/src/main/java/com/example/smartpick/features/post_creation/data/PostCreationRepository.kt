@@ -9,6 +9,8 @@ import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.data.mapper.toDto
 import com.example.smartpick.core.model.Post
 import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.network.ModerationException
+import com.example.smartpick.core.network.ModerationService
 import com.example.smartpick.core.utils.Constants.TABLE_POSTS
 import com.example.smartpick.core.utils.Constants.TABLE_PRODUCTS
 import io.github.jan.supabase.SupabaseClient
@@ -35,7 +37,8 @@ import javax.inject.Singleton
 
 @Singleton
 class PostCreationRepository @Inject constructor(
-    private val supabase: SupabaseClient
+    private val supabase: SupabaseClient,
+    private val moderationService: ModerationService // FIX: Bơm ModerationService vào Repository
 ) {
 
     private fun uriToFlow(context: Context, uri: Uri) = flow {
@@ -104,8 +107,26 @@ class PostCreationRepository @Inject constructor(
         context: Context
     ) = withContext(Dispatchers.IO) {
         try {
-            // FIX: Lấy chính xác thời điểm hàm được gọi (Lúc ấn nút Đăng)
-            // Format sang chuẩn ISO 8601 (VD: 2026-06-05T12:34:56.789Z) và ép về múi giờ UTC để đồng bộ Supabase
+
+
+            if (content.isNotBlank()) {
+                val isContentSafe = moderationService.checkTextContent(content)
+                if (!isContentSafe) {
+                    // Sử dụng ModerationException để đồng bộ với file ModerationService của bạn
+                    throw ModerationException("Nội dung bài viết chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
+                }
+            }
+
+            productData?.let {
+                if (it.name.isNotBlank()) {
+                    val isProductNameSafe = moderationService.checkTextContent(it.name)
+                    if (!isProductNameSafe) {
+                        throw ModerationException("Tên sản phẩm chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
+                    }
+                }
+            }
+
+
             val currentTimestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }.format(Date())
@@ -114,6 +135,25 @@ class PostCreationRepository @Inject constructor(
                 mediaUris.map { uri -> async { uploadMedia(uri, context) } }.awaitAll().filter { it.isNotEmpty() }
             }
 
+
+
+            val imageUrls = uploadedUrls.filter { url ->
+                !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov")
+            }
+
+            if (imageUrls.isNotEmpty()) {
+                val imageSafetyResults = coroutineScope {
+                    imageUrls.map { url ->
+                        async { moderationService.checkImageContent(url) }
+                    }.awaitAll()
+                }
+
+                if (imageSafetyResults.contains(false)) {
+                    throw ModerationException("Hình ảnh chứa nội dung nhạy cảm hoặc bạo lực. Vui lòng chọn ảnh khác.")
+                }
+            }
+
+
             var finalProductId: String? = null
 
             productData?.let {
@@ -121,9 +161,7 @@ class PostCreationRepository @Inject constructor(
                     id = UUID.randomUUID().toString(),
                     ownerId = userId,
                     imageUrls = uploadedUrls.filter { url -> !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov") },
-                    videoUrl = uploadedUrls.find { url -> url.lowercase().contains(".mp4") || url.lowercase().contains(".mov") },
-                    // Nếu Model Product của bạn có createdAt, có thể chèn luôn vào đây
-                    // createdAt = currentTimestamp
+                    videoUrl = uploadedUrls.find { url -> url.lowercase().contains(".mp4") || url.lowercase().contains(".mov") }
                 )
 
                 val savedProduct = supabase.postgrest[TABLE_PRODUCTS]
@@ -134,20 +172,20 @@ class PostCreationRepository @Inject constructor(
                 finalProductId = savedProduct.id
             }
 
-            // Gắn cứng thời gian vừa tạo vào bài viết
             val newPost = Post(
                 id = UUID.randomUUID().toString(),
                 userId = userId,
                 productId = finalProductId,
                 content = content,
                 mediaUrls = uploadedUrls,
-                createdAt = currentTimestamp // <-- CHÈN THỜI GIAN ẤN NÚT VÀO ĐÂY
+                createdAt = currentTimestamp
             )
 
             supabase.postgrest[TABLE_POSTS].insert(newPost.toDto())
         } catch (e: Exception) {
             Log.e("POST_CREATION", "Lỗi chi tiết: ${e.localizedMessage}")
             e.printStackTrace()
+            // Ném lỗi lên trên để CreatePostViewModel catch và show UI
             throw e
         }
     }
