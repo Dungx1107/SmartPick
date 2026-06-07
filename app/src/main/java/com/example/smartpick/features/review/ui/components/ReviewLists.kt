@@ -31,7 +31,7 @@ fun PendingReviewList(
         EmptyState("Bạn không có sản phẩm nào chờ đánh giá", modifier)
     } else {
         LazyColumn(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier,
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -97,7 +97,7 @@ fun CompletedReviewList(
         EmptyState("Bạn chưa có đánh giá nào", modifier)
     } else {
         LazyColumn(
-            modifier = modifier.fillMaxSize(),
+            modifier = modifier,
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

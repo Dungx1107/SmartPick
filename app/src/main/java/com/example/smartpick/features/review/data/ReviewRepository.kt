@@ -29,7 +29,8 @@ class ReviewRepository @Inject constructor(
      */
     suspend fun getProductReviews(productId: String): List<Review> = withContext(Dispatchers.IO) {
         try {
-            postgrest["reviews"].select(Columns.raw("*, users(id, full_name, avatar_url)")) {
+            // Định cấu hình chỉ rõ trường user_id trỏ sang bảng users để lấy thông tin profile người đăng
+            postgrest["reviews"].select(Columns.raw("*, users!user_id(id, full_name, avatar_url)")) {
                 filter { eq("product_id", productId) }
                 order("created_at", Order.DESCENDING)
             }.decodeList<ReviewResponseDto>().map { it.toDomain() }

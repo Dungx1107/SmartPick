@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -35,10 +36,9 @@ import java.util.Locale
 @Composable
 fun ReviewCard(
     review: Review,
-    onProductClick: (String) -> Unit, // Luồng sự kiện click điều hướng chuẩn chỉ
+    onProductClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Lấy trực tiếp product nằm trong cấu trúc đối tượng review đã được map chuẩn
     val product = review.product
     val formattedPrice = remember(product?.price) {
         val vietnamLocale = Locale.Builder()
@@ -53,6 +53,7 @@ fun ReviewCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .wrapContentHeight()
             .clickable { product?.id?.let { onProductClick(it) } },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
@@ -61,72 +62,96 @@ fun ReviewCard(
         Column(modifier = Modifier.padding(12.dp)) {
 
             // --- PHẦN 1: THẺ TÓM TẮT SẢN PHẨM ---
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AsyncImage(
-                    model = product?.imageUrls?.firstOrNull(),
-                    contentDescription = null,
+            if (product != null) {
+                Row(
                     modifier = Modifier
-                        .size(60.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(MaterialTheme.colorScheme.outlineVariant),
-                    contentScale = ContentScale.Crop
-                )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = product?.name ?: "Sản phẩm không tồn tại",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        .fillMaxWidth()
+                        .background(
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AsyncImage(
+                        model = product?.imageUrls?.firstOrNull(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(MaterialTheme.colorScheme.outlineVariant),
+                        contentScale = ContentScale.Crop
                     )
 
-                    Text(
-                        text = "Người bán: ${product?.ownerName ?: "Thành viên SmartPick"}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMuted,
-                        maxLines = 1
-                    )
+                    Spacer(modifier = Modifier.width(12.dp))
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = product?.name ?: "Sản phẩm không tồn tại",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
 
-                    Text(
-                        text = formattedPrice,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                        Text(
+                            text = "Người bán: ${product?.ownerName ?: "Thành viên SmartPick"}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMuted,
+                            maxLines = 1
+                        )
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = formattedPrice,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
 
-            // --- PHẦN 2: NỘI DUNG ĐÁNH GIÁ CỦA CHÍNH BẠN ---
+            // --- PHẦN 2: NỘI DUNG ĐÁNH GIÁ ---
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Đánh giá của bạn:",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if (product == null) {
+                            AsyncImage(
+                                model = review.user?.avatarUrl ?: "https://via.placeholder.com/150", // URL fallback nếu null
+                                contentDescription = "User Avatar",
+                                modifier = Modifier
+                                    .size(32.dp) // Kích thước avatar nhỏ gọn phù hợp với thẻ card
+                                    .clip(CircleShape) // Bo tròn avatar
+                                    .background(MaterialTheme.colorScheme.outlineVariant),
+                                contentScale = ContentScale.Crop
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
 
-                    Row {
+                        // Hiển thị tên người dùng hoặc nhãn mặc định
+                        Text(
+                            text = if (product == null) (review.user?.fullName ?: "Người dùng SmartPick") else "Đánh giá của bạn:",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    // Khối hiển thị số sao đánh giá (Xếp bên phải)
+                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                         repeat(5) { index ->
                             Icon(
                                 imageVector = Icons.Default.Star,

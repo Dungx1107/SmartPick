@@ -25,12 +25,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import com.example.smartpick.R
 import com.example.smartpick.core.model.Product
 import com.example.smartpick.core.model.Review
 import com.example.smartpick.core.ui.theme.SmartPickTheme
@@ -44,7 +42,6 @@ fun ReviewHubScreen(
     onNavigateToWriteReview: (String) -> Unit,
     onNavigateToProductDetail: (String) -> Unit, // BỔ SUNG: Lambda điều hướng tới trang chi tiết sản phẩm
     modifier: Modifier = Modifier,
-    paddingValues: PaddingValues = PaddingValues(0.dp)
 ) {
     val productsToReview by viewModel.productsToReview.collectAsState()
     val reviewedProducts by viewModel.reviewedProducts.collectAsState()
@@ -61,11 +58,7 @@ fun ReviewHubScreen(
         isLoading = isLoading,
         onNavigateToWriteReview = onNavigateToWriteReview,
         onNavigateToProductDetail = onNavigateToProductDetail, // Chuyển tiếp xuống Content tầng dưới
-        modifier = modifier.padding(
-            start = paddingValues.calculateStartPadding(LayoutDirection.Ltr),
-            end = paddingValues.calculateEndPadding(LayoutDirection.Ltr),
-            bottom = paddingValues.calculateBottomPadding()
-        )
+        modifier = modifier.fillMaxSize()
     )
 }
 
@@ -125,11 +118,14 @@ fun ReviewHubContent(
                     when (selectedTabIndex) {
                         0 -> PendingReviewList(
                             products = productsToReview,
-                            onReviewClick = onNavigateToWriteReview
+                            onReviewClick = onNavigateToWriteReview,
+                            modifier = Modifier.fillMaxSize()
                         )
+
                         1 -> CompletedReviewList(
                             reviews = reviewedProducts,
-                            onProductClick = onNavigateToProductDetail // KẾT NỐI: Truyền lambda xuống danh sách đã đánh giá
+                            onProductClick = onNavigateToProductDetail, // KẾT NỐI: Truyền lambda xuống danh sách đã đánh giá
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -152,8 +148,53 @@ fun ReviewHubContentPreview() {
             imageUrls = listOf("https://via.placeholder.com/150"),
             stock = 5,
             soldCount = 2
+        ),
+        Product(
+            id = "prod_01",
+            ownerId = "user_01",
+            name = "Tai nghe Bluetooth Không Dây Chống Ồn Chủ Động Sony WH-1000XM5",
+            brand = "Sony",
+            category = "Phụ kiện",
+            price = 6490000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 5,
+            soldCount = 2
+        ),
+        Product(
+            id = "prod_01",
+            ownerId = "user_01",
+            name = "Tai nghe Bluetooth Không Dây Chống Ồn Chủ Động Sony WH-1000XM5",
+            brand = "Sony",
+            category = "Phụ kiện",
+            price = 6490000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 5,
+            soldCount = 2
+        ),
+        Product(
+            id = "prod_01",
+            ownerId = "user_01",
+            name = "Tai nghe Bluetooth Không Dây Chống Ồn Chủ Động Sony WH-1000XM5",
+            brand = "Sony",
+            category = "Phụ kiện",
+            price = 6490000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 5,
+            soldCount = 2
+        ),
+        Product(
+            id = "prod_01",
+            ownerId = "user_01",
+            name = "Tai nghe Bluetooth Không Dây Chống Ồn Chủ Động Sony WH-1000XM5",
+            brand = "Sony",
+            category = "Phụ kiện",
+            price = 6490000.0,
+            imageUrls = listOf("https://via.placeholder.com/150"),
+            stock = 5,
+            soldCount = 2
+        ),
+
         )
-    )
 
     val mockReviews = listOf(
         Review(

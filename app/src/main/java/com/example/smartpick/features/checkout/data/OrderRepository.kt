@@ -141,7 +141,7 @@ class OrderRepository @Inject constructor(
                 title = "Đặt hàng thành công",
                 content = buyerContent,
                 targetId = orderId,
-                postId = null, // CHUẨN CHỈ: Người mua mua qua giỏ hàng tổng hợp, không gắn với postId cụ thể nào nên truyền null
+                postId = null,
                 createdAt = ""
             )
 
@@ -173,7 +173,6 @@ class OrderRepository @Inject constructor(
 
                 val sellerContent = "Bạn đã bán được sản phẩm '${product.name}' thuộc đơn hàng này."
 
-                // CHUẨN CHỈ: Kiểm tra mã ID bài đăng gốc chính xác, nếu trống hoặc chuỗi "null" thì gán null thực sự cho Database
                 val validPostId = if (!item.originPostId.isNullOrBlank() && item.originPostId != "null") {
                     item.originPostId
                 } else {
@@ -188,7 +187,7 @@ class OrderRepository @Inject constructor(
                     title = "Đã bán được sản phẩm",
                     content = sellerContent,
                     targetId = orderId,
-                    postId = validPostId, // Truyền mã ID chuẩn hoặc NULL sạch sẽ lên DB
+                    postId = validPostId,
                     createdAt = ""
                 )
 
