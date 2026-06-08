@@ -21,6 +21,7 @@ class PostCreationRepositoryTest {
 
     private lateinit var mockSupabase: SupabaseClient
     private lateinit var mockModerationService: ModerationService
+    private lateinit var mockLmStudioModerator: LmStudioModerator
     private lateinit var mockContext: Context
     private lateinit var repository: PostCreationRepository
 
@@ -33,8 +34,9 @@ class PostCreationRepositoryTest {
 
         mockSupabase = mockk()
         mockModerationService = mockk()
+        mockLmStudioModerator = mockk(relaxed = true)
         mockContext = mockk()
-        repository = PostCreationRepository(mockSupabase, mockModerationService)
+        repository = PostCreationRepository(mockSupabase, mockModerationService, mockLmStudioModerator)
     }
 
     @Test
@@ -43,6 +45,7 @@ class PostCreationRepositoryTest {
         val toxicContent = "Thằng ngu này m mua ko"
         // Giả lập API AI kiểm duyệt trả về False (Không an toàn)
         coEvery { mockModerationService.checkTextContent(toxicContent) } returns false
+        every { mockLmStudioModerator.validateText(toxicContent, any()) } throws ModerationException("Nội dung bài viết hoặc thông tin sản phẩm chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
 
         // 2. THỰC THI VÀ KIỂM TRA LỖI (ACT & ASSERT)
         try {

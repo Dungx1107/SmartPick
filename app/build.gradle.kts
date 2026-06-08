@@ -95,6 +95,7 @@ android {
     }
 
     testOptions {
+        unitTests.isReturnDefaultValues = true
         unitTests.all {
             it.jvmArgs("-XX:+EnableDynamicAgentLoading")
         }
@@ -188,6 +189,7 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.10")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
     testImplementation("org.slf4j:slf4j-simple:2.0.7")
+    testImplementation("app.cash.turbine:turbine:1.1.0")
 
 // --- HILT TESTING FIX ---
     val hiltVersion = "2.51.1"
