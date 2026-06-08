@@ -1,44 +1,157 @@
-# Chương 3: Phân tích và Thiết kế hệ thống
+# Chương 3: Phân tích và thiết kế hệ thống
 
 ## 3.1. Phân tích yêu cầu
 
-### 3.1.1. Yêu cầu chức năng
-- **Người dùng:** Đăng ký, đăng nhập (Email/Google), cập nhật hồ sơ, quản lý tài khoản.
-- **Cộng đồng:** Đăng bài viết chia sẻ (hỗ trợ nhiều ảnh/video), thích bài viết, bình luận đa tầng, xem thông báo tương tác.
-- **Thương mại điện tử:** Tìm kiếm sản phẩm, xem chi tiết, quản lý giỏ hàng, thanh toán đơn hàng (Checkout), xem lịch sử mua sắm và đánh giá sản phẩm (Reviews).
-- **AI & An toàn:** Tư vấn mua sắm với AI Curator, tự động kiểm duyệt hình ảnh và văn bản độc hại.
+### 3.1.1. Yêu cầu chức năng (Functional Requirements)
+Dựa trên việc phân tích các module trong source code (`com.example.smartpick.features`), hệ thống cung cấp các chức năng sau:
 
-### 3.1.2. Yêu cầu phi chức năng
-- **Tính khả dụng:** Giao diện trực quan, mượt mà, tuân thủ Material Design 3.
-- **Hiệu năng:** Tải dữ liệu và media nhanh, phản hồi AI dưới 3 giây.
-- **Bảo mật:** Phân quyền dữ liệu (RLS) trên Supabase, xác thực an toàn.
+1.  **Hệ thống xác thực (Auth):**
+    - Đăng ký tài khoản mới bằng Email.
+    - Đăng nhập qua Email/Password hoặc Google Sign-In.
+    - Quản lý trạng thái đăng nhập (Session) và tự động chuyển hướng.
+2.  **Mạng xã hội mua sắm (Feed & Community):**
+    - Xem bảng tin bài viết review (Video/Ảnh).
+    - Thích (Like) bài viết với cơ chế Optimistic UI.
+    - Bình luận (Comment) đa tầng (Reply comment).
+    - Xem chi tiết bài viết và sản phẩm đi kèm.
+    - Đăng bài viết mới kèm màng lọc kiểm duyệt AI.
+3.  **Thương mại điện tử (E-commerce):**
+    - Duyệt sản phẩm theo danh mục và tìm kiếm.
+    - Xem chi tiết sản phẩm (Mô tả, giá, người bán, đánh giá).
+    - Quản lý giỏ hàng (Thêm, sửa số lượng, xóa, chọn món thanh toán).
+    - Thanh toán (Checkout): Nhập thông tin giao hàng và xác nhận đơn hàng.
+    - Lịch sử đơn hàng: Theo dõi các đơn hàng đã mua.
+    - Đánh giá sản phẩm (Review): Đánh giá sau khi mua hàng thành công.
+4.  **Hỗ trợ thông minh (AI & Realtime):**
+    - Chatbot AI Curator: Tư vấn sản phẩm và giải đáp thắc mắc.
+    - Hệ thống thông báo (Notification): Nhận thông báo tương tác và đơn hàng thời gian thực qua FCM và Supabase Realtime.
+5.  **Quản lý người bán (Seller):**
+    - Dashboard thống kê doanh thu.
+    - Quản lý sản phẩm đang bán.
+    - Quản lý đơn hàng đã bán.
+
+### 3.1.2. Yêu cầu phi chức năng (Non-functional Requirements)
+- **Performance:** Ứng dụng phản hồi nhanh, media được load bất đồng bộ (Coil/ExoPlayer).
+- **Security:** Bảo mật dữ liệu qua Supabase Row Level Security (RLS).
+- **Usability:** Giao diện tuân thủ Material Design 3, hỗ trợ người dùng tối đa.
+- **Reliability:** Xử lý ngoại lệ mạng và lỗi AI tốt, không gây treo ứng dụng.
 
 ## 3.2. Sơ đồ Use Case
 
-Hệ thống bao gồm các tác nhân chính là Người dùng và các API AI (Gemini, Sightengine). Các chức năng chính được phân bổ qua các module: Auth, Feed, Home, Cart, Review, Chatbot và Notification.
+```mermaid
+usecaseDiagram
+    actor "Người dùng" as User
+    actor "Người bán" as Seller
+    actor "Hệ thống AI" as AI
 
-## 3.3. Thiết kế Cơ sở dữ liệu (Database Schema)
+    package "Tài khoản" {
+        User --> (Đăng ký/Đăng nhập)
+        User --> (Cập nhật Profile)
+    }
 
-Dựa trên PostgreSQL của Supabase, hệ thống gồm các thực thể chính:
-- `users`: Thông tin định danh và profile.
-- `products`: Thông tin sản phẩm, giá, người bán.
-- `posts`: Nội dung review, liên kết media và sản phẩm.
-- `comments`: Lưu trữ thảo luận đa tầng.
-- `cart_items`: Quản lý trạng thái giỏ hàng.
-- `orders` & `order_items`: Lưu trữ lịch sử giao dịch.
-- `reviews`: Đánh giá tin cậy từ người mua hàng.
-- `notifications`: Thông báo thời gian thực.
+    package "Cộng đồng" {
+        User --> (Xem Feed)
+        User --> (Đăng bài Review)
+        User --> (Like/Bình luận)
+        (Đăng bài Review) ..> (Kiểm duyệt AI) : <<include>>
+        AI --> (Kiểm duyệt AI)
+    }
 
-## 3.4. Thiết kế Điều hướng (Navigation Design)
+    package "Mua sắm" {
+        User --> (Tìm kiếm sản phẩm)
+        User --> (Quản lý giỏ hàng)
+        User --> (Thanh toán đơn hàng)
+        User --> (Đánh giá sản phẩm)
+    }
 
-Sơ đồ điều hướng được xây dựng trên **Jetpack Compose Navigation** với các Route chính:
-- **Nhóm Chính (Bottom Bar):** Home, Feed, Review Hub, Saved, Profile.
-- **Nhóm Chức năng:** Product Detail, Post Detail, Create Post, Cart, Checkout, Notifications, Settings.
-- **Nhóm Bổ trợ:** Write Review, Edit Profile, Seller Dashboard.
+    package "Tư vấn" {
+        User --> (Chat với AI Curator)
+    }
 
-## 3.5. Luồng xử lý AI Moderation
+    package "Người bán" {
+        Seller --> (Xem thống kê doanh thu)
+        Seller --> (Quản lý sản phẩm/đơn hàng)
+    }
 
-Mọi nội dung bài đăng (văn bản và hình ảnh) đều đi qua `ModerationService` trước khi được lưu:
-1. **Text:** Gửi prompt tới Gemini 1.5 Flash để phân loại (SAFE/TOXIC).
-2. **Image:** Gửi URL/File tới Sightengine để kiểm tra các chỉ số (Nudity, Violence, Weapon).
-3. **Kết quả:** Chỉ khi cả hai đều trả về kết quả an toàn, bài viết mới được khởi tạo trên hệ thống.
+    User <|-- Seller
+```
+
+## 3.3. Thiết kế Cơ sở dữ liệu (Database Design)
+
+Phân tích từ hệ thống DTO và cấu trúc Database trên Supabase:
+
+### 3.3.1. Sơ đồ thực thể quan hệ (ERD)
+
+```mermaid
+erDiagram
+    USERS ||--o{ POSTS : "tạo"
+    USERS ||--o{ PRODUCTS : "bán"
+    USERS ||--o{ ORDERS : "đặt hàng"
+    USERS ||--o{ COMMENTS : "bình luận"
+    USERS ||--o{ NOTIFICATIONS : "nhận"
+    PRODUCTS ||--o{ POSTS : "được review"
+    PRODUCTS ||--o{ ORDER_ITEMS : "chứa trong"
+    ORDERS ||--o{ ORDER_ITEMS : "bao gồm"
+    POSTS ||--o{ COMMENTS : "có"
+    ORDER_ITEMS ||--o| REVIEWS : "đánh giá"
+```
+
+### 3.3.2. Các bảng dữ liệu chính
+- **users:** `id, email, full_name, avatar_url, phone_number, created_at`
+- **products:** `id, owner_id, name, price, stock, category, image_urls, video_url`
+- **posts:** `id, user_id, product_id, content, media_urls`
+- **orders:** `id, user_id, total_amount, shipping_address, status`
+- **order_items:** `id, order_id, product_id, quantity, price_at_purchase`
+- **notifications:** `id, user_id, type, content, is_read`
+
+## 3.4. Kiến trúc hệ thống
+
+```mermaid
+flowchart TD
+    subgraph "Frontend (Android App)"
+        UI[Jetpack Compose UI]
+        VM[ViewModel]
+        Repo[Repository]
+    end
+
+    subgraph "External Services"
+        Gemini[Google Gemini AI]
+        Sightengine[Sightengine API]
+        FCM[Firebase Messaging]
+    end
+
+    subgraph "Backend (Supabase)"
+        Auth[Supabase Auth]
+        DB[(PostgreSQL)]
+        Storage[Supabase Storage]
+        RT[Realtime Engine]
+    end
+
+    UI <--> VM
+    VM <--> Repo
+    Repo <--> Auth
+    Repo <--> DB
+    Repo <--> Storage
+    Repo <--> RT
+    Repo <--> Gemini
+    Repo <--> Sightengine
+    Repo <--> FCM
+```
+
+## 3.5. Thiết kế API (Endpoints thực tế)
+
+Hệ thống sử dụng cơ chế RESTful qua Supabase Postgrest:
+
+| Method | Endpoint | Mô tả |
+| :--- | :--- | :--- |
+| POST | `/auth/v1/signup` | Đăng ký tài khoản |
+| POST | `/auth/v1/token` | Đăng nhập lấy JWT |
+| GET | `/rest/v1/posts` | Lấy danh sách bảng tin |
+| POST | `/rest/v1/posts` | Tạo bài viết mới |
+| POST | `/rest/v1/rpc/toggle_like` | Like/Unlike bài viết |
+| GET | `/rest/v1/products` | Lấy danh sách sản phẩm |
+| POST | `/rest/v1/orders` | Tạo đơn hàng mới |
+| GET | `/rest/v1/notifications` | Lấy thông báo người dùng |
+
+## 3.6. Kết luận chương
+Chương này đã mô tả chi tiết thiết kế hệ thống SmartPick từ các yêu cầu chức năng đến cấu trúc dữ liệu và API. Sự kết hợp giữa kiến trúc MVVM ở phía Client và nền tảng BaaS Supabase tạo ra một hệ thống linh hoạt, có khả năng mở rộng tốt.

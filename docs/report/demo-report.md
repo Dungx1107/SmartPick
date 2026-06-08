@@ -1,74 +1,107 @@
-# BÁO CÁO TỔNG KẾT DỰ ÁN SMARTPICK
+# BÁO CÁO XÂY DỰNG HỆ THỐNG MẠNG XÃ HỘI MUA SẮM THÔNG MINH SMARTPICK
+
+**Học phần:** Phát triển ứng dụng di động nâng cao
+**Hệ thống:** SmartPick (Social Commerce with AI)
+
+---
 
 ## MỤC LỤC
-1. [Giới thiệu dự án](#1-giới-thiệu-dự-án)
-2. [Phân tích yêu cầu](#2-phân-tích-yêu-cầu)
-3. [Kiến trúc hệ thống](#3-kiến-trúc-hệ-thống)
-4. [Công nghệ sử dụng](#4-công-nghệ-sử-dụng)
-5. [Thiết kế chi tiết](#5-thiết-kế-chi-tiết)
-6. [Đánh giá và Kiểm thử](#6-đánh-giá-và-kiểm-thử)
-7. [Kết luận và Hướng phát triển](#7-kết-luận-và-hướng-phát-triển)
+
+1. [Chương 1: Đặt vấn đề](#chương-1-đặt-vấn-đề)
+2. [Chương 2: Công nghệ sử dụng](#chương-2-công-nghe-su-dung)
+3. [Chương 3: Phân tích và thiết kế hệ thống](#chương-3-phan-tich-va-thiết-kế-hệ-thống)
+4. [Chương 4: Đánh giá và kiểm thử](#chương-4-danh-gia-va-kiểm-thử)
+5. [Kết luận](#kết-luận)
 
 ---
 
-## 1. Giới thiệu dự án
-SmartPick là ứng dụng Android được thiết kế nhằm xây dựng một cộng đồng chia sẻ trải nghiệm sản phẩm trung thực. Khác với các sàn thương mại điện tử thuần túy, SmartPick tập trung vào yếu tố "Social" và "AI" để giúp người dùng đưa ra quyết định mua sắm đúng đắn nhất.
+## Chương 1: Đặt vấn đề
 
-- **Bối cảnh:** Sự bùng nổ của thương mại điện tử đi kèm với vấn nạn đánh giá ảo và nội dung không lành mạnh.
-- **Mục tiêu:** Tạo môi trường chia sẻ sạch, an toàn và thông minh nhờ tích hợp AI.
+### 1.1. Bối cảnh thực tế
+Trong kỷ nguyên công nghiệp 4.0, hành vi mua sắm của người tiêu dùng đã có sự thay đổi mạnh mẽ. Mô hình Thương mại điện tử truyền thống đang dần chuyển dịch sang "Social Commerce" (Thương mại xã hội), nơi các quyết định mua hàng bị ảnh hưởng lớn bởi các nội dung đánh giá (review), chia sẻ trải nghiệm thực tế trên các mạng xã hội. Tuy nhiên, sự tách biệt giữa nền tảng nội dung và nền tảng giao dịch tạo ra sự đứt gãy trong trải nghiệm khách hàng.
 
-## 2. Phân tích yêu cầu
-- **Chức năng chính:**
-    - Hệ thống tài khoản và bảo mật (Google Sign-In).
-    - Bảng tin (Feed) hỗ trợ đa phương tiện (Ảnh/Video).
-    - Giỏ hàng và quy trình thanh toán (Checkout).
-    - Hệ thống đánh giá (Reviews) có xác thực mua hàng.
-    - Trợ lý tư vấn AI (Gemini Chatbot).
-- **Yêu cầu phi chức năng:**
-    - Tự động kiểm duyệt nội dung (Moderation).
-    - Đồng bộ dữ liệu thời gian thực (Realtime).
-    - Giao diện hiện đại (Material Design 3).
+### 1.2. Mục tiêu hệ thống
+Phát triển ứng dụng Android **SmartPick** - một hệ sinh thái Social Commerce toàn diện, tích hợp AI để tối ưu hóa hành trình mua sắm:
+- Tích hợp mạng xã hội chia sẻ review (Video/Ảnh) và thương mại điện tử.
+- Sử dụng AI để kiểm duyệt nội dung tự động và tư vấn sản phẩm thông minh.
+- Đảm bảo tính an toàn và minh bạch trong cộng đồng mua sắm.
 
-## 3. Kiến trúc hệ thống
-Ứng dụng tuân thủ kiến trúc **Clean Architecture** kết hợp mô hình **MVVM**:
-- **Presentation:** Jetpack Compose & ViewModel.
-- **Domain/Data:** Repositories quản lý luồng dữ liệu từ Supabase.
-- **Core:** Chứa Moderation Service và Network Module dùng chung.
+### 1.3. Đối tượng sử dụng
+- **Người dùng (Buyer):** Tìm kiếm review thực tế, mua hàng và nhận tư vấn AI.
+- **Người bán (Seller):** Quản lý gian hàng, sản phẩm và theo dõi doanh thu qua Dashboard.
+- **Khách (Guest):** Tiếp cận thông tin ứng dụng trước khi định danh.
+
+---
+
+## Chương 2: Công nghệ sử dụng
+
+Hệ thống được xây dựng trên nền tảng Android Native với kiến trúc hiện đại:
+
+| Thành phần | Công nghệ / Thư viện |
+| :--- | :--- |
+| **Ngôn ngữ** | Kotlin 2.0 (JVM 17) |
+| **UI Framework** | Jetpack Compose (Material Design 3) |
+| **Kiến trúc** | MVVM + Clean Architecture |
+| **Dependency Injection** | Hilt (Dagger) |
+| **Backend (BaaS)** | Supabase (Auth, DB, Storage, Realtime) |
+| **Xử lý mạng** | Ktor Client & OkHttp |
+| **Trí tuệ nhân tạo** | Google Gemini (LLM), Sightengine (Image Moderation) |
+| **Media** | Media3 ExoPlayer (Video), Coil (Image) |
+| **Thông báo** | Firebase Cloud Messaging (FCM) |
+
+---
+
+## Chương 3: Phân tích và thiết kế hệ thống
+
+### 3.1. Phân tích yêu cầu chức năng
+- **Module Auth:** Đăng nhập Email/Google, quản lý session.
+- **Module Cộng đồng:** Feed video/ảnh, Like (Optimistic UI), Comment đa tầng.
+- **Module Thương mại:** Giỏ hàng, Checkout, Lịch sử mua hàng, Đánh giá sản phẩm.
+- **Module AI:** Chatbot tư vấn Curator, AI Moderation (Màng lọc nội dung xấu).
+- **Module Seller:** Dashboard thống kê doanh thu và quản lý kho.
+
+### 3.2. Sơ đồ thực thể quan hệ (ERD)
 
 ```mermaid
-graph TD
-    UI[Jetpack Compose UI] --> VM[ViewModel]
-    VM --> Repo[Repository]
-    Repo --> DB[(Supabase Database)]
-    Repo --> AI[AI Services - Gemini/Sightengine]
+erDiagram
+    USERS ||--o{ POSTS : "tạo"
+    USERS ||--o{ PRODUCTS : "bán"
+    USERS ||--o{ ORDERS : "đặt hàng"
+    USERS ||--o{ COMMENTS : "bình luận"
+    PRODUCTS ||--o{ POSTS : "được review"
+    ORDERS ||--o{ ORDER_ITEMS : "chứa"
+    ORDER_ITEMS ||--o| REVIEWS : "đánh giá"
 ```
 
-## 4. Công nghệ sử dụng
-- **Android SDK:** Kotlin, Jetpack Compose, Hilt, Coroutines.
-- **Backend:** Supabase (Auth, DB, Storage, Realtime).
-- **AI Integration:** Google Gemini 1.5 Flash & Sightengine API.
-- **Media:** ExoPlayer (Video), Coil (Image).
-
-## 5. Thiết kế chi tiết
-### 5.1. Cơ sở dữ liệu
-Hệ thống sử dụng PostgreSQL với các bảng chính: `users`, `products`, `posts`, `orders`, `order_items`, `reviews`.
-Cơ chế **Row Level Security (RLS)** được áp dụng để bảo vệ dữ liệu người dùng.
-
-### 5.2. Luồng hoạt động quan trọng
-- **Kiểm duyệt nội dung:** Mọi bài đăng đều được quét song song bởi 2 AI trước khi lưu vào database.
-- **Xác thực mua hàng:** Người dùng chỉ được viết đánh giá sau khi đơn hàng chuyển sang trạng thái `completed`.
-
-## 6. Đánh giá và Kiểm thử
-- **Đã kiểm thử:** Chức năng đăng nhập, đăng bài, giỏ hàng, và các ca chặn nội dung độc hại.
-- **Hiệu năng:** Ứng dụng hoạt động mượt mà, load media nhanh nhờ cơ chế Caching của Coil và Ktor.
-- **Đánh giá UX:** Giao diện trực quan, luồng mua hàng ngắn gọn (3 bước).
-
-## 7. Kết luận và Hướng phát triển
-Dự án SmartPick đã hoàn thiện các mục tiêu đề ra ban đầu, tích hợp thành công AI vào thực tế nghiệp vụ.
-**Hướng phát triển:**
-- Tích hợp thanh toán điện tử (Momo/VNPay).
-- Hệ thống gợi ý sản phẩm thông minh.
-- Phiên bản iOS sử dụng Kotlin Multiplatform.
+### 3.3. API Design
+Hệ thống sử dụng cơ chế RESTful tự động từ Supabase:
+- `GET /rest/v1/posts`: Lấy bảng tin theo thời gian thực.
+- `POST /rest/v1/rpc/toggle_like`: Xử lý logic Like bài viết.
+- `POST /rest/v1/orders`: Tạo đơn hàng và trừ kho tự động.
 
 ---
-*SmartPick Team - 2024*
+
+## Chương 4: Đánh giá và kiểm thử
+
+### 4.1. Chiến lược kiểm thử
+Dự án thực hiện Unit Test toàn diện cho tầng ViewModel và Service bằng JUnit 4, MockK và Turbine.
+
+### 4.2. Các kịch bản kiểm thử chính
+1. **Kiểm duyệt AI:** Đăng bài có nội dung độc hại (Text/Image) -> Hệ thống chặn thành công.
+2. **Logic Giỏ hàng:** Tăng số lượng quá tồn kho -> Hiển thị cảnh báo lỗi.
+3. **Optimistic UI:** Like bài viết cập nhật UI ngay lập tức trước khi server phản hồi.
+4. **Tài chính:** Tính toán doanh thu tại Seller Dashboard chính xác theo giá tại thời điểm mua.
+
+### 4.3. Đánh giá hệ thống
+- **Ưu điểm:** Kiến trúc sạch, an toàn nội dung tuyệt đối nhờ AI, trải nghiệm mượt mà.
+- **Hạn chế:** Phụ thuộc vào kết nối Internet và chi phí API AI.
+
+---
+
+## Kết luận
+
+Hệ thống **SmartPick** đã hoàn thiện các chức năng cốt lõi của một nền tảng Social Commerce hiện đại. Việc ứng dụng AI vào kiểm duyệt và tư vấn không chỉ tăng tính an toàn mà còn nâng cao trải nghiệm mua sắm cá nhân hóa. Trong tương lai, hệ thống sẽ mở rộng thêm các phương thức thanh toán điện tử và Livestream bán hàng.
+
+---
+**Nhóm thực hiện dự án SmartPick**
+Cập nhật: 2024

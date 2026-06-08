@@ -1,35 +1,55 @@
 # Chương 2: Công nghệ sử dụng
 
-## 2.1. Danh sách công nghệ và thư viện chính
+Dựa trên phân tích thực tế từ `build.gradle.kts` và cấu trúc mã nguồn của dự án SmartPick, các công nghệ sau đã được áp dụng:
 
-| Nhóm | Công nghệ / Thư viện | Mục đích sử dụng |
-|:---|:---|:---|
-| **Ngôn ngữ** | Kotlin 2.0 | Ngôn ngữ lập trình hiện đại, an toàn và ngắn gọn. |
-| **Giao diện (UI)** | Jetpack Compose | Framework xây dựng giao diện khai báo (Declarative UI). |
-| **Kiến trúc** | MVVM + Clean Architecture | Tách biệt logic, dễ bảo trì và kiểm thử. |
-| **Dependency Injection** | Hilt (Dagger) | Quản lý phụ thuộc tự động, giảm boilerplate code. |
-| **Backend (BaaS)** | Supabase | Database (Postgres), Auth, Storage và Realtime. |
-| **Xử lý mạng** | Ktor & OkHttp | Thực hiện các yêu cầu HTTP tới Supabase và AI API. |
-| **Bất đồng bộ** | Coroutines & Flow | Xử lý các tác vụ tốn thời gian mà không gây treo ứng dụng. |
-| **Trí tuệ nhân tạo (AI)** | Gemini 1.5 Flash | Trợ lý tư vấn sản phẩm và kiểm duyệt văn bản. |
-| **Kiểm duyệt ảnh** | Sightengine API | Nhận diện và chặn các hình ảnh vi phạm chính sách. |
-| **Xử lý Media** | Media3 ExoPlayer & Coil | Phát video và tải/hiển thị hình ảnh tối ưu. |
-| **Định dạng dữ liệu** | Kotlinx Serialization | Chuyển đổi JSON sang Object nhanh chóng. |
+## 2.1. Kiến trúc tổng thể
+- **Kiến trúc ứng dụng:** Mobile Client-Server.
+- **Mô hình phát triển:** Native Android Development.
+- **Pattern:** MVVM (Model-View-ViewModel) kết hợp với các nguyên lý của Clean Architecture (Data, Domain, UI layers).
+- **Cơ chế giao tiếp:** REST API (thông qua Ktor/OkHttp) và Realtime Data (thông qua Supabase Realtime).
 
-## 2.2. Lý do chọn công nghệ
+## 2.2. Frontend (Mobile App)
+- **Ngôn ngữ:** Kotlin 2.0 (JVM 17).
+- **UI Framework:** Jetpack Compose (Declarative UI) với Material Design 3.
+- **Navigation:** Jetpack Navigation Compose (Type-safe routes).
+- **Dependency Injection:** Hilt (Dagger) để quản lý vòng đời của các đối tượng.
+- **Reactive Programming:** Kotlin Coroutines & Flow (StateFlow, SharedFlow).
+- **Image/Video Loading:** Coil (hỗ trợ cả Video Frame decoding).
+- **Media Player:** Media3 ExoPlayer để phát video review.
+- **Local Storage:** Jetpack DataStore (Preferences) để lưu trạng thái người dùng và session.
 
-1.  **Kotlin & Jetpack Compose:** Đây là bộ đôi tiêu chuẩn của Google cho phát triển Android hiện đại. Compose giúp giảm 40% lượng code UI so với XML truyền thống.
-2.  **Supabase:** Cung cấp đầy đủ các tính năng của Firebase nhưng dựa trên PostgreSQL, cho phép truy vấn quan hệ mạnh mẽ và khả năng mở rộng tốt.
-3.  **Hilt:** Giúp việc quản lý các instance của Repository, Client mạng trở nên tập trung, tránh việc khởi tạo thủ công ở nhiều nơi.
-4.  **Gemini AI:** Là một trong những mô hình ngôn ngữ lớn (LLM) mạnh nhất hiện nay, có tốc độ phản hồi nhanh (phiên bản Flash) phù hợp cho ứng dụng di động.
+## 2.3. Backend & Database (BaaS)
+- **Nền tảng chính:** **Supabase** (Backend-as-a-Service).
+- **Database:** PostgreSQL (với Postgrest API tự động).
+- **Authentication:** Supabase Auth (hỗ trợ Email/Password và tích hợp Google ID Service).
+- **Storage:** Supabase Storage để lưu trữ hình ảnh và video bài đăng.
+- **Realtime:** Supabase Realtime (WebSockets) để cập nhật thông báo và tương tác tức thì.
 
-## 2.3. Ưu và nhược điểm
+## 2.4. Trí tuệ nhân tạo (External Services)
+- **Generative AI:** Google Gemini AI SDK (`generativeai:0.7.0`).
+    - *Vai trò:* Chatbot tư vấn sản phẩm và kiểm duyệt văn bản.
+- **Content Moderation:** Sightengine API.
+    - *Vai trò:* Nhận diện nội dung hình ảnh/video nhạy cảm, vi phạm chính sách.
 
-### Ưu điểm:
-- **Tốc độ phát triển nhanh:** Nhờ các thư viện mạnh mẽ và framework hiện đại.
-- **Hiệu năng cao:** Ứng dụng mượt mà, tiêu tốn ít tài nguyên nhờ vào sự tối ưu của Compose và Coroutines.
-- **An toàn dữ liệu:** Tận dụng Row Level Security (RLS) của Postgres.
+## 2.5. Cloud Services & DevOps
+- **Push Notification:** Firebase Cloud Messaging (FCM).
+- **Google Services:** Google Play Services Auth (cho Google Sign-In).
 
-### Nhược điểm:
-- **Phụ thuộc bên thứ ba:** Hệ thống phụ thuộc nhiều vào các API Key và sự ổn định của Supabase/AI Services.
-- **Yêu cầu kết nối mạng:** Hầu hết các tính năng AI và Social đều cần internet để hoạt động.
+## 2.6. Testing & Quality Assurance
+- **Unit Testing:** JUnit 4, MockK.
+- **Flow Testing:** Turbine.
+- **Dependency Injection Testing:** Hilt Testing.
+- **Mocking Web Server:** OkHttp MockWebServer (cho network testing).
+
+## 2.7. Bảng tổng hợp các thư viện quan trọng
+
+| Thư viện | Vai trò | Lý do lựa chọn |
+| :--- | :--- | :--- |
+| `io.github.jan-tennert.supabase` | Core SDK | Đồng bộ hóa dữ liệu và xác thực nhanh chóng. |
+| `io.ktor:ktor-client` | Network Engine | Nhẹ, hiệu năng cao và tương thích tốt với Kotlin Multiplatform. |
+| `androidx.compose.material3` | Giao diện | Cung cấp các thành phần UI hiện đại, chuẩn Google. |
+| `com.google.ai.client.generativeai` | AI Integration | Tận dụng sức mạnh của mô hình Gemini 1.5 Flash (nhanh và rẻ). |
+| `org.jetbrains.kotlinx:kotlinx-serialization` | JSON Parsing | Type-safe, tích hợp sâu với ngôn ngữ Kotlin. |
+
+## 2.8. Kết luận chương
+Hệ thống tận dụng các công nghệ tiên tiến nhất trong hệ sinh thái Android hiện nay. Việc sử dụng Supabase giúp giảm tải việc xây dựng Server truyền thống, trong khi Jetpack Compose và Hilt đảm bảo mã nguồn dễ bảo trì và mở rộng trong tương lai.
