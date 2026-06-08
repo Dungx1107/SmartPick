@@ -94,7 +94,10 @@ fun PostDetailScreen(
         comments = comments,
         isCommentLoading = isCommentLoading,
         replyingTo = replyingTo,
-        onBackClick = onBackClick,
+        onBackClick = {
+            feedViewModel.refreshFeedSilently()
+            onBackClick()
+        },
         onReactionClick = { postId, reactionType ->
             feedViewModel.toggleReaction(
                 postId,
@@ -215,7 +218,9 @@ fun PostDetailContent(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = {
+                        onBackClick()
+                    }) {
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = null

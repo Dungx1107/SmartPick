@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.example.smartpick.core.data.dto.PostDto
+import com.example.smartpick.core.data.dto.PostProductInsertDto
 import com.example.smartpick.core.data.dto.ProductDto
 import com.example.smartpick.core.data.mapper.toDomain
 import com.example.smartpick.core.data.mapper.toDto
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
+import java.lang.reflect.Array.set
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -107,24 +109,22 @@ class PostCreationRepository @Inject constructor(
         context: Context
     ) = withContext(Dispatchers.IO) {
         try {
-
-
-            if (content.isNotBlank()) {
-                val isContentSafe = moderationService.checkTextContent(content)
-                if (!isContentSafe) {
-                    // Sử dụng ModerationException để đồng bộ với file ModerationService của bạn
-                    throw ModerationException("Nội dung bài viết chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
-                }
-            }
-
-            productData?.let {
-                if (it.name.isNotBlank()) {
-                    val isProductNameSafe = moderationService.checkTextContent(it.name)
-                    if (!isProductNameSafe) {
-                        throw ModerationException("Tên sản phẩm chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
-                    }
-                }
-            }
+//            if (content.isNotBlank()) {
+//                val isContentSafe = moderationService.checkTextContent(content)
+//                if (!isContentSafe) {
+//                    // Sử dụng ModerationException để đồng bộ với file ModerationService của bạn
+//                    throw ModerationException("Nội dung bài viết chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
+//                }
+//            }
+//
+//            productData?.let {
+//                if (it.name.isNotBlank()) {
+//                    val isProductNameSafe = moderationService.checkTextContent(it.name)
+//                    if (!isProductNameSafe) {
+//                        throw ModerationException("Tên sản phẩm chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
+//                    }
+//                }
+//            }
 
 
             val currentTimestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
@@ -135,41 +135,50 @@ class PostCreationRepository @Inject constructor(
                 mediaUris.map { uri -> async { uploadMedia(uri, context) } }.awaitAll().filter { it.isNotEmpty() }
             }
 
-
-
             val imageUrls = uploadedUrls.filter { url ->
                 !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov")
             }
 
-            if (imageUrls.isNotEmpty()) {
-                val imageSafetyResults = coroutineScope {
-                    imageUrls.map { url ->
-                        async { moderationService.checkImageContent(url) }
-                    }.awaitAll()
-                }
-
-                if (imageSafetyResults.contains(false)) {
-                    throw ModerationException("Hình ảnh chứa nội dung nhạy cảm hoặc bạo lực. Vui lòng chọn ảnh khác.")
-                }
-            }
+//            if (imageUrls.isNotEmpty()) {
+//                val imageSafetyResults = coroutineScope {
+//                    imageUrls.map { url ->
+//                        async { moderationService.checkImageContent(url) }
+//                    }.awaitAll()
+//                }
+//
+//                if (imageSafetyResults.contains(false)) {
+//                    throw ModerationException("Hình ảnh chứa nội dung nhạy cảm hoặc bạo lực. Vui lòng chọn ảnh khác.")
+//                }
+//            }
 
 
             var finalProductId: String? = null
 
             productData?.let {
-                val newProduct = it.copy(
-                    id = UUID.randomUUID().toString(),
+                val generatedProductId = UUID.randomUUID().toString()
+
+                // Phân tách danh sách ảnh và video từ mảng dữ liệu đã upload thành công
+                val productImages = uploadedUrls.filter { url -> !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov") }
+                val productVideo = uploadedUrls.find { url -> url.lowercase().contains(".mp4") || url.lowercase().contains(".mov") }
+
+                // Khởi tạo đối tượng DTO thô, không chứa cấu hình quan hệ phức tạp
+                val rawProductData = PostProductInsertDto(
+                    id = generatedProductId,
                     ownerId = userId,
-                    imageUrls = uploadedUrls.filter { url -> !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov") },
-                    videoUrl = uploadedUrls.find { url -> url.lowercase().contains(".mp4") || url.lowercase().contains(".mov") }
+                    name = it.name,
+                    brand = it.brand,
+                    category = it.category,
+                    price = it.price,
+                    stock = it.stock,
+                    imageUrls = productImages,
+                    videoUrl = productVideo
                 )
 
-                val savedProduct = supabase.postgrest[TABLE_PRODUCTS]
-                    .insert(newProduct.toDto()) { select() }
-                    .decodeSingle<ProductDto>()
-                    .toDomain()
+                // Thực hiện insert đối tượng thô chuẩn xác vào bảng sản phẩm
+                supabase.postgrest[TABLE_PRODUCTS].insert(rawProductData)
 
-                finalProductId = savedProduct.id
+                // Gán trực tiếp ID vừa tạo ở local cho bài viết
+                finalProductId = generatedProductId
             }
 
             val newPost = Post(

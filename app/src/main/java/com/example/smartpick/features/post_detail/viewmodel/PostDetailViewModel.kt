@@ -75,33 +75,27 @@ class PostDetailViewModel @Inject constructor(
                  * - Cập nhật UI state
                  */
                 if (response != null) {
-
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-
                             post = Post(
                                 id = response.id,
                                 userId = response.user.id,
                                 content = response.content,
                                 mediaUrls = response.mediaUrls,
-                                createdAt = response.createdAt
-                            ),
+                                createdAt = response.createdAt,
 
+                                // ÁNH XẠ CHÍNH XÁC: Chuyển đổi các trường tương tác từ DTO sang Model Post
+                                reactionCount = response.likesCount,
+                                currentUserReaction = if (response.isLiked) com.example.smartpick.core.model.ReactionType.LIKE else null,
+                                reactionBreakdown = if (response.isLiked) mapOf(com.example.smartpick.core.model.ReactionType.LIKE to response.likesCount) else emptyMap(),
+                                sharedPostId = response.sharedPostId
+                            ),
                             user = response.user.toDomain(),
-                            product = response.product?.toDomain(),
-                            /**
-                             * Có thể bổ sung:
-                             * - likesCount
-                             * - commentsCount
-                             * nếu cần hiển thị tổng.
-                             */
-//                            likesCount = response.likesCount,
-//                            commentsCount = response.commentsCount
+                            product = response.product?.toDomain()
                         )
                     }
-
-                } else {
+                }else {
                     /* Không tìm thấy bài viết. */
                     _uiState.update {
                         it.copy(

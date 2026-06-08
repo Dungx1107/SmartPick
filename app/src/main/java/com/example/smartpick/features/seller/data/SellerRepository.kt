@@ -63,12 +63,11 @@ class SellerRepository @Inject constructor(
                 .select(columns = Columns.raw("*, products!inner(*), orders!inner(*)")) {
                     filter {
                         eq("products.owner_id", sellerId)
-                        eq("orders.status", "completed")
+//                        eq("orders.status", "completed")
                     }
                     order("created_at", Order.DESCENDING)
                 }
 
-            // KHẮC PHỤC LỖI: Thay .body bằng .data để lấy chính xác chuỗi JSON thô từ Supabase Client
             val rawJson = response.data
             Log.d("SELLER_DEBUG", "JSON thô từ Database: $rawJson")
 

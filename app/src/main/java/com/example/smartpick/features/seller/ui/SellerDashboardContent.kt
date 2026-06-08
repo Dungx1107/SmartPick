@@ -42,7 +42,7 @@ fun SellerDashboardContent(
     modifier: Modifier = Modifier,
     initialTabIndex: Int = 0
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember { mutableIntStateOf(initialTabIndex) }
     val orderCountLabel = remember(orders) { "Đơn hàng đã bán (${orders.size})" }
 
     Scaffold(

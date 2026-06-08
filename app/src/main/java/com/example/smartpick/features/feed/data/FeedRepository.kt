@@ -1,6 +1,7 @@
 package com.example.smartpick.features.feed.data
 
 import android.util.Log
+import com.example.smartpick.core.data.dto.NotificationInsertDto
 import com.example.smartpick.core.data.dto.PostReactionDto
 import com.example.smartpick.core.data.dto.PostReactionInsertDto
 import com.example.smartpick.core.data.dto.ProductDto
@@ -165,18 +166,22 @@ class FeedRepository @Inject constructor(
             val existingList = supabase.postgrest[TABLE_REACTIONS].select { filter { eq("post_id", postId); eq("user_id", userId) } }.decodeList<PostReactionDto>()
             val existing = existingList.firstOrNull()
 
+            var shouldSendNotification = false
             if (existing != null) {
                 if (existing.reactionType == reactionType.name) {
                     supabase.postgrest[TABLE_REACTIONS].delete { filter { eq("id", existing.id!!) } }
                 } else {
                     supabase.postgrest[TABLE_REACTIONS].update(mapOf("reaction_type" to reactionType.name)) { filter { eq("id", existing.id!!) } }
+                    shouldSendNotification = true // Người dùng đổi loại cảm xúc (ví dụ từ Like sang Tym)
                 }
                 if (existingList.size > 1) {
                     existingList.drop(1).forEach { dup -> supabase.postgrest[TABLE_REACTIONS].delete { filter { eq("id", dup.id!!) } } }
                 }
             } else {
                 supabase.postgrest[TABLE_REACTIONS].insert(PostReactionInsertDto(postId, userId, reactionType.name))
+                shouldSendNotification = true // Thả cảm xúc mới hoàn toàn
             }
+
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
     }
@@ -185,6 +190,7 @@ class FeedRepository @Inject constructor(
         try {
             val sharedPostData = mapOf("user_id" to currentUserId, "shared_post_id" to originalPostId, "content" to caption)
             supabase.postgrest[TABLE_POSTS].insert(sharedPostData)
+
             Result.success(Unit)
         } catch (e: Exception) { Result.failure(e) }
     }
@@ -217,7 +223,8 @@ class FeedRepository @Inject constructor(
         }
     }
 
-    suspend fun getPostById(postId: String): Result<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
+    suspend fun getPostById(postId: String):
+            Result<Triple<Post, User, Product?>> = withContext(Dispatchers.IO) {
         try {
             val response = supabase.postgrest[TABLE_POSTS]
                 .select(columns = Columns.raw("*, users(*), products(*), post_reactions(*)")) {
@@ -233,11 +240,8 @@ class FeedRepository @Inject constructor(
     suspend fun uploadMedia(context: android.content.Context, uri: android.net.Uri): String? = withContext(Dispatchers.IO) {
         try {
             val bytes = context.contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: return@withContext null
-
-            // FIX VIDEO: Tự động phát hiện MIME Type để gắn đuôi file chuẩn xác
             val mimeType = context.contentResolver.getType(uri) ?: ""
             val extension = if (mimeType.startsWith("video/")) ".mp4" else ".jpg"
-
             val fileName = "${java.util.UUID.randomUUID()}$extension"
             val bucket = supabase.storage.from("post_media")
             bucket.upload(fileName, bytes)
@@ -281,4 +285,5 @@ class FeedRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
 }
