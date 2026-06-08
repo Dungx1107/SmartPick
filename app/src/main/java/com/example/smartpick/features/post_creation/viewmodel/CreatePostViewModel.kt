@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartpick.core.model.Product
+import com.example.smartpick.core.network.ModerationException
 import com.example.smartpick.features.auth.data.AuthRepository
 import com.example.smartpick.features.post_creation.data.PostCreationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,8 +39,6 @@ class CreatePostViewModel @Inject constructor(
         product: Product?,
         context: Context
     ) {
-
-
         viewModelScope.launch {
 
             /* Chuyển UI sang trạng thái Loading. */
@@ -89,6 +88,15 @@ class CreatePostViewModel @Inject constructor(
                 /* Chuyển UI sang trạng thái Success. */
                 _uiState.value = CreatePostUiState.Success
 
+            }catch (e: ModerationException) {
+                /**
+                 * Bắt riêng biệt ngoại lệ kiểm duyệt từ LM Studio.
+                 * Đẩy thông điệp cảnh báo từ hệ thống cục bộ thẳng vào State Error để StateOverlay hiển thị.
+                 */
+                Log.w("POST_CREATION_MODERATION", "Nội dung văn bản bị LM Studio chặn: ${e.message}")
+                _uiState.value = CreatePostUiState.Error(
+                    e.message ?: "Nội dung chứa từ ngữ vi phạm tiêu chuẩn cộng đồng."
+                )
             } catch (e: Exception) {
 
                 /**

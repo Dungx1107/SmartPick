@@ -63,7 +63,6 @@ class SellerRepository @Inject constructor(
                 .select(columns = Columns.raw("*, products!inner(*), orders!inner(*)")) {
                     filter {
                         eq("products.owner_id", sellerId)
-//                        eq("orders.status", "completed")
                     }
                     order("created_at", Order.DESCENDING)
                 }

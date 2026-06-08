@@ -43,7 +43,7 @@ fun CreatePostScreen(
         onSubmit = { content, mediaUris, product ->
             viewModel.createPost(content, mediaUris, product, context)
         },
-        onDismissError = { viewModel.clearError() } // Kết nối lệnh tắt Popup
+        onDismissError = { viewModel.clearError() } // Đã kết nối lệnh giải phóng trạng thái lỗi về Idle
     )
 }
 
@@ -131,7 +131,7 @@ fun CreatePostContent(
                     }
                 }
             }
-            // Truyền sự kiện vào StateOverlay để tắt Popup
+            // Component hiển thị Dialog/Popup lỗi vi phạm tiêu chuẩn cộng đồng từ LM Studio
             StateOverlay(uiState, onDismissError)
         }
     }

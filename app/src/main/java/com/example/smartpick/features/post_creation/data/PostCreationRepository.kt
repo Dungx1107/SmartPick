@@ -40,7 +40,8 @@ import javax.inject.Singleton
 @Singleton
 class PostCreationRepository @Inject constructor(
     private val supabase: SupabaseClient,
-    private val moderationService: ModerationService // FIX: Bơm ModerationService vào Repository
+    private val moderationService: ModerationService,// FIX: Bơm ModerationService vào Repository
+    private val lmStudioModerator: LmStudioModerator
 ) {
 
     private fun uriToFlow(context: Context, uri: Uri) = flow {
@@ -70,7 +71,8 @@ class PostCreationRepository @Inject constructor(
             val contentResolver = context.contentResolver
             val mimeType = contentResolver.getType(uri) ?: "application/octet-stream"
 
-            var extension = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
+            var extension =
+                android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mimeType)
             if (extension.isNullOrEmpty()) {
                 extension = if (mimeType.startsWith("video/")) "mp4" else "jpg"
             }
@@ -125,31 +127,33 @@ class PostCreationRepository @Inject constructor(
 //                    }
 //                }
 //            }
+            lmStudioModerator.validateText(content = content, productName = productData?.name)
 
-
-            val currentTimestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
-                timeZone = TimeZone.getTimeZone("UTC")
-            }.format(Date())
+            val currentTimestamp =
+                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }.format(Date())
 
             val uploadedUrls = coroutineScope {
-                mediaUris.map { uri -> async { uploadMedia(uri, context) } }.awaitAll().filter { it.isNotEmpty() }
+                mediaUris.map { uri -> async { uploadMedia(uri, context) } }.awaitAll()
+                    .filter { it.isNotEmpty() }
             }
 
             val imageUrls = uploadedUrls.filter { url ->
                 !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov")
             }
 
-//            if (imageUrls.isNotEmpty()) {
-//                val imageSafetyResults = coroutineScope {
-//                    imageUrls.map { url ->
-//                        async { moderationService.checkImageContent(url) }
-//                    }.awaitAll()
-//                }
-//
-//                if (imageSafetyResults.contains(false)) {
-//                    throw ModerationException("Hình ảnh chứa nội dung nhạy cảm hoặc bạo lực. Vui lòng chọn ảnh khác.")
-//                }
-//            }
+            if (imageUrls.isNotEmpty()) {
+                val imageSafetyResults = coroutineScope {
+                    imageUrls.map { url ->
+                        async { moderationService.checkImageContent(url) }
+                    }.awaitAll()
+                }
+
+                if (imageSafetyResults.contains(false)) {
+                    throw ModerationException("Hình ảnh chứa nội dung nhạy cảm hoặc bạo lực. Vui lòng chọn ảnh khác.")
+                }
+            }
 
 
             var finalProductId: String? = null
@@ -158,8 +162,12 @@ class PostCreationRepository @Inject constructor(
                 val generatedProductId = UUID.randomUUID().toString()
 
                 // Phân tách danh sách ảnh và video từ mảng dữ liệu đã upload thành công
-                val productImages = uploadedUrls.filter { url -> !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov") }
-                val productVideo = uploadedUrls.find { url -> url.lowercase().contains(".mp4") || url.lowercase().contains(".mov") }
+                val productImages = uploadedUrls.filter { url ->
+                    !url.lowercase().contains(".mp4") && !url.lowercase().contains(".mov")
+                }
+                val productVideo = uploadedUrls.find { url ->
+                    url.lowercase().contains(".mp4") || url.lowercase().contains(".mov")
+                }
 
                 // Khởi tạo đối tượng DTO thô, không chứa cấu hình quan hệ phức tạp
                 val rawProductData = PostProductInsertDto(
