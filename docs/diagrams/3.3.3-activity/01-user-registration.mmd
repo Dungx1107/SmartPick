@@ -1,0 +1,20 @@
+flowchart TD
+    Start([Bắt đầu đăng ký]) --> Input[Nhập Email, Mật khẩu, Tên, Username, Số điện thoại]
+    Input --> Validate{Dữ liệu hợp lệ?}
+    
+    Validate -- No --> ErrorUI[Hiển thị lỗi nhập liệu trên màn hình] --> Input
+    Validate -- Yes --> CheckAvail[Gọi checkAvailability RPC]
+    
+    CheckAvail --> CheckResponse{Username hoặc Email trùng?}
+    CheckResponse -- Trùng --> ErrorAvail[Báo lỗi: Email/Username đã tồn tại] --> Input
+    CheckResponse -- Không --> CallSignUp[Gọi signUpManual của AuthRepository]
+    
+    CallSignUp --> RunSupabase[Gửi thông tin đăng ký lên Supabase Auth]
+    RunSupabase --> CheckSignUp{Đăng ký thành công?}
+    
+    CheckSignUp -- Thất bại (Lỗi hệ thống/mạng) --> CatchError[Bắt lỗi, ánh xạ thông báo lỗi dễ hiểu]
+    CatchError --> ErrorAlert[Hiển thị thông báo lỗi lên UI] --> Input
+    
+    CheckSignUp -- Thành công --> SendWelcome[Gọi EmailHelper gửi email Welcome]
+    SendWelcome --> SuccessUI[Hiển thị Toast đăng ký thành công]
+    SuccessUI --> End([Kết thúc - Yêu cầu xác nhận Email])

@@ -1,0 +1,14 @@
+flowchart TD
+    Start([Bắt đầu quản lý đơn hàng đã bán]) --> OpenDashboard[Người bán mở Dashboard]
+    OpenDashboard --> FetchSoldOrders[Gọi getSoldOrders từ SellerRepository]
+    
+    FetchSoldOrders --> QueryDb[Truy vấn DB lấy các order_items liên kết với sản phẩm của người bán]
+    QueryDb --> CheckSuccess{Truy vấn DB thành công?}
+    
+    CheckSuccess -- No --> ShowError[Hiển thị lỗi tải dữ liệu đơn hàng đã bán] --> EndFail([Kết thúc])
+    CheckSuccess -- Yes --> RecvList[Nhận danh sách SoldOrderItemDto]
+    
+    RecvList --> CalcMetrics[Tính toán số liệu: Tổng doanh thu, Số sản phẩm đã bán, Số đơn hàng]
+    CalcMetrics --> UpdateState[Cập nhật UI State với danh sách và thống kê]
+    UpdateState --> RenderUI[Hiển thị danh sách sản phẩm đã bán và trạng thái đơn hàng tương ứng]
+    RenderUI --> End([Kết thúc])

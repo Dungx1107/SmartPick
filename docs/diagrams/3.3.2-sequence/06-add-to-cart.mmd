@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as ProductDetailScreen / HomeScreen
+    participant VM as ProductDetailViewModel / HomeViewModel
+    participant Repo as CartRepository
+    participant DB as Supabase Database (cart_items)
+
+    User->>UI: Click nút "Thêm vào giỏ hàng"
+    UI->>VM: addToCart(productId, quantity)
+    activate VM
+    VM->>Repo: addToCart(userId, productId, postId)
+    activate Repo
+    Repo->>DB: select existing cart item (user_id & product_id)
+    activate DB
+    DB-->>Repo: Trả về CartItemDto?
+    
+    alt Nếu đã tồn tại trong giỏ hàng
+        Repo->>DB: update quantity = quantity + 1, post_id = cleanPostId
+        DB-->>Repo: Cập nhật thành công
+    else Nếu chưa tồn tại
+        Repo->>DB: insert new cart_item (user_id, product_id, quantity=1, post_id)
+        DB-->>Repo: Chèn thành công
+    end
+    
+    Repo->>Repo: fetchCartItems(userId) (Lấy lại danh sách mới nhất)
+    Repo->>DB: select list of cart_items with product details
+    DB-->>Repo: Trả về List<CartItemDto>
+    deactivate DB
+    Repo-->>Repo: Cập nhật _cartItemsFlow.value = items (StateFlow)
+    
+    Repo-->>VM: Trả về Result.success(Unit)
+    deactivate Repo
+    VM-->>UI: Cập nhật trạng thái thành công
+    deactivate VM
+    UI->>User: Hiển thị Toast "Đã thêm vào giỏ hàng"

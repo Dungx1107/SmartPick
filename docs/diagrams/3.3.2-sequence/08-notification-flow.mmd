@@ -1,0 +1,61 @@
+sequenceDiagram
+    autonumber
+    actor User as Người nhận thông báo
+    participant UI as NotificationsScreen
+    participant VM as NotificationViewModel
+    participant Repo as NotificationRepository
+    participant RT as Supabase Realtime Engine
+    participant DB as Supabase Database (notifications)
+    participant FCMService as SmartPickFirebaseMessagingService
+    participant FCMServer as Google FCM Server
+
+    %% 1. Thiết lập lắng nghe Realtime
+    User->>UI: Mở màn hình Thông báo
+    UI->>VM: loadNotifications() / observe
+    activate VM
+    VM->>Repo: observeNotifications(userId)
+    activate Repo
+    Repo->>Repo: Khởi tạo Channel ("notifications_userId")
+    
+    %% Nạp lần đầu
+    Repo->>DB: Lấy dữ liệu lần đầu (Initial fetch)
+    activate DB
+    DB-->>Repo: List<NotificationDto>
+    Repo->>Repo: map { toDomain() }
+    Repo-->>VM: Phát dữ liệu đầu tiên (emit)
+    VM-->>UI: Cập nhật StateFlow hiển thị danh sách ban đầu
+    UI->>User: Hiển thị các thông báo hiện tại
+    
+    %% Đăng ký Realtime
+    Repo->>RT: channel.subscribe()
+    activate RT
+    deactivate Repo
+    deactivate VM
+
+    %% 2. Sự kiện thay đổi Database (ví dụ có lượt thích mới từ người dùng khác)
+    note over DB, RT: Sự kiện phát sinh bất đồng bộ
+    DB-->>RT: Table Change (INSERT, UPDATE, hoặc DELETE)
+    RT-->>Repo: Nhận sự kiện thay đổi qua WebSocket
+    activate Repo
+    Repo->>DB: Fetch danh sách thông báo mới nhất
+    DB-->>Repo: Trả về List<NotificationDto> mới
+    deactivate DB
+    Repo->>Repo: map { toDomain() }
+    Repo-->>VM: Phát danh sách cập nhật (emit)
+    activate VM
+    VM-->>UI: Cập nhật StateFlow hiển thị danh sách mới
+    deactivate VM
+    UI->>User: Danh sách thông báo tự động cập nhật thời gian thực
+    deactivate RT
+    deactivate Repo
+
+    %% 3. Đẩy thông báo FCM
+    note over DB, FCMServer: Tiến trình gửi Push Notification
+    DB->>FCMServer: Trigger gửi FCM (từ send-fcm Edge Function)
+    activate FCMServer
+    FCMServer-->>FCMService: Gửi gói tin Push qua Google Play Services
+    activate FCMService
+    FCMService->>FCMService: Hiện thông báo trên thanh Status Bar (Android Notification)
+    FCMService-->>User: Đổ chuông / Rung & Hiển thị popup tin nhắn
+    deactivate FCMService
+    deactivate FCMServer

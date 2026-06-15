@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng A
+    participant UI as CommentsScreen
+    participant VM as CommentViewModel
+    participant Repo as CommentRepository
+    participant DB as Supabase Database
+    participant NotifRepo as NotificationRepository
+    participant EdgeFunc as Supabase Edge Function (send-fcm)
+    participant Receiver as Người dùng B (Chủ bài viết)
+
+    User->>UI: Nhập bình luận & nhấn gửi
+    UI->>VM: sendComment(postId, userId, content, postOwnerId, username)
+    activate VM
+    VM->>VM: Đặt _isSending = true
+    VM->>Repo: insertComment(postId, userId, receiverId, content, parentId)
+    activate Repo
+    Repo->>DB: insert comment to TABLE_COMMENTS
+    activate DB
+    DB-->>Repo: Trả về comment ID
+    deactivate DB
+    Repo-->>VM: Trả về comment ID thành công
+    deactivate Repo
+
+    VM->>VM: Cập nhật danh sách _comments.value cục bộ (Thêm comment mới)
+    VM-->>UI: LiveData/StateFlow cập nhật danh sách
+    UI->>User: Hiển thị bình luận mới ngay lập tức
+
+    %% Gửi thông báo Push Notification
+    rect rgb(255, 248, 220)
+        note over VM, Receiver: Tiến trình gửi thông báo đẩy ngầm
+        VM->>NotifRepo: triggerPushNotification(receiverId, title, body, type, postId, targetId)
+        activate NotifRepo
+        NotifRepo->>EdgeFunc: invoke("send-fcm", payload)
+        activate EdgeFunc
+        EdgeFunc-->>Receiver: Đẩy tin nhắn qua Google FCM (Firebase Cloud Messaging)
+        EdgeFunc-->>NotifRepo: Hoàn thành
+        deactivate EdgeFunc
+        NotifRepo-->>VM: Hoàn thành
+        deactivate NotifRepo
+    end
+    
+    VM->>VM: Đặt _isSending = false
+    deactivate VM

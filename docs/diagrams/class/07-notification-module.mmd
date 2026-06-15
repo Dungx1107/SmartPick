@@ -1,0 +1,53 @@
+classDiagram
+    class NotificationsScreen {
+        <<Compose UI>>
+        +viewModel: NotificationViewModel
+        +onNotificationClick(notification: Notification)
+    }
+
+    class NotificationViewModel {
+        <<HiltViewModel>>
+        -repository: NotificationRepository
+        -authRepository: AuthRepository
+        +_notifications: MutableStateFlow
+        +notifications: StateFlow
+        +loadNotifications() Unit
+        +markAsRead(notificationId: String) Unit
+    }
+
+    class NotificationRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        +observeNotifications(userId: String) Flow
+        +sendNotification(notification: Notification) Result
+        +markAsRead(notificationId: String) Unit
+        +upsertPushToken(token: String, userId: String) Unit
+        +triggerPushNotification(receiverId: String, title: String, body: String, type: String, postId: String?, targetId: String?) Unit
+    }
+
+    class Notification {
+        <<Domain Model>>
+        +id: String
+        +receiverId: String
+        +senderId: String
+        +type: String
+        +title: String
+        +content: String
+        +targetId: String?
+        +postId: String?
+        +createdAt: String
+        +isRead: Boolean
+    }
+
+    class SmartPickFirebaseMessagingService {
+        <<Service>>
+        -authRepository: AuthRepository
+        -notificationRepository: NotificationRepository
+        +onNewToken(token: String) Unit
+        +onMessageReceived(message: RemoteMessage) Unit
+    }
+
+    NotificationsScreen --> NotificationViewModel : Tương tác
+    NotificationViewModel --> NotificationRepository : Gọi lắng nghe & cập nhật
+    NotificationRepository ..> Notification : Quản lý thực thể
+    SmartPickFirebaseMessagingService --> NotificationRepository : Cập nhật token đẩy

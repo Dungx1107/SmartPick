@@ -1,0 +1,44 @@
+classDiagram
+    class ModerationService {
+        <<Singleton>>
+        -client: OkHttpClient
+        -geminiApiKey: String
+        -sightengineUser: String
+        -sightengineSecret: String
+        +checkTextContent(text: String) Boolean
+        +checkImageContent(imageUrl: String) Boolean
+    }
+
+    class LmStudioModerator {
+        <<Singleton>>
+        -client: OkHttpClient
+        -lmStudioUrl: String
+        +validateText(content: String, productName: String?) Unit
+    }
+
+    class ModerationException {
+        <<Exception>>
+        +message: String
+    }
+
+    class PostCreationRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        -moderationService: ModerationService
+        -lmStudioModerator: LmStudioModerator
+        +createFullPost(userId: String, content: String, mediaUris: List, productData: Product?, context: Context) Unit
+    }
+
+    class CreatePostViewModel {
+        <<HiltViewModel>>
+        -repository: PostCreationRepository
+        +createPost(content: String, mediaUris: List, product: Product?) Unit
+    }
+
+    PostCreationRepository --> LmStudioModerator : Sử dụng
+    PostCreationRepository --> ModerationService : Sử dụng
+    LmStudioModerator ..> ModerationException : Ném ra lỗi
+    ModerationService ..> ModerationException : Ném ra lỗi
+    PostCreationRepository ..> ModerationException : Truyền lỗi
+    CreatePostViewModel --> PostCreationRepository : Gọi tạo bài
+    CreatePostViewModel ..> ModerationException : Bắt & xử lý hiển thị cảnh báo

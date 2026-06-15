@@ -1,0 +1,63 @@
+classDiagram
+    class LoginScreen {
+        <<Compose UI>>
+        +viewModel: AuthViewModel
+        +onGoogleLoginClick()
+        +onManualLoginClick()
+    }
+
+    class SignUpScreen {
+        <<Compose UI>>
+        +viewModel: AuthViewModel
+        +onSignUpClick()
+    }
+
+    class AuthViewModel {
+        <<HiltViewModel>>
+        -authRepository: AuthRepository
+        +authState: StateFlow
+        +isLoading: StateFlow
+        +loginManual(email: String, pass: String) Unit
+        +loginWithGoogle(googleIdToken: String) Unit
+        +signUpManual(email: String, pass: String, name: String, user: String, phone: String) Unit
+    }
+
+    class AuthRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        +sessionStatus: Flow
+        +getCurrentUser() User?
+        +signInWithGoogleAndSaveUser(googleIdToken: String) User?
+        +signUpManual(email: String, pass: String, name: String, user: String, phone: String) Result
+        +signInManual(email: String, pass: String) Result
+        +checkAvailability(username: String, email: String) Result
+        +signOut() Unit
+    }
+
+    class GoogleAuthHelper {
+        <<Helper>>
+        +performGoogleSignIn(context: Context, scope: CoroutineScope, webClientId: String, onTokenReceived: Function, onError: Function) Unit
+    }
+
+    class User {
+        <<Domain Model>>
+        +id: String
+        +email: String?
+        +fullName: String?
+        +avatarUrl: String?
+        +username: String?
+        +phoneNumber: String?
+    }
+
+    class AvailabilityResponse {
+        <<DTO>>
+        +usernameAvailable: Boolean
+        +emailAvailable: Boolean
+    }
+
+    LoginScreen --> AuthViewModel : Tương tác
+    SignUpScreen --> AuthViewModel : Tương tác
+    AuthViewModel --> AuthRepository : Gọi nghiệp vụ xác thực
+    LoginScreen --> GoogleAuthHelper : Sử dụng trợ giúp
+    AuthRepository ..> User : Trả về thực thể
+    AuthRepository ..> AvailabilityResponse : Kiểm tra trùng lặp

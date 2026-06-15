@@ -1,0 +1,56 @@
+classDiagram
+    class CartScreen {
+        <<Compose UI>>
+        +viewModel: CartViewModel
+        +onCheckout(selectedIds: List)
+    }
+
+    class CartViewModel {
+        <<HiltViewModel>>
+        -cartRepository: CartRepository
+        -authRepository: AuthRepository
+        +_selectedIds: MutableStateFlow
+        +cartItems: StateFlow
+        +totalCartCount: StateFlow
+        +cartError: StateFlow
+        +refreshCart() Unit
+        +toggleSelection(cartItemId: String) Unit
+        +increaseQuantity(item: CartItem) Unit
+        +decreaseQuantity(item: CartItem) Unit
+        +removeItem(cartItemId: String) Unit
+    }
+
+    class CartRepository {
+        <<Singleton>>
+        -postgrest: Postgrest
+        -_cartItemsFlow: MutableStateFlow
+        +cartItemsFlow: StateFlow
+        +fetchCartItems(userId: String) List
+        +addToCart(userId: String, productId: String, postId: String?) Result
+        +updateCartItemQuantity(userId: String, cartItemId: String, newQuantity: Int) Result
+        +clearLocalCart() Unit
+    }
+
+    class CartItem {
+        <<Domain Model>>
+        +id: String?
+        +userId: String
+        +productId: String
+        +quantity: Int
+        +product: Product?
+        +originPostId: String?
+    }
+
+    class Product {
+        <<Domain Model>>
+        +id: String
+        +ownerId: String
+        +name: String
+        +price: Double
+        +stock: Int
+    }
+
+    CartScreen --> CartViewModel : Tương tác
+    CartViewModel --> CartRepository : Gọi nghiệp vụ
+    CartRepository ..> CartItem : Quản lý dòng
+    CartItem --> Product : Liên kết thông tin sản phẩm

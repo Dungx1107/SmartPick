@@ -1,0 +1,72 @@
+flowchart TD
+    %% Tác nhân (Actors)
+    Guest["Khách (Guest)"]
+    Buyer["Người mua (Buyer)"]
+    Seller["Người bán (Seller)"]
+
+    %% Kế thừa tác nhân
+    Buyer --> Guest
+    Seller --> Buyer
+
+    %% Ca sử dụng (Use Cases)
+    subgraph Auth_Profile [Xác thực & Hồ sơ]
+        UC_Auth["Đăng ký / Đăng nhập"]
+        UC_Profile["Quản lý & Chỉnh sửa hồ sơ"]
+    end
+
+    subgraph Feed_Social [Cộng đồng & Tương tác]
+        UC_Feed["Xem bảng tin (Feed)"]
+        UC_Post["Đăng bài viết review"]
+        UC_LikeComment["Thả tim & Bình luận bài viết"]
+        UC_Follow["Theo dõi người dùng"]
+        UC_Search["Tìm kiếm bài viết / sản phẩm"]
+    end
+
+    subgraph ECommerce [Thương mại điện tử]
+        UC_ProductDetail["Xem chi tiết sản phẩm"]
+        UC_Cart["Quản lý giỏ hàng"]
+        UC_Checkout["Thanh toán đơn hàng (Checkout)"]
+        UC_OrderHistory["Xem lịch sử mua hàng"]
+    end
+
+    subgraph AI_Systems [Hệ thống Trí tuệ nhân tạo (AI)]
+        UC_GeminiText["AI Text Moderation (Gemini AI)"]
+        UC_SightengineImg["AI Image Moderation (Sightengine)"]
+        UC_AICurator["Trợ lý ảo AI Curator (Chatbot)"]
+    end
+
+    subgraph Seller_Dashboard [Quản lý bán hàng]
+        UC_PublishProduct["Đăng bán sản phẩm mới"]
+        UC_Inventory["Quản lý tồn kho (Inventory)"]
+        UC_SellerDashboard["Xem Dashboard & Thống kê doanh thu"]
+        UC_SellerOrders["Quản lý đơn hàng đã bán"]
+    end
+
+    %% Mối liên kết giữa Actor và Use Case
+    Guest --> UC_Auth
+    Guest --> UC_Feed
+    Guest --> UC_Search
+    Guest --> UC_ProductDetail
+
+    Buyer --> UC_Profile
+    Buyer --> UC_Post
+    Buyer --> UC_LikeComment
+    Buyer --> UC_Follow
+    Buyer --> UC_Cart
+    Buyer --> UC_Checkout
+    Buyer --> UC_OrderHistory
+    Buyer --> UC_AICurator
+
+    %% Bán hàng
+    Seller --> UC_PublishProduct
+    Seller --> UC_Inventory
+    Seller --> UC_SellerDashboard
+    Seller --> UC_SellerOrders
+
+    %% Quan hệ include / extend
+    UC_Post -.->|"<<include>>"| UC_GeminiText
+    UC_Post -.->|"<<include>>"| UC_SightengineImg
+    UC_LikeComment -.->|"<<include>>"| UC_GeminiText
+    UC_Cart -.->|"<<include>>"| UC_Inventory
+    UC_Checkout -.->|"<<include>>"| UC_Inventory
+    UC_PublishProduct -.->|"<<include>>"| UC_Inventory

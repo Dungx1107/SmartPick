@@ -1,0 +1,35 @@
+flowchart TD
+    Start([Bắt đầu đăng nhập]) --> Choose[Chọn phương thức đăng nhập]
+    
+    %% Đăng nhập thủ công
+    Choose -- Email/Mật khẩu --> InputManual[Nhập Email & Mật khẩu]
+    InputManual --> CheckEmpty{Thông tin trống?}
+    CheckEmpty -- Có --> ErrorEmpty[Báo lỗi: Nhập đầy đủ thông tin] --> InputManual
+    CheckEmpty -- Không --> CallSignInManual[Gọi signInManual]
+    CallSignInManual --> RunManualSupabase[Gửi yêu cầu tới Supabase Auth]
+    
+    RunManualSupabase --> CheckConfirmed{Email đã xác nhận?}
+    CheckConfirmed -- No --> ErrConfirm[Báo lỗi: Xác nhận email trước khi đăng nhập] --> InputManual
+    CheckConfirmed -- Yes --> CheckManualResult{Đăng nhập thành công?}
+    
+    CheckManualResult -- Thất bại --> ErrCredentials[Báo lỗi: Email hoặc mật khẩu không chính xác] --> InputManual
+    CheckManualResult -- Thành công --> SendEmailManual[Gửi email thông báo đăng nhập thủ công]
+    SendEmailManual --> SaveFCMManual[Lấy & lưu FCM Token lên user_push_tokens]
+    SaveFCMManual --> SuccessManual[Chuyển sang HomeScreen] --> End([Kết thúc])
+
+    %% Đăng nhập Google
+    Choose -- Google Sign-In --> RequestGoogle[Gọi performGoogleSignIn]
+    RequestGoogle --> ShowGoogleDialog[Hiển thị hộp thoại chọn tài khoản của CredentialManager]
+    ShowGoogleDialog --> SelectGoogle{Người dùng chọn tài khoản?}
+    
+    SelectGoogle -- Hủy bỏ --> EndCancel([Hủy bỏ đăng nhập])
+    SelectGoogle -- Chọn tài khoản --> GetGoogleToken[Nhận Google ID Token]
+    GetGoogleToken --> CallGoogleSignIn[Gọi signInWithGoogleAndSaveUser]
+    CallGoogleSignIn --> RunGoogleSupabase[Đăng nhập Supabase Auth bằng ID Token]
+    
+    RunGoogleSupabase --> GetMetadata[Trích xuất FullName, Avatar, Email từ metadata]
+    GetMetadata --> QueryUserDb{User đã tồn tại trong DB?}
+    QueryUserDb -- Không --> InsertProfile[Lưu thông tin mới vào bảng users] --> SendWelcome[Gửi email Welcome] --> SaveFCMGoogle
+    QueryUserDb -- Có --> UpdateProfile[Cập nhật thông tin vào bảng users] --> SendLoginGoogle[Gửi email thông báo đăng nhập Google] --> SaveFCMGoogle
+    
+    SaveFCMGoogle[Lấy & lưu FCM Token lên user_push_tokens] --> SuccessGoogle[Chuyển sang HomeScreen] --> End

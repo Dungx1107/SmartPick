@@ -1,0 +1,79 @@
+classDiagram
+    class ProductDetailScreen {
+        <<Compose UI>>
+        +viewModel: ProductDetailViewModel
+        +onAddToCart()
+        +onWriteReview()
+    }
+
+    class ProductDetailViewModel {
+        <<HiltViewModel>>
+        -homeRepository: HomeRepository
+        -reviewRepository: ReviewRepository
+        -cartRepository: CartRepository
+        -authRepository: AuthRepository
+        -_uiState: MutableStateFlow
+        +uiState: StateFlow
+        +loadProductDetail(productId: String) Unit
+        +addToCart(productId: String, quantity: Int) Unit
+    }
+
+    class ProductDetailUiState {
+        <<Data Class>>
+        +product: Product?
+        +reviews: List
+        +relatedPosts: List
+        +isLoading: Boolean
+        +error: String?
+    }
+
+    class HomeRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        +getProductById(id: String) Product?
+        +getProducts() List
+    }
+
+    class ReviewRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        +getProductReviews(productId: String) List
+        +insertReview(review: Review) Result
+    }
+
+    class CartRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        +addToCart(userId: String, productId: String, postId: String?) Result
+    }
+
+    class Product {
+        <<Domain Model>>
+        +id: String
+        +ownerId: String
+        +name: String
+        +brand: String?
+        +category: String?
+        +price: Double
+        +stock: Int
+        +imageUrls: List
+        +videoUrl: String?
+    }
+
+    class Review {
+        <<Domain Model>>
+        +id: String
+        +userId: String
+        +productId: String
+        +rating: Int
+        +content: String
+        +createdAt: String?
+    }
+
+    ProductDetailScreen --> ProductDetailViewModel : Tương tác
+    ProductDetailViewModel --> ProductDetailUiState : Quản lý trạng thái
+    ProductDetailViewModel --> HomeRepository : Gọi chi tiết sản phẩm
+    ProductDetailViewModel --> ReviewRepository : Gọi đánh giá liên quan
+    ProductDetailViewModel --> CartRepository : Thêm vào giỏ hàng
+    ProductDetailUiState --> Product : Chứa thực thể
+    ProductDetailUiState --> Review : Chứa danh sách đánh giá

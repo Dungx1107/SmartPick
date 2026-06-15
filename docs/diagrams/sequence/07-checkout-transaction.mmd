@@ -1,0 +1,61 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng (Buyer)
+    participant UI as CheckoutScreen
+    participant VM as CheckoutViewModel
+    participant Repo as OrderRepository
+    participant DB as Supabase PostgreSQL
+    participant Notif as NotificationRepository
+    participant Seller as Người bán (Seller)
+
+    User->>UI: Điền thông tin giao hàng & nhấn "Thanh toán"
+    UI->>VM: placeOrder(onSuccess, onError)
+    activate VM
+    
+    %% Tầng kiểm tra kho ViewModel (Tier 2)
+    VM->>VM: Kiểm tra tồn kho cục bộ (quantity > product.stock?)
+    alt Nếu hết hàng cục bộ
+        VM-->>UI: onError("Sản phẩm hết hàng / chỉ còn X chiếc!")
+        UI->>User: Hiển thị thông báo hết hàng
+    else Tồn kho hợp lệ cục bộ
+        VM->>VM: Đặt _isProcessing = true
+        VM->>Repo: checkout(userId, cartItems, address, phone, paymentMethod)
+        activate Repo
+        
+        Note right of DB: Bắt đầu Transaction (Phía Database)
+        Repo->>DB: Insert Order Request to orders table
+        activate DB
+        DB-->>Repo: Trả về OrderResponse (orderId)
+        
+        Repo->>DB: Insert Order Items (Bulk) to order_items table
+        
+        %% Database Trigger (Tier 3 Defense)
+        Note right of DB: Database Trigger: Tự động cập nhật products.stock
+        alt Đủ tồn kho (Database Commit)
+            DB-->>Repo: Chèn thành công & Giảm kho
+            
+            %% Luồng thông báo
+            Repo->>Notif: sendOrderNotificationsToOwners(...)
+            activate Notif
+            Notif->>DB: Ghi nhận thông báo cho Buyer & Seller
+            Notif->>DB: Gọi Edge Function send-fcm
+            DB-->>User: [Push notification] Đặt hàng thành công
+            DB-->>Seller: [Push notification] Đơn hàng mới
+            deactivate Notif
+            
+            Repo-->>VM: Trả về Result.success(Unit)
+            VM->>VM: _cartItems.value = emptyList(), nạp lại lịch sử đơn hàng
+            VM->>VM: Đặt _isProcessing = false
+            VM-->>UI: Gọi onSuccess()
+            UI->>User: Điều hướng tới màn hình Thành công
+        else Không đủ tồn kho hoặc Lỗi DB (Database Rollback)
+            DB-->>Repo: Ném lỗi Database Exception (Rollback)
+            deactivate DB
+            Repo-->>VM: Trả về Result.failure(Exception)
+            deactivate Repo
+            VM->>VM: Đặt _isProcessing = false
+            VM-->>UI: Gọi onError(message)
+            deactivate VM
+            UI->>User: Hiển thị lỗi hệ thống / thông báo giao dịch thất bại
+        end
+    end

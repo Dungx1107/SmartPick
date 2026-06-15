@@ -1,0 +1,24 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as LoginScreen
+    participant VM as AuthViewModel
+    participant Repo as AuthRepository
+    participant SB as Supabase Auth
+
+    User->>UI: Nhập email, password & nhấn "Đăng nhập"
+    UI->>VM: login(email, password)
+    activate VM
+    VM->>VM: Cập nhật _isLoading = true
+    VM->>Repo: signInWithEmail(email, password)
+    activate Repo
+    Repo->>SB: signInWith(Email) { password = ... }
+    activate SB
+    SB-->>Repo: Trả về Session / UserInfo
+    deactivate SB
+    Repo-->>VM: Trả về Result.success(Unit)
+    deactivate Repo
+    VM->>VM: Cập nhật _isLoading = false, _authState = Success
+    VM-->>UI: LiveData/StateFlow phát ra trạng thái Success
+    deactivate VM
+    UI->>User: Điều hướng tới HomeScreen

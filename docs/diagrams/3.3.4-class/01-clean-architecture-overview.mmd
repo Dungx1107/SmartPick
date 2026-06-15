@@ -1,0 +1,51 @@
+classDiagram
+    class ComposeScreen {
+        <<Compose UI>>
+        +navController: NavController
+        +viewModel: ViewModel
+    }
+
+    class ViewModel {
+        <<HiltViewModel>>
+        +uiState: StateFlow
+        +viewModelScope: CoroutineScope
+    }
+
+    class DomainModel {
+        <<Domain Entity>>
+        +id: String
+    }
+
+    class DataMapper {
+        <<Utility>>
+        +toDomain() DomainModel
+        +toDto() DTO
+    }
+
+    class Repository {
+        <<Repository>>
+        -supabase: SupabaseClient
+        +fetch() Result
+    }
+
+    class DTO {
+        <<Serializable>>
+        +id: String
+    }
+
+    class SupabaseClient {
+        <<External SDK>>
+        +auth: Auth
+        +postgrest: Postgrest
+        +storage: Storage
+        +realtime: Realtime
+    }
+
+    ComposeScreen --> ViewModel : Quan sát trạng thái UI & Truyền hành động
+    ViewModel --> Repository : Gọi nghiệp vụ qua Coroutines/Flow
+    ViewModel --> DomainModel : Sử dụng để hiển thị dữ liệu lên UI
+    Repository --> SupabaseClient : Tương tác với backend/network
+    Repository --> DTO : Nhận dữ liệu JSON thô giải mã
+    Repository --> DataMapper : Chuyển đổi DTO thành Domain Model
+    DataMapper --> DomainModel : Khởi tạo thực thể miền
+    DataMapper --> DTO : Khởi tạo thực thể mạng

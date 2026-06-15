@@ -1,0 +1,39 @@
+flowchart TD
+    Start([Bắt đầu đăng bài viết]) --> Input[Nhập nội dung bài viết, chọn ảnh/video & điền sản phẩm nếu có]
+    Input --> ValidateFields{Nội dung & ảnh hợp lệ cục bộ?}
+    
+    ValidateFields -- No --> ShowUIError[Hiển thị lỗi nhập liệu trên màn hình] --> Input
+    ValidateFields -- Yes --> SetLoading[Hiển thị trạng thái Loading và khóa nút bấm]
+    
+    %% AI Moderation
+    SetLoading --> CheckTextMod[Kiểm duyệt văn bản: LmStudio qwen3-coder-30b]
+    CheckTextMod --> TextModResult{Từ khóa trả về là UNSAFE?}
+    
+    TextModResult -- Yes --> TextViolation[Ném ModerationException] --> HandleException
+    TextModResult -- No --> UploadMedia[Tiến hành upload media file lên Supabase Storage]
+    
+    UploadMedia --> GetPublicUrls[Lấy danh sách các liên kết ảnh/video đã upload]
+    
+    GetPublicUrls --> FilterImages[Lọc ra danh sách các ảnh để kiểm duyệt Sightengine API]
+    FilterImages --> RunImageMod[Gọi checkImageContent của Sightengine]
+    
+    RunImageMod --> ImageModResult{Sightengine phát hiện ảnh nhạy cảm?}
+    ImageModResult -- Yes --> ImageViolation[Ném ModerationException] --> HandleException
+    ImageModResult -- No --> InsertProduct{Có gắn thẻ sản phẩm?}
+    
+    %% Xử lý Database
+    InsertProduct -- Có --> RunInsertProduct[Chèn thông tin sản phẩm vào bảng products]
+    RunInsertProduct --> GetProductId[Nhận ID sản phẩm được tạo]
+    GetProductId --> RunInsertPost[Chèn thông tin bài viết kèm ID sản phẩm liên kết vào bảng posts]
+    
+    InsertProduct -- Không --> RunInsertPost
+    
+    RunInsertPost --> DBSuccess{Lưu DB thành công?}
+    DBSuccess -- No --> CatchDBError[Bắt lỗi Database Exception] --> HandleException
+    DBSuccess -- Yes --> ClearLoading[Tắt Loading & Reset State]
+    ClearLoading --> SuccessToast[Hiển thị Toast đăng bài thành công]
+    SuccessToast --> NavigateBack[Quay lại màn hình Feed] --> End([Kết thúc])
+    
+    %% Xử lý Exception
+    HandleException[Bắt ngoại lệ ModerationException / Exception khác] --> ShowErrorDialog[Hiển thị AlertDialog thông báo lỗi và lý do vi phạm]
+    ShowErrorDialog --> UnlockUI[Mở khóa nút bấm để người dùng chỉnh sửa] --> Input

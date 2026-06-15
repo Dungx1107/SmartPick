@@ -1,0 +1,28 @@
+flowchart TD
+    Start([Bắt đầu thêm vào giỏ hàng]) --> CheckStockUI{Sản phẩm còn hàng? stock > 0}
+    
+    %% Tier 1 Phòng thủ
+    CheckStockUI -- No --> DisableBtn[Disable nút 'Thêm vào giỏ hàng'] --> EndDisable([Kết thúc])
+    
+    %% Tier 2 Phòng thủ
+    CheckStockUI -- Yes --> ClickBtn[Người dùng nhấn nút 'Thêm vào giỏ hàng']
+    ClickBtn --> CheckQuantity{Số lượng yêu cầu <= Tồn kho?}
+    CheckQuantity -- No --> ShowStockAlert[Hiển thị thông báo: Chỉ còn X sản phẩm trong kho!] --> EndCancel([Hủy bỏ thao tác])
+    
+    CheckQuantity -- Yes --> CallAddToCart[Gọi addToCart của CartRepository]
+    CallAddToCart --> QueryDB[Truy vấn bảng cart_items kiểm tra sản phẩm đã có chưa]
+    
+    QueryDB --> ProductExists{Sản phẩm đã có trong giỏ hàng?}
+    ProductExists -- Có --> UpdateQuantity[Tăng số lượng: quantity = quantity + 1]
+    ProductExists -- Không --> InsertNewItem[Chèn bản ghi mới: quantity = 1]
+    
+    UpdateQuantity --> SaveDB[Lưu thay đổi xuống Supabase Database]
+    InsertNewItem --> SaveDB
+    
+    SaveDB --> DBSuccess{Lưu thành công?}
+    DBSuccess -- No --> ShowErrorToast[Hiển thị Toast: Không thể thêm vào giỏ hàng] --> EndCancel
+    DBSuccess -- Yes --> FetchNewCart[Gọi fetchCartItems tải lại giỏ hàng mới nhất]
+    
+    FetchNewCart --> UpdateUIState[Cập nhật StateFlow cartItems để cập nhật giao diện]
+    UpdateUIState --> ShowSuccessToast[Hiển thị Toast: Đã thêm vào giỏ hàng]
+    ShowSuccessToast --> End([Kết thúc])

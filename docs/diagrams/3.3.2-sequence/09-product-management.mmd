@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor Seller as Người bán (Seller)
+    participant UI as SellerDashboardScreen
+    participant VM as SellerViewModel
+    participant Repo as SellerRepository
+    participant DB as Supabase PostgreSQL
+
+    Seller->>UI: Mở trang Dashboard người bán
+    UI->>VM: loadDashboardData()
+    activate VM
+    VM->>VM: Cập nhật state = Loading
+
+    %% Lấy danh sách sản phẩm đang bán
+    VM->>Repo: getSellerProducts(ownerId)
+    activate Repo
+    Repo->>DB: select * from products where owner_id = ownerId
+    activate DB
+    DB-->>Repo: Trả về List<ProductDto>
+    Repo->>Repo: map { toDomain() }
+    Repo-->>VM: Trả về List<Product>
+    deactivate Repo
+
+    %% Lấy danh sách đơn hàng đã bán và doanh thu
+    VM->>Repo: getSoldOrders(sellerId)
+    activate Repo
+    Repo->>DB: select order_items joined with products & orders
+    Repo-->>VM: Trả về List<SoldOrderItemDto>
+    deactivate Repo
+    deactivate DB
+
+    VM->>VM: Tính toán tổng doanh thu, số đơn đã bán, số lượng sản phẩm
+    VM->>VM: Cập nhật state = Success
+    VM-->>UI: Cập nhật UI State (RevenueStats, ProductList)
+    deactivate VM
+    UI->>Seller: Hiển thị thống kê biểu đồ doanh thu và danh sách sản phẩm

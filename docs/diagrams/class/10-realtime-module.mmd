@@ -1,0 +1,50 @@
+classDiagram
+    class SupabaseProvider {
+        <<Object>>
+        +client: SupabaseClient
+    }
+
+    class SupabaseClient {
+        <<External SDK>>
+        +realtime: Realtime
+        +postgrest: Postgrest
+        +channel(name: String) RealtimeChannel
+    }
+
+    class Realtime {
+        <<Supabase Plugin>>
+        +reconnectDelay: Duration
+    }
+
+    class RealtimeChannel {
+        <<Supabase Channel>>
+        +subscribe() Unit
+        +postgresChangeFlow(schema: String, filter: String) Flow
+    }
+
+    class PostgresAction {
+        <<Sealed Class>>
+        +Insert
+        +Update
+        +Delete
+    }
+
+    class NotificationRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        +observeNotifications(userId: String) Flow
+    }
+
+    class NotificationViewModel {
+        <<HiltViewModel>>
+        -repository: NotificationRepository
+        +notifications: StateFlow
+    }
+
+    SupabaseProvider --> SupabaseClient : Cung cấp
+    SupabaseClient --> Realtime : Tích hợp plugin
+    SupabaseClient --> RealtimeChannel : Tạo kênh kết nối
+    NotificationRepository --> SupabaseClient : Sử dụng để tạo kênh
+    NotificationRepository --> RealtimeChannel : Đăng ký & lắng nghe thay đổi
+    RealtimeChannel ..> PostgresAction : Phát ra sự kiện thay đổi dữ liệu
+    NotificationViewModel --> NotificationRepository : Lấy luồng dữ liệu thời gian thực Flow

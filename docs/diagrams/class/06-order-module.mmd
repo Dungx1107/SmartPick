@@ -1,0 +1,67 @@
+classDiagram
+    class CheckoutScreen {
+        <<Compose UI>>
+        +viewModel: CheckoutViewModel
+        +onConfirmCheckout()
+    }
+
+    class CheckoutViewModel {
+        <<HiltViewModel>>
+        -orderRepository: OrderRepository
+        -cartRepository: CartRepository
+        -authRepository: AuthRepository
+        -homeRepository: HomeRepository
+        +phone: MutableStateFlow
+        +address: MutableStateFlow
+        +paymentMethod: MutableStateFlow
+        +cartItems: StateFlow
+        +orders: StateFlow
+        +isProcessing: StateFlow
+        +placeOrder(onSuccess: Function, onError: Function) Unit
+        +loadOrderHistory() Unit
+    }
+
+    class OrderRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        -notificationRepository: NotificationRepository
+        +checkout(userId: String, cartItems: List, address: String, phone: String, paymentMethod: String) Result
+        +getOrderHistory(userId: String) List
+        +getLastOrderInfo(userId: String) LastOrderInfoDto?
+        -sendOrderNotificationsToOwners(cartItems: List, orderId: String, buyerId: String) Unit
+    }
+
+    class LastOrderInfoDto {
+        <<DTO>>
+        +phoneNumber: String?
+        +shippingAddress: String?
+    }
+
+    class Order {
+        <<Domain Model>>
+        +id: String
+        +userId: String
+        +totalAmount: Double
+        +shippingAddress: String
+        +phoneNumber: String
+        +paymentMethod: String
+        +status: String
+        +createdAt: String
+        +orderItems: List
+    }
+
+    class OrderItem {
+        <<Domain Model>>
+        +id: String
+        +orderId: String
+        +productId: String
+        +quantity: Int
+        +price: Double
+        +product: Product?
+    }
+
+    CheckoutScreen --> CheckoutViewModel : Tương tác
+    CheckoutViewModel --> OrderRepository : Gọi thanh toán & lịch sử
+    OrderRepository ..> Order : Quản lý thực thể
+    OrderRepository ..> LastOrderInfoDto : Sử dụng thông tin cũ
+    Order --> OrderItem : Chứa danh sách chi tiết

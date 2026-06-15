@@ -1,0 +1,33 @@
+flowchart TD
+    Start([Bắt đầu thanh toán]) --> LoadData[Nạp dữ liệu giỏ hàng cần mua & Điền thông tin tự động từ Profile / Đơn hàng cũ]
+    LoadData --> UserInput[Người dùng kiểm tra thông tin giao hàng & chọn phương thức thanh toán]
+    
+    UserInput --> ConfirmClick[Nhấn nút 'Đặt hàng / Thanh toán']
+    ConfirmClick --> CheckDouble{Đang xử lý đơn hàng trước đó isProcessing = true?}
+    CheckDouble -- Yes --> BlockClick[Chặn đứng click trùng lặp] --> EndBlocked([Không thực hiện gì])
+    CheckDouble -- No --> ValidateFields{Số điện thoại & Địa chỉ được nhập đầy đủ?}
+    
+    ValidateFields -- No --> ErrorFields[Báo lỗi: Vui lòng nhập đầy đủ thông tin nhận hàng] --> UserInput
+    ValidateFields -- Yes --> CheckEmptyCart{Danh sách sản phẩm mua rỗng?}
+    
+    CheckEmptyCart -- Yes --> ErrorEmpty[Báo lỗi: Giỏ hàng của bạn đang trống] --> EndBlocked
+    CheckEmptyCart -- No --> Tier2Check[Thực hiện kiểm tra tồn kho cục bộ Tier 2]
+    
+    Tier2Check --> CheckStockVM{Có sản phẩm nào vượt quá tồn kho?}
+    CheckStockVM -- Yes --> ErrorStock[Báo lỗi: Sản phẩm X hiện đã hết hàng hoặc chỉ còn Y sản phẩm!] --> UserInput
+    CheckStockVM -- No --> SetProcessing[Đặt isProcessing = true]
+    
+    SetProcessing --> CallCheckoutRepo[Gọi checkout của OrderRepository]
+    CallCheckoutRepo --> CreateOrder[Chèn bản ghi vào bảng orders]
+    CreateOrder --> InsertItems[Chèn chi tiết vào bảng order_items - Kích hoạt Trigger trừ kho]
+    
+    InsertItems --> CheckTx{Giao dịch DB thành công?}
+    CheckTx -- No --> CatchTxError[Bắt lỗi Database Exception - Rollback]
+    CatchTxError --> ResetProcessingFail[Đặt isProcessing = false]
+    ResetProcessingFail --> ShowErrToast[Hiển thị lỗi hệ thống hoặc thông báo giao dịch thất bại] --> UserInput
+    
+    CheckTx -- Yes --> TriggerNotif[Gửi thông báo DB & FCM Push tới Buyer và Sellers]
+    TriggerNotif --> ClearLocalCart[Lọc sạch giỏ hàng & nạp lại lịch sử đơn hàng]
+    ClearLocalCart --> ResetProcessingSuccess[Đặt isProcessing = false]
+    ResetProcessingSuccess --> NavigateSuccess[Gọi onSuccess: Điều hướng tới trang thành công]
+    NavigateSuccess --> End([Kết thúc])

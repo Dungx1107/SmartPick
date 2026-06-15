@@ -1,0 +1,27 @@
+flowchart TD
+    Start([Bắt đầu kiểm tra tồn kho khi đặt hàng / thêm giỏ]) --> Tier1[TẦNG 1: Phòng thủ cấp giao diện - UI Level]
+    
+    %% Tier 1
+    Tier1 --> CheckStockUI{Tồn kho thực tế <= 0?}
+    CheckStockUI -- Yes --> DisableAction[Vô hiệu hóa nút bấm đặt hàng / Thêm giỏ hàng] --> EndBlocked([Kết thúc - Chặn thao tác])
+    CheckStockUI -- No --> Tier2[TẦNG 2: Phòng thủ cấp nghiệp vụ - ViewModel Level]
+    
+    %% Tier 2
+    Tier2 --> CheckQtyVM{Số lượng đặt mua > Tồn kho sản phẩm?}
+    CheckQtyVM -- Yes --> RejectAction[Ngăn chặn gửi yêu cầu lên Server & Hiển thị thông báo: Chỉ còn X chiếc!] --> EndWarning([Kết thúc - Cảnh báo người dùng])
+    CheckQtyVM -- No --> Tier3[TẦNG 3: Phòng thủ cấp dữ liệu - Database Level]
+    
+    %% Tier 3
+    Tier3 --> InitTx[Bắt đầu Transaction ghi nhận hóa đơn]
+    InitTx --> InsertOrderItems[Thực hiện chèn dữ liệu vào bảng order_items]
+    InsertOrderItems --> TriggerCheck[Kích hoạt Server Trigger / Database Constraint tự động trừ kho]
+    
+    TriggerCheck --> CheckStockDb{Tồn kho DB có đủ trừ?}
+    CheckStockDb -- No (Tranh chấp đồng thời) --> RollbackTx[Hủy bỏ Transaction - Transaction Rollback]
+    RollbackTx --> ThrowDbException[Ném Database Exception về phía Client]
+    ThrowDbException --> AlertUser[Ứng dụng hiển thị thông báo: Giao dịch thất bại do hết hàng] --> EndCancel([Kết thúc - Giao dịch thất bại])
+    
+    CheckStockDb -- Yes --> DeductStock[Trừ tồn kho sản phẩm tương ứng]
+    DeductStock --> CommitTx[Xác nhận hóa đơn thành công - Transaction Commit]
+    CommitTx --> ClearCart[Giữ nguyên giỏ / Đồng bộ hóa dữ liệu mới]
+    ClearCart --> EndSuccess([Kết thúc - Giao dịch thành công])

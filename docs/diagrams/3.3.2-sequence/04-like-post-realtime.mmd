@@ -1,0 +1,33 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as FeedScreen / PostDetailScreen
+    participant VM as FeedViewModel
+    participant Repo as FeedRepository
+    participant DB as Supabase Database (post_reactions)
+    participant RT as Supabase Realtime Engine
+    participant OtherDevice as Thiết bị của người dùng khác
+
+    User->>UI: Click icon Thả tim (Like) bài viết
+    UI->>VM: toggleReaction(postId, reactionType)
+    activate VM
+    VM->>VM: Thực hiện Optimistic Update (Cập nhật giao diện cục bộ ngay lập tức)
+    VM-->>UI: StateFlow phát ra số tim mới và icon được bật
+    UI->>User: Cập nhật giao diện lập tức (không trễ)
+
+    VM->>Repo: toggleReaction(postId, userId, reactionType)
+    activate Repo
+    Repo->>DB: Kiểm tra reaction hiện có & Insert/Delete bản ghi
+    activate DB
+    DB-->>Repo: Thành công (Result.success)
+    deactivate Repo
+
+    %% Kênh Realtime
+    DB-->>RT: Phát hiện thay đổi bảng (Trigger Postgres Change)
+    activate RT
+    RT-->>OtherDevice: Đẩy sự kiện qua WebSocket (Realtime channel)
+    deactivate RT
+    OtherDevice->>OtherDevice: Tự động cập nhật số lượt tim trên giao diện người dùng khác
+
+    deactivate DB
+    deactivate VM

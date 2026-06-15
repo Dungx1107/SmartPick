@@ -1,0 +1,66 @@
+classDiagram
+    class CreatePostScreen {
+        <<Compose UI>>
+        +viewModel: CreatePostViewModel
+        +onBack()
+    }
+
+    class CreatePostViewModel {
+        <<HiltViewModel>>
+        -repository: PostCreationRepository
+        -authRepository: AuthRepository
+        -_uiState: MutableStateFlow
+        +uiState: StateFlow
+        +createPost(content: String, mediaUris: List, product: Product?) Unit
+    }
+
+    class PostCreationRepository {
+        <<Singleton>>
+        -supabase: SupabaseClient
+        -moderationService: ModerationService
+        -lmStudioModerator: LmStudioModerator
+        +createFullPost(userId: String, content: String, mediaUris: List, productData: Product?, context: Context) Unit
+        -uploadMedia(uri: Uri, context: Context) String
+    }
+
+    class LmStudioModerator {
+        <<Singleton>>
+        -client: OkHttpClient
+        -lmStudioUrl: String
+        +validateText(content: String, productName: String?) Unit
+    }
+
+    class ModerationService {
+        <<Singleton>>
+        -client: OkHttpClient
+        +checkImageContent(imageUrl: String) Boolean
+        +checkTextContent(text: String) Boolean
+    }
+
+    class Post {
+        <<Domain Model>>
+        +id: String
+        +userId: String
+        +productId: String?
+        +content: String?
+        +mediaUrls: List
+        +createdAt: String?
+    }
+
+    class Product {
+        <<Domain Model>>
+        +id: String
+        +ownerId: String
+        +name: String
+        +brand: String?
+        +category: String?
+        +price: Double
+        +stock: Int
+    }
+
+    CreatePostScreen --> CreatePostViewModel : Tương tác
+    CreatePostViewModel --> PostCreationRepository : Gọi nghiệp vụ
+    PostCreationRepository --> LmStudioModerator : Xác thực text (qwen3)
+    PostCreationRepository --> ModerationService : Xác thực ảnh (Sightengine)
+    PostCreationRepository ..> Post : Tạo lập
+    PostCreationRepository ..> Product : Tạo lập

@@ -1,0 +1,61 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as LoginScreen
+    participant Helper as GoogleAuthHelper (performGoogleSignIn)
+    participant CredMgr as Android CredentialManager
+    participant VM as AuthViewModel
+    participant Repo as AuthRepository
+    participant SB as Supabase Auth
+    participant DB as Supabase PostgreSQL
+    participant Email as EmailHelper
+    participant FCM as FirebaseMessaging
+
+    User->>UI: Click nút "Đăng nhập bằng Google"
+    UI->>Helper: performGoogleSignIn(context, scope, webClientId, onTokenReceived, onError)
+    activate Helper
+    Helper->>CredMgr: getCredential(request)
+    activate CredMgr
+    CredMgr-->>User: Hiển thị hộp thoại chọn tài khoản Google
+    User->>CredMgr: Chọn tài khoản Google
+    CredMgr-->>Helper: Trả về Google ID Token
+    deactivate CredMgr
+    Helper-->>UI: Gọi callback onTokenReceived(googleIdToken)
+    deactivate Helper
+
+    UI->>VM: loginWithGoogle(googleIdToken)
+    activate VM
+    VM->>VM: Đặt _isLoading = true
+    VM->>Repo: signInWithGoogleAndSaveUser(googleIdToken)
+    activate Repo
+
+    %% Đăng nhập Supabase Auth bằng ID Token
+    Repo->>SB: signInWith(IDToken) { provider = Google, idToken = googleIdToken }
+    activate SB
+    SB-->>Repo: Trả về Session & currentUser
+    deactivate SB
+
+    %% Phân tích Metadata & Đồng bộ Users DB
+    Repo->>Repo: Trích xuất full_name, avatar_url, email
+    Repo->>DB: select * from users where id = currentUser.id (Check new/existing user)
+    activate DB
+    DB-->>Repo: Trả về UserDto?
+    Repo->>DB: upsert user profile (to TABLE_USERS)
+    DB-->>Repo: Thành công
+
+    %% Gửi Email & Đăng ký FCM
+    Repo->>Email: send(email, WELCOME hoặc LOGIN_GOOGLE, name)
+    Repo->>FCM: Lấy FCM Token từ Firebase SDK
+    activate FCM
+    FCM-->>Repo: Trả về fcmToken
+    deactivate FCM
+    Repo->>DB: upsert fcmToken in user_push_tokens table
+    DB-->>Repo: Lưu token thành công
+    deactivate DB
+    
+    Repo-->>VM: Trả về User object
+    deactivate Repo
+    VM->>VM: Đặt _isLoading = false, _authState = Success
+    VM-->>UI: StateFlow phát ra trạng thái Success
+    deactivate VM
+    UI->>User: Chuyển hướng thành công vào HomeScreen

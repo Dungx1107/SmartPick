@@ -1,0 +1,61 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as CreatePostScreen
+    participant VM as CreatePostViewModel
+    participant Repo as PostCreationRepository
+    participant LmMod as LmStudioModerator
+    participant Storage as Supabase Storage
+    participant ImgMod as ModerationService (Sightengine)
+    participant DB as Supabase Database
+
+    User->>UI: Nhập nội dung, chọn ảnh & nhấn "Đăng bài"
+    UI->>VM: createPost(content, mediaUris, product)
+    activate VM
+    VM->>VM: Cập nhật state = Loading
+    VM->>Repo: createFullPost(userId, content, mediaUris, product, context)
+    activate Repo
+    
+    %% 1. Kiểm duyệt văn bản
+    Repo->>LmMod: validateText(content, product.name)
+    activate LmMod
+    LmMod-->>Repo: (Nếu vi phạm -> ném ModerationException)
+    deactivate LmMod
+    
+    %% 2. Upload file
+    rect rgb(240, 248, 255)
+        note right of Repo: Upload file song song (Coroutines)
+        Repo->>Storage: upload(media file)
+        activate Storage
+        Storage-->>Repo: Trả về public url
+        deactivate Storage
+    end
+
+    %% 3. Kiểm duyệt hình ảnh
+    Repo->>ImgMod: checkImageContent(imageUrl)
+    activate ImgMod
+    ImgMod-->>Repo: (Nếu vi phạm -> ném ModerationException)
+    deactivate ImgMod
+
+    %% 4. Lưu database
+    Repo->>DB: Insert product data (nếu có gắn thẻ sản phẩm)
+    activate DB
+    DB-->>Repo: Trả về Product ID
+    deactivate DB
+    Repo->>DB: Insert post data (to TABLE_POSTS)
+    activate DB
+    DB-->>Repo: Thành công
+    deactivate DB
+    
+    Repo-->>VM: Trả về hoàn thành thành công
+    deactivate Repo
+    VM->>VM: Cập nhật state = Success
+    VM-->>UI: LiveData/StateFlow phát ra trạng thái Success
+    deactivate VM
+    UI->>User: Hiển thị Toast thành công và quay lại Feed
+    
+    %% Luồng lỗi ModerationException
+    note over UI, DB: Luồng ngoại lệ: Nếu bất kì bước kiểm duyệt AI nào vi phạm
+    Repo-->>VM: Ném ModerationException("Nội dung vi phạm...")
+    VM->>VM: Bắt lỗi, cập nhật state = Error(message)
+    VM-->>UI: Hiển thị AlertDialog cảnh báo vi phạm tiêu chuẩn

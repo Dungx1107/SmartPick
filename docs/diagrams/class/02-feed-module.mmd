@@ -1,0 +1,83 @@
+classDiagram
+    class FeedScreen {
+        <<Compose UI>>
+        +FeedViewModel viewModel
+        +onPostClick(postId: String)
+        +onReactionClick(postId: String, type: ReactionType)
+    }
+
+    class FeedViewModel {
+        <<HiltViewModel>>
+        -FeedRepository feedRepository
+        -AuthRepository authRepository
+        -_uiState: MutableStateFlow
+        +uiState: StateFlow
+        +loadFeed() Unit
+        +toggleReaction(postId: String, reactionType: ReactionType) Unit
+    }
+
+    class FeedUiState {
+        <<Sealed Class>>
+        +Loading
+        +Success(posts: List)
+        +Error(message: String)
+    }
+
+    class FeedRepository {
+        <<Singleton>>
+        -SupabaseClient supabase
+        +getPostsWithUsers(currentUserId: String) List
+        +toggleReaction(postId: String, userId: String, reactionType: ReactionType) Result
+    }
+
+    class Post {
+        <<Domain Model>>
+        +id: String
+        +userId: String
+        +productId: String?
+        +content: String?
+        +mediaUrls: List
+        +createdAt: String?
+        +reactionCount: Int
+        +currentUserReaction: ReactionType?
+    }
+
+    class User {
+        <<Domain Model>>
+        +id: String
+        +fullName: String?
+        +avatarUrl: String?
+        +email: String?
+        +username: String?
+    }
+
+    class Product {
+        <<Domain Model>>
+        +id: String
+        +ownerId: String
+        +name: String
+        +brand: String?
+        +category: String?
+        +price: Double
+        +stock: Int
+        +imageUrls: List
+        +videoUrl: String?
+    }
+
+    class ReactionType {
+        <<Enum>>
+        +LIKE
+        +LOVE
+        +HAHA
+        +WOW
+        +SAD
+        +ANGRY
+    }
+
+    FeedScreen --> FeedViewModel : Tương tác
+    FeedViewModel --> FeedRepository : Gọi dữ liệu
+    FeedViewModel --> FeedUiState : Quản lý trạng thái
+    FeedRepository ..> Post : Cung cấp
+    FeedRepository ..> User : Cung cấp
+    FeedRepository ..> Product : Cung cấp
+    Post --> ReactionType : Tham chiếu cảm xúc hiện tại

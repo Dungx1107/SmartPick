@@ -1,0 +1,25 @@
+sequenceDiagram
+    autonumber
+    actor User as Người dùng
+    participant UI as FeedScreen
+    participant VM as FeedViewModel
+    participant Repo as FeedRepository
+    participant SB as Supabase Postgrest
+
+    User->>UI: Mở màn hình Bảng tin (Feed)
+    UI->>VM: loadFeed()
+    activate VM
+    VM->>VM: Cập nhật FeedUiState = Loading
+    VM->>Repo: fetchFeedPosts()
+    activate Repo
+    Repo->>SB: select("*, users(*), products(*)")
+    activate SB
+    SB-->>Repo: Trả về List<PostDto>
+    deactivate SB
+    Repo->>Repo: map { toDomain() }
+    Repo-->>VM: Trả về List<Post> (Domain Models)
+    deactivate Repo
+    VM->>VM: Cập nhật FeedUiState = Success(posts)
+    VM-->>UI: Recomposition với dữ liệu mới
+    deactivate VM
+    UI->>User: Hiển thị danh sách bài đăng (Ảnh/Video/Sản phẩm liên kết)

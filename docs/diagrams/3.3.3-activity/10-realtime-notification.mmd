@@ -1,0 +1,17 @@
+flowchart TD
+    Start([Bắt đầu khởi chạy ứng dụng]) --> InitNotifFlow[Kích hoạt observeNotifications của NotificationRepository]
+    InitNotifFlow --> FetchInitial[Truy vấn danh sách thông báo lần đầu trong DB]
+    
+    FetchInitial --> EmitInitial[Phát dữ liệu lần đầu qua Flow về ViewModel]
+    EmitInitial --> RenderUI[Hiển thị danh sách thông báo và số badge đỏ trên icon UI]
+    
+    RenderUI --> SubscribeRealtime[Tạo Channel mới và thực hiện channel.subscribe đăng ký WebSocket]
+    SubscribeRealtime --> ListenState{Có sự kiện Postgres thay đổi?}
+    
+    ListenState -- No (Giữ kết nối) --> ListenState
+    ListenState -- Yes (Insert/Update/Delete) --> DetectChange[Nhận diện sự kiện PostgresAction]
+    
+    DetectChange --> FetchLatest[Truy vấn lại danh sách thông báo mới nhất từ DB]
+    FetchLatest --> EmitLatest[Phát danh sách mới qua Flow]
+    EmitLatest --> UpdateUI[UI tự động Recompose hiển thị thông báo mới và badge số lượng]
+    UpdateUI --> ListenState

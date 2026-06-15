@@ -1,0 +1,22 @@
+flowchart TD
+    Start([Bắt đầu đăng bán sản phẩm mới]) --> Input[Nhập tên, giá, thương hiệu, danh mục, số lượng tồn kho của sản phẩm]
+    Input --> InputPost[Nhập nội dung bài viết review kèm hình ảnh sản phẩm]
+    InputPost --> CheckFields{Các trường nhập liệu hợp lệ?}
+    
+    CheckFields -- No --> ShowError[Báo lỗi: Nhập đầy đủ và đúng định dạng các trường] --> Input
+    CheckFields -- Yes --> LockUI[Khóa UI hiển thị Loading]
+    
+    LockUI --> CallModeration[Kích hoạt bộ lọc AI Moderation]
+    CallModeration --> CheckMod{Văn bản & hình ảnh an toàn?}
+    
+    CheckMod -- No (Toxic/Unsafe) --> ThrowModException[Ném ModerationException]
+    ThrowModException --> ShowDialog[Hiển thị cảnh báo vi phạm tiêu chuẩn cộng đồng] --> UnlockUI[Mở khóa UI] --> Input
+    
+    CheckMod -- Yes (Safe) --> UploadImages[Upload hình ảnh lên Supabase Storage bucket media]
+    UploadImages --> SaveProduct[Chèn thông tin sản phẩm vào TABLE_PRODUCTS]
+    SaveProduct --> RetrieveProdId[Nhận UUID của sản phẩm được tạo]
+    
+    RetrieveProdId --> SavePost[Chèn thông tin bài viết vào TABLE_POSTS liên kết với productId]
+    SavePost --> RefreshHome[Nạp lại bảng tin Feed & Danh sách sản phẩm gợi ý]
+    RefreshHome --> SuccessToast[Hiển thị thông báo đăng sản phẩm thành công]
+    SuccessToast --> End([Kết thúc])

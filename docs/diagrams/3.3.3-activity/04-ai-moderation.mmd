@@ -1,0 +1,29 @@
+flowchart TD
+    Start([Bắt đầu kiểm duyệt nội dung]) --> CheckText{Có văn bản cần duyệt?}
+    
+    %% Kiểm duyệt văn bản
+    CheckText -- Không --> CheckImage{Có hình ảnh cần duyệt?}
+    CheckText -- Có --> BuildTextToValidate[Tạo chuỗi gộp: content + productName]
+    BuildTextToValidate --> SendTextRequest[Gửi POST request tới LM Studio: v1/chat/completions]
+    SendTextRequest --> RecvTextResponse{HTTP code = 200?}
+    
+    RecvTextResponse -- No --> FailLM[Ném ModerationException: Lỗi kết nối hệ thống kiểm duyệt] --> ThrowException
+    RecvTextResponse -- Yes --> ParseJSONText[Phân tích choices.message.content]
+    ParseJSONText --> CheckLLMResult{Kết quả là UNSAFE?}
+    
+    CheckLLMResult -- Yes --> BadText[Ném ModerationException: Nội dung chứa từ ngữ vi phạm tiêu chuẩn] --> ThrowException
+    CheckLLMResult -- No --> CheckImage
+    
+    %% Kiểm duyệt hình ảnh
+    CheckImage -- Không --> SafeEnd([Xác nhận nội dung AN TOÀN])
+    CheckImage -- Có --> SendImageRequest[Gửi GET request tới Sightengine API với url ảnh & models = nudity, wad, offensive, gore, violence]
+    SendImageRequest --> RecvImageResponse{HTTP code = 200?}
+    
+    RecvImageResponse -- No --> FailSightengine[Ném Exception: Sightengine kết nối thất bại] --> ThrowException
+    RecvImageResponse -- Yes --> ParseJSONImage[Trích xuất điểm số các tiêu chí: weapon, gore, offensive, violence, nudity]
+    
+    ParseJSONImage --> CheckImageScore{Có tiêu chí nào vượt quá ngưỡng 0.5?}
+    CheckImageScore -- Yes --> BadImage[Ném ModerationException: Hình ảnh chứa nội dung nhạy cảm hoặc bạo lực] --> ThrowException
+    CheckImageScore -- No --> SafeEnd
+    
+    ThrowException([Ném ngoại lệ lên ViewModel hiển thị thông báo lỗi và ngăn chặn đăng dữ liệu])
