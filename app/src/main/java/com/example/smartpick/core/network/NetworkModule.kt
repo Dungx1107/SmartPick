@@ -8,6 +8,8 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -20,14 +22,31 @@ object NetworkModule {
     }
     @Provides
     @Singleton
+    @Named("DefaultClient")
     fun provideOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder().build()
     }
     @Provides
     @Singleton
-    fun provideModerationService(client: OkHttpClient): ModerationService {
+    @Named("LlmClient")
+    fun provideLlmOkHttpClient(
+        @Named("DefaultClient") defaultClient: OkHttpClient
+    ): OkHttpClient {
+        return defaultClient.newBuilder()
+            .connectTimeout(60, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(60, TimeUnit.SECONDS)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideModerationService(
+        @Named("LlmClient") client: OkHttpClient
+    ): ModerationService {
         return ModerationService(client)
     }
+
     @Provides
     @Singleton
     fun provideSupabaseClient(): SupabaseClient {

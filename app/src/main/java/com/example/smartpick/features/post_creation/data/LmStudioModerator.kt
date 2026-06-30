@@ -8,13 +8,15 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Singleton
 class LmStudioModerator @Inject constructor(
-    private val client: OkHttpClient
+    @Named("LlmClient") private val client: OkHttpClient
 ) {
-    private val lmStudioUrl = "http://10.11.238.87:1234/v1/chat/completions"
+//    private val lmStudioUrl = "http://10.11.238.87:1234/v1/chat/completions"
+    private val lmStudioUrl = "http://192.168.0.125:1234/v1/chat/completions"
 
     /**
      * Kiểm duyệt nội dung văn bản (Gồm nội dung bài viết và tên sản phẩm).
@@ -30,8 +32,10 @@ class LmStudioModerator @Inject constructor(
 
         try {
             val jsonRequest = JSONObject().apply {
-                put("model", "qwen3-coder-30b")
+//                put("model", "qwen3-coder-30b")
+                put("model", "qwen-3-14b-instruct")
                 put("temperature", 0.0)
+                put("max_tokens", 50)
 
                 val messagesArray = JSONArray().apply {
                     put(JSONObject().apply {
@@ -61,7 +65,6 @@ class LmStudioModerator @Inject constructor(
 
                 val responseBody = response.body?.string() ?: throw ModerationException("Hệ thống kiểm duyệt trả về dữ liệu rỗng.")
 
-                // 1. IN LOG ĐỂ THEO DÕI TOÀN BỘ LUỒNG DỮ LIỆU TRẢ VỀ TỪ LM STUDIO TRÊN LOGCAT
                 android.util.Log.d("LM_STUDIO_RESPONSE", "JSON nhận về: $responseBody")
 
                 val jsonResponse = JSONObject(responseBody)
@@ -71,18 +74,14 @@ class LmStudioModerator @Inject constructor(
                     val message = choices.getJSONObject(0).optJSONObject("message")
                     val llmResult = message?.optString("content")?.trim()?.uppercase() ?: ""
 
-                    // 2. IN LOG CHI TIẾT TỪ KHÓA MÀ MODEL ĐÃ TRẢ RA
                     android.util.Log.d("LM_STUDIO_RESPONSE", "Từ khóa Model phản hồi: $llmResult")
 
-                    // 3. SỬA LỖI LOGIC: Kiểm tra nghiêm ngặt cấu trúc chuỗi trả về
-                    // Thay vì dùng .contains() lỏng lẻo dễ bị dính chữ "SAFE" vào "UNSAFE", ta kiểm tra chính xác từ khóa độc lập.
                     if (llmResult == "UNSAFE" || (llmResult.contains("UNSAFE") && !llmResult.startsWith("SAFE"))) {
                         throw ModerationException("Nội dung bài viết hoặc thông tin sản phẩm chứa từ ngữ vi phạm tiêu chuẩn cộng đồng.")
                     }
                 }
             }
         } catch (e: ModerationException) {
-            // Ném tiếp quyền kiểm soát ngoại lệ lên cho Repository/ViewModel
             throw e
         } catch (e: Exception) {
             e.printStackTrace()

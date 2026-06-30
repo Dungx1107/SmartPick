@@ -12,6 +12,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import javax.inject.Inject
+import javax.inject.Named
 import javax.inject.Singleton
 
 /**
@@ -26,7 +27,7 @@ class ModerationException(message: String) : Exception(message)
  */
 @Singleton
 class ModerationService @Inject constructor(
-    private val client: OkHttpClient
+    @Named("LlmClient") private val client: OkHttpClient
 ) {
 
     companion object {

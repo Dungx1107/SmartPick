@@ -40,7 +40,7 @@ import javax.inject.Singleton
 @Singleton
 class PostCreationRepository @Inject constructor(
     private val supabase: SupabaseClient,
-    private val moderationService: ModerationService,// FIX: Bơm ModerationService vào Repository
+    private val moderationService: ModerationService,
     private val lmStudioModerator: LmStudioModerator
 ) {
 
